@@ -1,0 +1,5 @@
+# Tomba! 2 - The Evil Swine Return (SCUS-94454) — function-start seeds.
+# One 0x-prefixed KSEG0 address per line. '#' lines ignored. The recompiler
+# also discovers functions dynamically from entry_pc, so this only needs
+# entries the walker can't reach (indirect/overlay targets).
+0x80018B6C

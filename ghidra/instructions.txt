@@ -1,0 +1,66 @@
+================================================================
+GHIDRA SETUP — Tomba2Recomp
+================================================================
+
+Goal: import the Tomba! 2 (USA) boot executable into Ghidra so
+functions, labels and structs can feed ../seeds/ and ../annotations/.
+
+Game:    Tomba! 2 - The Evil Swine Return (USA)
+Serial:  SCUS-94454
+Region:  North America (NTSC-U)
+
+----------------------------------------------------------------
+CPU / processor
+----------------------------------------------------------------
+The PlayStation CPU is a MIPS R3000A (LSI CW33300 core):
+  - 32-bit, LITTLE-ENDIAN, MIPS I integer ISA
+  - No hardware FPU. Coprocessors are COP0 (system control) and
+    COP2 (the GTE geometry transform engine). Ghidra's default MIPS
+    decoder handles the integer ISA fine; GTE (cop2) ops show up as
+    coprocessor instructions — that is expected, not an error.
+
+  Ghidra language:  MIPS:LE:32:default
+  Compiler spec:    default
+  Endianness:       little
+  Address size:     32-bit
+
+----------------------------------------------------------------
+What to import
+----------------------------------------------------------------
+Import the HEADERLESS dump (the 2048-byte PS-EXE header is already
+stripped, so file offset 0 maps cleanly to the load address):
+
+  ghidra\SCUS_944.54_no_header.bin
+
+(Alternatively import the header-ful boot EXE tomba2\SCUS_944.54 and
+ set the import "File Offset" to 0x800. The headerless dump is simpler
+ and is what these notes assume.)
+
+----------------------------------------------------------------
+Load / memory layout (read from the PS-EXE header)
+----------------------------------------------------------------
+  Load address (base):  0x80010000   <-- file offset 0 maps here
+  Entry point (pc0):    0x80018B6C
+  Initial $gp:          0x00000000    (set at runtime)
+  Text size:            0x00028800    (165,888 bytes)
+  End of text:          0x80038800    (load_address + text_size)
+  Initial $sp (stack):  0x801FFFF0
+
+PS1 address space, for context:
+  0x80000000-0x801FFFFF  KSEG0  cached; the 2 MB main RAM
+  0xA0000000-0xA01FFFFF  KSEG1  uncached mirror of the same RAM
+  0xBFC00000             BIOS ROM reset vector
+
+The boot EXE is a small loader (~165 KB) that loads contiguously at
+0x80010000. The bulk of the game is streamed from disc as code
+overlays at runtime (same architecture as Tomba! 1) and is out of
+scope for the static EXE — those are discovered dynamically by the
+recompiler / captured by the overlay cache at runtime.
+
+----------------------------------------------------------------
+Import via the shared Ghidra MCP server (port 4444)
+----------------------------------------------------------------
+The workspace runs a single headless Ghidra MCP server (mcp__psx_ghidra__*,
+http://localhost:4444/sse). Use import_file with:
+  language = MIPS:LE:32:default, base_address = 0x80010000
+on ghidra/SCUS_944.54_no_header.bin, then run auto-analysis.

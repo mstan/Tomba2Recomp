@@ -1,0 +1,64 @@
+<iso_project image_name="mkpsxiso.bin" cue_sheet="mkpsxiso.cue">
+    <track type="data" xa_edc="true" new_type="false">
+        <identifiers system="PLAYSTATION" application="PLAYSTATION" creation_date="1999122412300000+36" modification_date="1999122412300000+36"/>
+        <license file="_extract/license_data.dat"/>
+        <default_attributes gmt_offs="36" xa_attrib="56" xa_perm="1365" xa_gid="0" xa_uid="0"/>
+        <directory_tree>
+            <file name="MAIN.EXE" source="_extract/MAIN.EXE" type="data"/>
+            <dir name="BIN" source="_extract/BIN">
+                <file name="A00.BIN" source="_extract/BIN/A00.BIN" type="data"/>
+                <file name="A01.BIN" source="_extract/BIN/A01.BIN" type="data"/>
+                <file name="A02.BIN" source="_extract/BIN/A02.BIN" type="data"/>
+                <file name="A03.BIN" source="_extract/BIN/A03.BIN" type="data"/>
+                <file name="A04.BIN" source="_extract/BIN/A04.BIN" type="data"/>
+                <file name="A05.BIN" source="_extract/BIN/A05.BIN" type="data"/>
+                <file name="A06.BIN" source="_extract/BIN/A06.BIN" type="data"/>
+                <file name="A07.BIN" source="_extract/BIN/A07.BIN" type="data"/>
+                <file name="A08.BIN" source="_extract/BIN/A08.BIN" type="data"/>
+                <file name="A09.BIN" source="_extract/BIN/A09.BIN" type="data"/>
+                <file name="A0A.BIN" source="_extract/BIN/A0A.BIN" type="data"/>
+                <file name="A0B.BIN" source="_extract/BIN/A0B.BIN" type="data"/>
+                <file name="A0C.BIN" source="_extract/BIN/A0C.BIN" type="data"/>
+                <file name="A0D.BIN" source="_extract/BIN/A0D.BIN" type="data"/>
+                <file name="A0E.BIN" source="_extract/BIN/A0E.BIN" type="data"/>
+                <file name="A0F.BIN" source="_extract/BIN/A0F.BIN" type="data"/>
+                <file name="A0G.BIN" source="_extract/BIN/A0G.BIN" type="data"/>
+                <file name="A0H.BIN" source="_extract/BIN/A0H.BIN" type="data"/>
+                <file name="A0I.BIN" source="_extract/BIN/A0I.BIN" type="data"/>
+                <file name="A0J.BIN" source="_extract/BIN/A0J.BIN" type="data"/>
+                <file name="A0K.BIN" source="_extract/BIN/A0K.BIN" type="data"/>
+                <file name="A0L.BIN" source="_extract/BIN/A0L.BIN" type="data"/>
+                <file name="CRD.BIN" source="_extract/BIN/CRD.BIN" type="data"/>
+                <file name="DEMO.BIN" source="_extract/BIN/DEMO.BIN" type="data"/>
+                <file name="GAME.BIN" source="_extract/BIN/GAME.BIN" type="data"/>
+                <file name="OPN.BIN" source="_extract/BIN/OPN.BIN" type="data"/>
+                <file name="SOP.BIN" source="_extract/BIN/SOP.BIN" type="data"/>
+                <file name="START.BIN" source="_extract/BIN/START.BIN" type="data"/>
+            </dir>
+            <dir name="CD" source="_extract/CD">
+                <file name="SWDATA.BIN" source="_extract/CD/SWDATA.BIN" type="data"/>
+                <file name="TOMBA2.DAT" source="_extract/CD/TOMBA2.DAT" type="data"/>
+                <file name="TOMBA2.IDX" source="_extract/CD/TOMBA2.IDX" type="data"/>
+                <file name="TOMBA2.IMG" source="_extract/CD/TOMBA2.IMG" type="data"/>
+                <file name="TOMBA2.SND" source="_extract/CD/TOMBA2.SND" type="data"/>
+            </dir>
+            <dir name="MOVIE" source="_extract/MOVIE">
+                <file name="LOGO.STR" source="_extract/MOVIE/LOGO.STR" type="mixed"/>
+            </dir>
+            <dir name="CD">
+                <file name="VOICE.XA" source="_extract/CD/VOICE.XA" type="mixed"/>
+                <file name="DEMO.XA" source="_extract/CD/DEMO.XA" type="mixed"/>
+                <file name="BGM.XA" source="_extract/CD/BGM.XA" type="mixed"/>
+            </dir>
+            <file name="SCUS_944.54" source="_extract/SCUS_944.54" type="data"/>
+            <file name="SYSTEM.CNF" source="_extract/SYSTEM.CNF" type="data"/>
+            <dir name="MOVIE">
+                <file name="OP.STR" source="_extract/MOVIE/OP.STR" type="mixed"/>
+                <file name="END.STR" source="_extract/MOVIE/END.STR" type="mixed"/>
+                <dummy sectors="150" type="0"/>
+            </dir>
+            <file name="ZZZ.DAT" trackid="02" type="da"/>
+        </directory_tree>
+    </track>
+    <track type="audio" trackid="02" source="_extract/ZZZ.WAV"/>
+</iso_project>
