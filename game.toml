@@ -20,6 +20,30 @@ window_title = "Tomba! 2 Recompiled"
 controller = "digital"
 memcard_dir = "saves"
 
+# Overlay cache (the real perf fix). Tomba 2's title/menu/level/FMV-driver code
+# is runtime-loaded overlay, not in the 474 compiled boot-EXE funcs, so by
+# default it ALL interprets (~4fps game logic). The cache JITs those overlays to
+# native via the *gcc* backend: autocapture writes overlay_captures.json, the
+# autocompile_cmd spawns the recompiler+gcc in the background to produce CPS
+# overlay DLLs in build-t2/cache, and the loader hot-swaps them in live.
+#
+# overlay_backend = "gcc" (NOT sljit): on 2026-06-23 the in-process sljit backend
+# declined ~31/39 Tomba 2 shards (no payoff) and hard-HUNG the boot on the
+# Whoopee-Camp logo. With gcc selected the loader runs gcc>interp and never
+# starts sljit live (overlay_loader_apply_live_policy forces sljit off when the
+# active backend is gcc), so the gap before DLLs land is the interpreter (slow
+# but correct), never the sljit hang path.
+#
+# No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
+# matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
+overlay_cache = false
+overlay_backend = "gcc"
+# All paths are RELATIVE to the project root (the runtime spawns this with cwd =
+# project root), so the shipped config is portable across machines. The
+# recompiler exe + runtime-include are resolved to absolute by compile_overlays.py
+# itself (a relative Windows exe path isn't resolved against the child cwd).
+overlay_autocompile_cmd = "python psxrecomp-v4/tools/compile_overlays.py --captures build-t2/overlay_captures.json --game-toml game.toml --recompiler psxrecomp-v4/recompiler/build-t2/psxrecomp-game.exe --runtime-include psxrecomp-v4/runtime/include --out-dir build-t2/cache && python psxrecomp-v4/tools/coverage_vault.py merge --vault ../_coverage_vault/SCUS-94454 --captures build-t2/overlay_captures.json --cache build-t2/cache/SCUS-94454"
+
 # Tomba 2 is a d-pad platformer. Real PS1 hardware powers a DualShock up in
 # DIGITAL mode (analog LED off, controller id 0x41) and Tomba 2's pad driver
 # only runs the DualShock config-mode handshake (0x43/0x4D...) when it sees the
@@ -41,6 +65,14 @@ memcard_dir = "saves"
 default_mode = "digital"
 allow_hybrid = false
 lock_mode    = true
+
+# --- Renderer: GPU-authoritative OpenGL (faster than the CPU rasterizer; moves
+# rasterization + any supersampling onto the GPU). Falls back to software if GL
+# init fails. supersampling kept at 1 for the perf baseline (raise to 2 later).
+[video]
+renderer          = "opengl"
+supersampling     = 1
+texture_filtering = "nearest"
 
 # ── Audit-specific config (consumed by psxrecomp/tools/*.py and tests) ──
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
