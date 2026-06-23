@@ -36,7 +36,7 @@ memcard_dir = "saves"
 #
 # No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
 # matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
-overlay_cache = false
+overlay_cache = true
 overlay_backend = "gcc"
 # All paths are RELATIVE to the project root (the runtime spawns this with cwd =
 # project root), so the shipped config is portable across machines. The
