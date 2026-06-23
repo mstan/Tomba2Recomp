@@ -17,8 +17,21 @@ strict = true
 [runtime]
 debug_port = 4500
 window_title = "Tomba! 2 Recompiled"
-controller = "dualshock"
+controller = "digital"
 memcard_dir = "saves"
+
+# Tomba 2 is a d-pad platformer. Real PS1 hardware powers a DualShock up in
+# DIGITAL mode (analog LED off, controller id 0x41) and Tomba 2's pad driver
+# only runs the DualShock config-mode handshake (0x43/0x4D...) when it sees the
+# analog id 0x73. The framework's default HYBRID mode boots analog-on (0x73),
+# which triggers that handshake every frame; our SIO config emulation doesn't
+# satisfy the driver, so it intermittently reads 0x00 button bytes (all buttons
+# "pressed") -> menu unresponsive + idle timer never reaches the attract demo.
+# Booting DIGITAL (id 0x41, never 0x73) matches the Beetle oracle exactly: the
+# game just polls with 0x42 and reads clean 0xFFFF idle. (Analog-stick support
+# would require completing the DualShock config-mode handshake emulation.)
+[controller]
+default_mode = "digital"
 
 # ── Audit-specific config (consumed by psxrecomp/tools/*.py and tests) ──
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
