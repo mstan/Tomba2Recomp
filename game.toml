@@ -28,10 +28,19 @@ memcard_dir = "saves"
 # satisfy the driver, so it intermittently reads 0x00 button bytes (all buttons
 # "pressed") -> menu unresponsive + idle timer never reaches the attract demo.
 # Booting DIGITAL (id 0x41, never 0x73) matches the Beetle oracle exactly: the
-# game just polls with 0x42 and reads clean 0xFFFF idle. (Analog-stick support
-# would require completing the DualShock config-mode handshake emulation.)
+# game just polls with 0x42 and reads clean 0xFFFF idle.
+#
+# Analog / Hybrid are NOT offered for Tomba 2: the DualShock config-mode
+# handshake emulation is incomplete, so any non-digital mode re-triggers the
+# phantom-input bug above. lock_mode hides the launcher's whole pad-mode
+# selector (Hybrid | Analog | D-Pad) and forces every port to default_mode, so
+# the player can never pick a broken mode. allow_hybrid=false is redundant under
+# lock_mode but documents intent. Re-enable the selector (drop lock_mode) only
+# once the analog config handshake is emulated end-to-end.
 [controller]
 default_mode = "digital"
+allow_hybrid = false
+lock_mode    = true
 
 # ── Audit-specific config (consumed by psxrecomp/tools/*.py and tests) ──
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
