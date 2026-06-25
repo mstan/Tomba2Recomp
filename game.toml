@@ -38,6 +38,14 @@ memcard_dir = "saves"
 # matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
 overlay_cache = true
 overlay_backend = "gcc"
+# Keep the timing-sensitive splash/FMV task setup routines on the interpreter.
+# Native execution of these small setup paths leaves the Whoopee-Camp logo stuck
+# before the intro FMV; the rest of the overlay cache still runs native.
+overlay_native_block = [
+  "0x80096A90",
+  "0x80052078",
+  "0x800520C0",
+]
 # All paths are RELATIVE to the project root (the runtime spawns this with cwd =
 # project root), so the shipped config is portable across machines. The
 # recompiler exe + runtime-include are resolved to absolute by compile_overlays.py
