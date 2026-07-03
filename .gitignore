@@ -61,3 +61,11 @@ starvation_dump.jsonl
 
 # Python caches
 __pycache__/
+
+# Regen backup dirs (regen-time safety copies of generated/)
+/generated.*/
+
+# Session debug logs / probe scratch at repo root (agent + soak runs)
+/_*.txt
+/_*.err
+/_*.log
