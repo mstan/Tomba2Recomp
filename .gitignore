@@ -69,3 +69,8 @@ __pycache__/
 /_*.txt
 /_*.err
 /_*.log
+
+# Release packaging: staged tree, zip, and the downloaded toolchain cache
+/release-stage/
+*.zip
+/tools/_toolchain_cache/
