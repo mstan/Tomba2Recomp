@@ -15,16 +15,15 @@ out_dir = "generated"
 strict = true
 
 [runtime]
-# Tomba2's OWN debug port — 4500 collides with the SNES mmx_cosim processes.
-# Taken elsewhere: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
-debug_port = 4515
 # HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
 # HLE tier's one-shot shell intercept; kernel init + game EXE load still run
 # on the real recompiled BIOS at host speed. Set false to watch BIOS logos.
 # Full HLE kernel tier (bios_hle) stays OFF here — LLE is the baseline; Tomba1
 # is the HLE validation title.
 fast_boot = true
-debug_port = 4500
+# Tomba2's OWN debug port — 4500 collides with the SNES mmx_cosim processes.
+# Taken elsewhere: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
+debug_port = 4515
 window_title = "Tomba! 2 Recompiled"
 controller = "digital"
 memcard_dir = "saves"

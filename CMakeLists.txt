@@ -17,6 +17,9 @@ set(GAME_GENERATED_DISPATCH
 psxrecomp_add_runtime_target(psx-runtime
     GAME_GENERATED_FULL_C "${GAME_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
+    # (OUTPUT_NAME set below: the exe ships as Tomba2Recomp.exe so process
+    # management — taskkill, port collisions, task manager — never confuses
+    # this title with other psxrecomp games' psx-runtime.exe instances.)
     # 4515: Tomba2's OWN debug port. 4500 collides with the SNES mmx_cosim
     # processes (they bind 127.0.0.1:4500 too and eat connections); other
     # taken ports: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
@@ -25,3 +28,6 @@ psxrecomp_add_runtime_target(psx-runtime
     DEFAULT_BIOS_PATH "${PSXRECOMP_ROOT}/bios/SCPH1001.BIN"
     DEFAULT_GAME_CONFIG_PATH "game.toml"
 )
+
+# Distinct process name (see comment above).
+set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "Tomba2Recomp")
