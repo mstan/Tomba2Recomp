@@ -17,7 +17,10 @@ set(GAME_GENERATED_DISPATCH
 psxrecomp_add_runtime_target(psx-runtime
     GAME_GENERATED_FULL_C "${GAME_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
-    DEBUG_PORT 4500
+    # 4515: Tomba2's OWN debug port. 4500 collides with the SNES mmx_cosim
+    # processes (they bind 127.0.0.1:4500 too and eat connections); other
+    # taken ports: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
+    DEBUG_PORT 4515
     WINDOW_TITLE "Tomba! 2 Recompiled"
     DEFAULT_BIOS_PATH "${PSXRECOMP_ROOT}/bios/SCPH1001.BIN"
     DEFAULT_GAME_CONFIG_PATH "game.toml"

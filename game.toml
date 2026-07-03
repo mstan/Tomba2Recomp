@@ -1,4 +1,4 @@
-[game]
+﻿[game]
 name = "Tomba! 2 - The Evil Swine Return"
 id = "SCUS-94454"
 exe = "tomba2/SCUS_944.54"
@@ -15,6 +15,15 @@ out_dir = "generated"
 strict = true
 
 [runtime]
+# Tomba2's OWN debug port — 4500 collides with the SNES mmx_cosim processes.
+# Taken elsewhere: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
+debug_port = 4515
+# HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
+# HLE tier's one-shot shell intercept; kernel init + game EXE load still run
+# on the real recompiled BIOS at host speed. Set false to watch BIOS logos.
+# Full HLE kernel tier (bios_hle) stays OFF here — LLE is the baseline; Tomba1
+# is the HLE validation title.
+fast_boot = true
 debug_port = 4500
 window_title = "Tomba! 2 Recompiled"
 controller = "digital"
@@ -37,7 +46,12 @@ memcard_dir = "saves"
 # No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
 # matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
 overlay_cache = true
-overlay_backend = "gcc"
+# "auto" = gcc when a gcc toolchain is present, else the toolchain-free tcc tier
+# (post-2026-06-25 tcc refactor). On a dev machine with mingw this resolves to gcc,
+# so behaviour matches the old explicit "gcc"; on a clean install it falls back to
+# tcc instead of leaving overlays interpreted. The in-process sljit producer stays
+# OFF in every case (it hung Tomba 2's Whoopee-Camp logo â€” see below).
+overlay_backend = "auto"
 # Keep the timing-sensitive splash/FMV task setup routines on the interpreter.
 # Native execution of these small setup paths leaves the Whoopee-Camp logo stuck
 # before the intro FMV; the rest of the overlay cache still runs native.
@@ -81,13 +95,23 @@ lock_mode    = true
 renderer          = "opengl"
 supersampling     = 1
 texture_filtering = "nearest"
+# FMV auto-skip (debug iteration speed). Tomba2's streamed movies end on a
+# frame-total cell (single u32 at 0x8010271C, checked by the sector pump
+# FUN_8008d110 against the streamed frame counter 0x801026E8; 0 = play to EOF)
+# rather than Tomba1's per-movie table — the START-hold fallback handles the
+# START-skippable ones. The Whoopee Camp logo is a SILENT RAM-preloaded movie
+# (no CD sectors, no XA during playback): fmv_skip_no_xa broadens detection to
+# MDEC activity alone so it fast-forwards too (presentation-side only).
+# Flip both to false for release-faithful behavior.
+auto_skip_fmv     = true
+fmv_skip_no_xa    = true
 
-# ── Audit-specific config (consumed by psxrecomp/tools/*.py and tests) ──
+# â”€â”€ Audit-specific config (consumed by psxrecomp/tools/*.py and tests) â”€â”€
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
 # project root.
 
 [audit]
-# Dynamic discovery — functions are found by walking control flow from
+# Dynamic discovery â€” functions are found by walking control flow from
 # entry_pc. No Ghidra function-starts file is required to bootstrap.
 
 # Code region: text segment is contiguous from load_address for text_size bytes.
