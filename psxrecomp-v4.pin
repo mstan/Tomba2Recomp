@@ -1,2 +1,11 @@
 branch=master
-sha=db159a1ea6c6d6a175882fbf1144bb1aa92d2cdc
+sha=010a281b0cce0dcc657d6452255a2312cefc10e5
+# Bumped 2026-07-03 (renderer arc merged): psxrecomp master 010a281 = db159a1 +
+#   the OpenGL black-frame-flicker fix (ISSUES #7), native-wide 16:9 GL perf/band
+#   fixes, the Vulkan (3rd) backend, and the R3 validation sweep. Runtime-only;
+#   codegen (MIPS->C) UNCHANGED -> hash 0cec55ab holds, NO regen, overlay caches
+#   valid. Validation (Tomba2 = experimental, not production): GL 4:3 PASS* /
+#   Vulkan 4:3 PASS* (caveats) / GL 16:9 FAIL* (no sprite-tag ws hooks on master
+#   -> renders 4:3 pillarboxed). Vulkan hidden by default (dev/CLI-only);
+#   widescreen EXPERIMENTAL in launcher. No release cut.
+#   See psxrecomp ENHANCEMENTS.md R1/R1b/R2/R3.
