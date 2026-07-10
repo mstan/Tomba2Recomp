@@ -121,12 +121,39 @@ overlay_native_block = [
 
 # ---- Visual quality -----------------------------------------------------
 [video]
-# renderer: "opengl" (this release's default, hardware GPU renderer) or
-# "software" (CPU renderer, the authentic-look fallback).
-renderer          = "opengl"
+# renderer: "software" (CPU renderer, this release's default) or "opengl"
+# (hardware GPU renderer). Software is the default while an OpenGL
+# performance issue specific to Tomba! 2 is being fixed (FMVs and gameplay
+# run visibly slower on the GL path).
+renderer          = "software"
 # supersampling: render at this multiple of native resolution. 1 = native PSX.
 supersampling     = 1
 texture_filtering = "nearest"
+# Widescreen ships OFF (authentic 4:3). Opt in from the launcher's
+# experimental Widescreen toggle (16:9 / 21:9 native-wide gameplay).
+aspect_ratio      = "4:3"
+# FMV auto-skip stays off for the faithful presentation; the launcher's FMV
+# toggle enables it. These two settings make that toggle also cover the
+# silent RAM-preloaded Whoopee Camp logo (it streams no XA audio, so the
+# default movie detector alone would miss it).
+fmv_skip_no_xa      = true
+fmv_skip_no_xa_hold = 600
+
+# ---- Widescreen (experimental) -------------------------------------------
+# 16:9 / 21:9 native-wide gameplay, launcher/settings opt-in; the 4:3 default
+# is byte-identical to the original presentation. Gameplay frames are
+# detected by GTE activity; menus/FMV stay authored 4:3.
+[widescreen]
+gte_game_mode    = true
+nw_flat_backdrop = true
+nw_phase_backdrop = true
+
+[widescreen.cull]
+# Widen the game's own screen-extent culls only while a wide aspect is
+# active (identity at 4:3).
+auto_screen_x = true
+screen_w_imms = ["0x140"]
+screen_h_imms = ["0xF0"]
 
 # ---- Controller ---------------------------------------------------------
 # Tomba! 2 is a d-pad platformer: real hardware boots a DualShock in DIGITAL
@@ -261,9 +288,16 @@ with working controller input and no known crashes. It has not been verified
 through a full playthrough yet, so treat it as a very playable preview.
 
 New in this release:
-- Memory card saving and loading now work: the emulated card's write
-  handshake matches real hardware, so the game's save/load menus complete
-  instead of hanging at the card check. Saves land in the saves/ folder.
+- CRITICAL boot fix: earlier zips could fail to start on user machines
+  (a reference copy of the game's boot executable only exists in developer
+  checkouts; the runtime now reads it directly from your disc image).
+- Experimental widescreen: 16:9 / 21:9 native-wide gameplay, opt-in from the
+  launcher's Widescreen toggle. The 4:3 default is byte-identical to the
+  original presentation; menus and FMVs stay authored 4:3.
+- The software renderer is now the default: the OpenGL path currently runs
+  Tomba! 2 visibly slower (FMVs and gameplay) and stays selectable in the
+  launcher until that issue is fixed.
+- Memory card saving and loading (from v0.0.2) carry forward.
 
 This package does not include the Tomba! 2 disc, the PlayStation BIOS, save
 data, or any game assets - you supply those from your own collection, and
@@ -272,7 +306,7 @@ wants). The executable and the cache folder contain statically recompiled
 (machine-translated) builds of the game's code.
 
 Known items in this release:
-- Widescreen is not offered yet (in development on a branch).
+- OpenGL renderer is slower than software for this title (see above).
 - Analog controller modes are not offered (the game is digital-native).
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "RELEASE.txt")
 

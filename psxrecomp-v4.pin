@@ -1,18 +1,23 @@
 branch=master
-sha=5353215eecbc1fa78d07401f60a4abfa7d29baba
-# Bumped 2026-07-09 (memcard save fix folded): psxrecomp master 5353215 =
-#   1ca37b3 (MMX6 sprite-sliver merge + docs) + merge of
-#   bug/memory-card-ape-escape-tomba-2 (fee5535): SIO memcard write handshake
-#   now echoes sector MSB/LSB like hardware/Beetle, plus BIOS RAM-0 store
-#   visibility filters. Fixes Tomba 2 save/load ("Checking MEMORY CARD..."
-#   hang). Runtime-only vs the shipped generated/ code: NO regen performed —
-#   the checked-in gen (db159a1-era codegen, hash 0cec55ab) is exactly what
-#   the v0.0.2 validation ran. Regenerating with the current master emitter
-#   (prod-emit et al.) is a separate future task requiring a fresh user
-#   playthrough (decoder/emitter changes require playthrough).
-# Validation 2026-07-09: Tomba 2 save/load PASS (user), cross-title gate
-#   Ape Escape / Tomba / MMX6 PASS (user), all built against this runtime.
-# Release v0.0.2 built from branch release/tomba2-v0.0.2-rmlui = 5353215 +
-#   cherry-pick b8a77ea (stb launcher -> RmlUi revert, same recipe as Ape
-#   v0.0.2) because the stb launcher on master does not link with
-#   PSX_LAUNCHER=ON (gl-loader Phase 2b never landed).
+sha=e894394
+# Bumped 2026-07-10 (v0.0.3): psxrecomp master e894394 =
+#   e5a958f (CRITICAL release-install boot fix: text-image guard arms from the
+#   boot EXE extracted off the user's DISC when no local EXE exists — v0.0.2's
+#   pin contained the Jul 4 guard commit 685f38d, so the v0.0.2 zip was at
+#   risk of dying at boot outside a dev checkout) + merge of
+#   codex/tomba2-whoopee-beach-fix (264f00c): [widescreen] nw_flat_backdrop /
+#   nw_phase_backdrop native-wide mirror gates, [video] fmv_skip_no_xa_hold
+#   (Whoopee logo auto-skip dwell), ws_dbg_stretch modes 7/8, fmv_state JSON
+#   escaping. Also inherited since 5353215: MMX4/5 true-wide merges (aca16bb),
+#   RmlUi launcher restored on master (f36b458 — the v0.0.2-era stb-revert
+#   cherry-pick recipe is OBSOLETE; release builds come straight off master),
+#   L3/R3 stick-click binds (f1afc7f).
+# CODEGEN: NO regen (same policy as v0.0.2) — the checked-in generated/ is the
+#   validated bits; regenerating with the current emitter requires a fresh
+#   user playthrough first. Overlay cache tag for this tree: cg4_26525e82
+#   (NOTE: runtime/include/overlay_codegen_hash.h is stamped by whichever
+#   build tree ran last; STALE-configured sibling build dirs stamp OLD source
+#   lists. Fresh-configure both the game build and recompiler build-t2 before
+#   computing the tag / compiling the cache — packager does this).
+# RELEASE GATE: extract the packaged zip OUTSIDE any git checkout and verify
+#   it boots to gameplay visually before publishing.
