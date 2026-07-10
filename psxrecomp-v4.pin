@@ -1,11 +1,18 @@
 branch=master
-sha=010a281b0cce0dcc657d6452255a2312cefc10e5
-# Bumped 2026-07-03 (renderer arc merged): psxrecomp master 010a281 = db159a1 +
-#   the OpenGL black-frame-flicker fix (ISSUES #7), native-wide 16:9 GL perf/band
-#   fixes, the Vulkan (3rd) backend, and the R3 validation sweep. Runtime-only;
-#   codegen (MIPS->C) UNCHANGED -> hash 0cec55ab holds, NO regen, overlay caches
-#   valid. Validation (Tomba2 = experimental, not production): GL 4:3 PASS* /
-#   Vulkan 4:3 PASS* (caveats) / GL 16:9 FAIL* (no sprite-tag ws hooks on master
-#   -> renders 4:3 pillarboxed). Vulkan hidden by default (dev/CLI-only);
-#   widescreen EXPERIMENTAL in launcher. No release cut.
-#   See psxrecomp ENHANCEMENTS.md R1/R1b/R2/R3.
+sha=5353215eecbc1fa78d07401f60a4abfa7d29baba
+# Bumped 2026-07-09 (memcard save fix folded): psxrecomp master 5353215 =
+#   1ca37b3 (MMX6 sprite-sliver merge + docs) + merge of
+#   bug/memory-card-ape-escape-tomba-2 (fee5535): SIO memcard write handshake
+#   now echoes sector MSB/LSB like hardware/Beetle, plus BIOS RAM-0 store
+#   visibility filters. Fixes Tomba 2 save/load ("Checking MEMORY CARD..."
+#   hang). Runtime-only vs the shipped generated/ code: NO regen performed —
+#   the checked-in gen (db159a1-era codegen, hash 0cec55ab) is exactly what
+#   the v0.0.2 validation ran. Regenerating with the current master emitter
+#   (prod-emit et al.) is a separate future task requiring a fresh user
+#   playthrough (decoder/emitter changes require playthrough).
+# Validation 2026-07-09: Tomba 2 save/load PASS (user), cross-title gate
+#   Ape Escape / Tomba / MMX6 PASS (user), all built against this runtime.
+# Release v0.0.2 built from branch release/tomba2-v0.0.2-rmlui = 5353215 +
+#   cherry-pick b8a77ea (stb launcher -> RmlUi revert, same recipe as Ape
+#   v0.0.2) because the stb launcher on master does not link with
+#   PSX_LAUNCHER=ON (gl-loader Phase 2b never landed).

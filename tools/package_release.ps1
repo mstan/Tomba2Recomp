@@ -1,9 +1,14 @@
 param(
-    [string]$Version = "v0.0.1",
+    [string]$Version = "v0.0.2",
     [string]$BuildDir = "build-release",
     # Where the accumulated overlay cache lives (compile_overlays.py --out-dir,
     # per game.toml overlay_autocompile_cmd). Bundled as a head start; optional.
-    [string]$CacheBuildDir = "build-t2"
+    [string]$CacheBuildDir = "build-t2",
+    # Ship the checked-in generated/ code as-is instead of regenerating.
+    # Use when the runtime changed but codegen did not: regenerating with a
+    # newer emitter would swap in code the release validation never ran
+    # (decoder/emitter changes require a fresh user playthrough).
+    [switch]$SkipRegen
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,8 +38,12 @@ function Invoke-Native {
 # builds against the pinned framework tree, never a sibling checkout.
 $RecompDir = Resolve-Path (Join-Path $Root "psxrecomp-v4\recompiler\build-t2")
 Invoke-Native { cmake --build $RecompDir --target psxrecomp-game -j $env:NUMBER_OF_PROCESSORS } "recompiler build"
-& (Join-Path $RecompDir "psxrecomp-game.exe") --config (Join-Path $Root "game.toml")
-if ($LASTEXITCODE -ne 0) { throw "game regen failed" }
+if ($SkipRegen) {
+    Write-Host "SkipRegen: shipping checked-in generated/ code (validated bits) without regeneration"
+} else {
+    & (Join-Path $RecompDir "psxrecomp-game.exe") --config (Join-Path $Root "game.toml")
+    if ($LASTEXITCODE -ne 0) { throw "game regen failed" }
+}
 
 Invoke-Native { cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=OFF -DPSX_LAUNCHER=ON } "cmake configure"
 Invoke-Native { cmake --build $BuildPath -j $env:NUMBER_OF_PROCESSORS } "cmake build"
@@ -146,8 +155,17 @@ Write-Host "Release codegen tag: $CgTag (only this cache namespace is shipped)"
 $CacheSrc = Join-Path $Root "$CacheBuildDir/cache/SCUS-94454"
 if (Test-Path $CacheSrc) {
     $CacheDst = Join-Path $Stage "cache/SCUS-94454"
-    $cacheFiles = Get-ChildItem $CacheSrc -Recurse -File -Include *.dll,*.ranges |
-        Where-Object { $_.FullName -notmatch '[\\/]sljit[\\/]' -and $_.FullName -match "[\\/]$CgTag[\\/]" }
+    $cacheFiles = @(Get-ChildItem $CacheSrc -Recurse -File -Include *.dll,*.ranges |
+        Where-Object { $_.FullName -notmatch '[\\/]sljit[\\/]' -and $_.FullName -match "[\\/]$CgTag[\\/]" })
+    if ($cacheFiles.Count -eq 0) {
+        # A tag mismatch means the accumulated cache predates this build's
+        # runtime includes. Shipping a foreign-tag cache would be dead weight
+        # (the runtime only loads its own namespace), so fail loudly: rebuild
+        # the cache under this tag (compile_overlays.py) or pass a different
+        # -CacheBuildDir.
+        throw ("Overlay cache at $CacheSrc has no shards for this build's codegen tag $CgTag - " +
+               "rebuild the cache with compile_overlays.py against this runtime, or release without a cache deliberately")
+    }
     foreach ($f in $cacheFiles) {
         $rel  = $f.FullName.Substring($CacheSrc.Length).TrimStart('\','/')
         $dest = Join-Path $CacheDst $rel
@@ -239,9 +257,13 @@ Tomba2Recomp $Version
 
 Tomba! 2: The Evil Swine Return boots from the PlayStation BIOS and plays -
 through the intro, the title screen, the attract demos, and into gameplay,
-with working controller input and no known crashes. This first release has
-not been verified through a full playthrough, so treat it as a very playable
-preview.
+with working controller input and no known crashes. It has not been verified
+through a full playthrough yet, so treat it as a very playable preview.
+
+New in this release:
+- Memory card saving and loading now work: the emulated card's write
+  handshake matches real hardware, so the game's save/load menus complete
+  instead of hanging at the card check. Saves land in the saves/ folder.
 
 This package does not include the Tomba! 2 disc, the PlayStation BIOS, save
 data, or any game assets - you supply those from your own collection, and
@@ -250,7 +272,6 @@ wants). The executable and the cache folder contain statically recompiled
 (machine-translated) builds of the game's code.
 
 Known items in this release:
-- Some audio static has been reported in places; under investigation.
 - Widescreen is not offered yet (in development on a branch).
 - Analog controller modes are not offered (the game is digital-native).
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "RELEASE.txt")
