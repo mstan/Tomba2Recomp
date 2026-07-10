@@ -87,11 +87,11 @@ default_mode = "digital"
 allow_hybrid = false
 lock_mode    = true
 
-# --- Renderer: GPU-authoritative OpenGL (faster than the CPU rasterizer; moves
-# rasterization + any supersampling onto the GPU). Falls back to software if GL
-# init fails. supersampling kept at 1 for the perf baseline (raise to 2 later).
+# --- Renderer: software is the Tomba 2 default until the OpenGL FMV/gameplay
+# performance issue documented in ISSUES.md is resolved. Supersampling stays at
+# 1 for the performance baseline (raise it only after that regression is fixed).
 [video]
-renderer          = "opengl"
+renderer          = "software"
 supersampling     = 1
 texture_filtering = "nearest"
 # FMV auto-skip (debug iteration speed). Tomba2's streamed movies end on a
@@ -101,9 +101,29 @@ texture_filtering = "nearest"
 # START-skippable ones. The Whoopee Camp logo is a SILENT RAM-preloaded movie
 # (no CD sectors, no XA during playback): fmv_skip_no_xa broadens detection to
 # MDEC activity alone so it fast-forwards too (presentation-side only).
-# Flip both to false for release-faithful behavior.
+# The longer silent-MDEC hold also covers the logo's post-decode wait while
+# auto-skip is enabled. Disable auto_skip_fmv for release-faithful behavior.
 auto_skip_fmv     = true
 fmv_skip_no_xa    = true
+fmv_skip_no_xa_hold = 600
+
+# Native-wide gameplay. The runtime keeps BIOS, FMV, and true 2D screens at
+# their authored 4:3 aspect; GTE-active gameplay uses the wider compositor.
+[widescreen]
+gte_game_mode  = true
+nw_hud_corners = false
+nw_backdrop    = false
+nw_flat_backdrop = true
+nw_phase_backdrop = true
+
+[widescreen.cull]
+# Tomba 2's overlay render funnels reject projected vertices against the
+# original 320x240 bounds. Widen the horizontal comparisons only while a wide
+# aspect is active. The explicit height immediate qualifies the signature but
+# is not itself changed.
+auto_screen_x = true
+screen_w_imms = ["0x140"]
+screen_h_imms = ["0xF0"]
 
 # â”€â”€ Audit-specific config (consumed by psxrecomp/tools/*.py and tests) â”€â”€
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
