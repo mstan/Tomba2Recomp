@@ -115,6 +115,7 @@ fmv_skip_no_xa_hold = 600
 # their authored 4:3 aspect; GTE-active gameplay uses the wider compositor.
 [widescreen]
 gte_game_mode  = true
+offer_ultrawide = true
 nw_hud_corners = false
 nw_backdrop    = false
 nw_flat_backdrop = true
