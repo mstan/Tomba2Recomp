@@ -1,6 +1,10 @@
 ﻿branch=master
-sha=fbc5182
-# Bumped 2026-07-10 (v0.0.3): psxrecomp master fbc5182 = parallel compile_overlays (fbc5182) + ws-2d-scene-pillarbox merge (a0818de) +
+sha=fb58554
+# Bumped 2026-07-11 (v0.0.4): exact validated OpenGL performance source
+# commit fb58554. This commit remains in psxrecomp master history; pinning it
+# directly preserves the cg4_fa2a5191 overlay-cache namespace shipped by the
+# release. It includes parallel compile_overlays (fbc5182), the
+# ws-2d-scene-pillarbox merge (a0818de), and
 #   e5a958f (CRITICAL release-install boot fix: text-image guard arms from the
 #   boot EXE extracted off the user's DISC when no local EXE exists â€” v0.0.2's
 #   pin contained the Jul 4 guard commit 685f38d, so the v0.0.2 zip was at

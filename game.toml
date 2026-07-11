@@ -87,13 +87,17 @@ default_mode = "digital"
 allow_hybrid = false
 lock_mode    = true
 
-# --- Renderer: software is the Tomba 2 default until the OpenGL FMV/gameplay
-# performance issue documented in ISSUES.md is resolved. Supersampling stays at
-# 1 for the performance baseline (raise it only after that regression is fixed).
+# --- Renderer: optimized hardware path. Supersampling stays at 1 for the
+# performance baseline; users can raise it on faster GPUs.
 [video]
-renderer          = "software"
+renderer          = "opengl"
 supersampling     = 1
 texture_filtering = "nearest"
+# Presentation-only blending on >=90 Hz displays. Guest simulation remains
+# 59.94 Hz, so gameplay/audio behavior is unchanged.
+frame_interpolation = true
+# 0 follows the display; launcher presets: 90, 120, 144, 165, and 240 FPS.
+frame_interpolation_fps = 0
 # FMV auto-skip (debug iteration speed). Tomba2's streamed movies end on a
 # frame-total cell (single u32 at 0x8010271C, checked by the sector pump
 # FUN_8008d110 against the streamed frame counter 0x801026E8; 0 = play to EOF)

@@ -121,14 +121,14 @@ overlay_native_block = [
 
 # ---- Visual quality -----------------------------------------------------
 [video]
-# renderer: "software" (CPU renderer, this release's default) or "opengl"
-# (hardware GPU renderer). Software is the default while an OpenGL
-# performance issue specific to Tomba! 2 is being fixed (FMVs and gameplay
-# run visibly slower on the GL path).
-renderer          = "software"
+# renderer: "opengl" (hardware renderer, default) or "software" (reference).
+renderer          = "opengl"
 # supersampling: render at this multiple of native resolution. 1 = native PSX.
 supersampling     = 1
 texture_filtering = "nearest"
+frame_interpolation = true
+# 0 follows the current display; the launcher also offers fixed FPS targets.
+frame_interpolation_fps = 0
 # Widescreen ships OFF (authentic 4:3). Opt in from the launcher's
 # experimental Widescreen toggle (16:9 / 21:9 native-wide gameplay).
 aspect_ratio      = "4:3"
@@ -294,9 +294,12 @@ New in this release:
 - Experimental widescreen: 16:9 / 21:9 native-wide gameplay, opt-in from the
   launcher's Widescreen toggle. The 4:3 default is byte-identical to the
   original presentation; menus and FMVs stay authored 4:3.
-- The software renderer is now the default: the OpenGL path currently runs
-  Tomba! 2 visibly slower (FMVs and gameplay) and stays selectable in the
-  launcher until that issue is fixed.
+- OpenGL is now the default renderer. Its presentation path no longer performs
+  per-frame GPU readbacks, and Tomba! 2's mixed opaque/transparent draw stream
+  is submitted in painter-ordered batches.
+- On displays at 90 Hz or above, presentation-only frame interpolation blends
+  completed frames at the host refresh rate without changing gameplay or audio
+  timing. Set frame_interpolation=false under [video] to opt out.
 - Memory card saving and loading (from v0.0.2) carry forward.
 
 This package does not include the Tomba! 2 disc, the PlayStation BIOS, save
@@ -306,7 +309,7 @@ wants). The executable and the cache folder contain statically recompiled
 (machine-translated) builds of the game's code.
 
 Known items in this release:
-- OpenGL renderer is slower than software for this title (see above).
+- The software renderer remains available as a reference/fallback.
 - Analog controller modes are not offered (the game is digital-native).
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "RELEASE.txt")
 
