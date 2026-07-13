@@ -145,6 +145,9 @@ fmv_skip_no_xa_hold = 600
 # detected by GTE activity; menus/FMV stay authored 4:3.
 [widescreen]
 gte_game_mode    = true
+# Without this the runtime clamps 21:9 to 16:9 and the launcher hides the
+# Ultrawide option (v0.0.3/v0.0.4 shipped without it by mistake).
+offer_ultrawide  = true
 nw_flat_backdrop = true
 nw_phase_backdrop = true
 
@@ -252,6 +255,31 @@ if ($nonSystem) {
 }
 Write-Host "Verified self-contained: imports only system DLLs ($($imports.Count) total)"
 
+# No baked build-machine paths: an absolute BIOS default baked into the exe
+# makes it silently load the BUILDER'S BIOS wherever that path exists, so the
+# clean-install picker flow is never exercised where releases are validated
+# (this shipped in v0.0.4 and masked GH issue #1's setup on the dev machine).
+$exeBytes = [System.IO.File]::ReadAllBytes((Join-Path $Stage "Tomba2Recomp.exe"))
+$exeText  = [System.Text.Encoding]::ASCII.GetString($exeBytes)
+$bakedBios = [regex]::Matches($exeText, '[A-Za-z]:[/\\][ -~]*?SCPH1001\.BIN') | ForEach-Object { $_.Value } | Select-Object -Unique
+if ($bakedBios) {
+    throw "Release exe contains baked absolute BIOS path(s): $($bakedBios -join '; ') -- build with a relative DEFAULT_BIOS_PATH"
+}
+Write-Host "Verified no baked absolute BIOS path in the exe"
+
+# No user-machine or copyrighted files may ride along in the stage.
+$strayPatterns = @("SCPH*.BIN","*.cue","*.iso","*.mcd","bios.cfg","disc.cfg",
+                   "settings.toml","keybinds.ini","overlay_captures.json")
+$stray = foreach ($pat in $strayPatterns) { Get-ChildItem $Stage -Recurse -File -Filter $pat -ErrorAction SilentlyContinue }
+if ($stray) {
+    throw "Stage contains files that must never ship: $(($stray | ForEach-Object FullName) -join '; ')"
+}
+$savesFiles = Get-ChildItem (Join-Path $Stage "saves") -Recurse -File -ErrorAction SilentlyContinue
+if ($savesFiles) {
+    throw "Stage saves/ directory must be empty, contains: $(($savesFiles | ForEach-Object FullName) -join '; ')"
+}
+Write-Host "Verified stage carries no BIOS/disc/save/sidecar files"
+
 @"
 ; PSXRecomp input mapping. PSX buttons are active when any listed source is pressed.
 ; Sources use SDL/Xbox names: a,b,x,y,back,start,leftshoulder,rightshoulder,
@@ -288,19 +316,22 @@ with working controller input and no known crashes. It has not been verified
 through a full playthrough yet, so treat it as a very playable preview.
 
 New in this release:
-- CRITICAL boot fix: earlier zips could fail to start on user machines
-  (a reference copy of the game's boot executable only exists in developer
-  checkouts; the runtime now reads it directly from your disc image).
-- Experimental widescreen: 16:9 / 21:9 native-wide gameplay, opt-in from the
-  launcher's Widescreen toggle. The 4:3 default is byte-identical to the
-  original presentation; menus and FMVs stay authored 4:3.
-- OpenGL is now the default renderer. Its presentation path no longer performs
-  per-frame GPU readbacks, and Tomba! 2's mixed opaque/transparent draw stream
-  is submitted in painter-ordered batches.
-- On displays at 90 Hz or above, presentation-only frame interpolation blends
-  completed frames at the host refresh rate without changing gameplay or audio
-  timing. Set frame_interpolation=false under [video] to opt out.
-- Memory card saving and loading (from v0.0.2) carry forward.
+- Multi-track disc dumps now work (fixes "Blank screen and no audio", GitHub
+  issue #1). Dumps in the common redump layout - a .cue with one .bin file
+  per track (Track 1 data + Track 2 audio) - previously mounted the audio
+  track as the whole disc and booted to a black screen. Both multi-file and
+  single-file .bin/.cue dumps are now supported.
+- 21:9 ultrawide is actually selectable. v0.0.3/v0.0.4 advertised it but
+  shipped a game.toml that clamped 21:9 back to 16:9 and hid the launcher
+  option.
+- A settings.toml with a syntax error is no longer silently ignored: the
+  runtime tells you, keeps your file as settings.toml.bad, and boots with
+  defaults instead of quietly overwriting your edits.
+- This build never falls back to files from the developer's machine: on a
+  machine without a configured BIOS/disc it always asks (earlier builds baked
+  a developer path into the exe, which hid setup problems from testing).
+- OpenGL full-rate presentation, frame interpolation, experimental 16:9/21:9
+  widescreen, and memory card support carry forward from v0.0.4.
 
 This package does not include the Tomba! 2 disc, the PlayStation BIOS, save
 data, or any game assets - you supply those from your own collection, and

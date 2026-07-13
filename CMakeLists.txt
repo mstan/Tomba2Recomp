@@ -25,7 +25,10 @@ psxrecomp_add_runtime_target(psx-runtime
     # taken ports: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
     DEBUG_PORT 4515
     WINDOW_TITLE "Tomba! 2 Recompiled"
-    DEFAULT_BIOS_PATH "${PSXRECOMP_ROOT}/bios/SCPH1001.BIN"
+    # No DEFAULT_BIOS_PATH: an absolute value would bake a build-machine path
+    # into the binary (the framework refuses those and falls back to relative
+    # "bios/SCPH1001.BIN"). Dev trees resolve it via the exe-dir upward search
+    # (psxrecomp-v4/bios); user installs use bios.cfg / the picker.
     DEFAULT_GAME_CONFIG_PATH "game.toml"
 )
 
