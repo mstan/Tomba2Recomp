@@ -1,27 +1,34 @@
-﻿branch=master
-sha=fb58554
-# Bumped 2026-07-11 (v0.0.4): exact validated OpenGL performance source
-# commit fb58554. This commit remains in psxrecomp master history; pinning it
-# directly preserves the cg4_fa2a5191 overlay-cache namespace shipped by the
-# release. It includes parallel compile_overlays (fbc5182), the
-# ws-2d-scene-pillarbox merge (a0818de), and
-#   e5a958f (CRITICAL release-install boot fix: text-image guard arms from the
-#   boot EXE extracted off the user's DISC when no local EXE exists â€” v0.0.2's
-#   pin contained the Jul 4 guard commit 685f38d, so the v0.0.2 zip was at
-#   risk of dying at boot outside a dev checkout) + merge of
-#   codex/tomba2-whoopee-beach-fix (264f00c): [widescreen] nw_flat_backdrop /
-#   nw_phase_backdrop native-wide mirror gates, [video] fmv_skip_no_xa_hold
-#   (Whoopee logo auto-skip dwell), ws_dbg_stretch modes 7/8, fmv_state JSON
-#   escaping. Also inherited since 5353215: MMX4/5 true-wide merges (aca16bb),
-#   RmlUi launcher restored on master (f36b458 â€” the v0.0.2-era stb-revert
-#   cherry-pick recipe is OBSOLETE; release builds come straight off master),
-#   L3/R3 stick-click binds (f1afc7f).
-# CODEGEN: NO regen (same policy as v0.0.2) â€” the checked-in generated/ is the
-#   validated bits; regenerating with the current emitter requires a fresh
-#   user playthrough first. Overlay cache tag for this tree: cg4_fa2a5191
+branch=master
+sha=df4bc33
+# Bumped 2026-07-12 (v0.0.5): master merge of codex/cue-multifile.
+#   5a2c6fd iso_reader: multi-FILE cue sheets (redump track-split dumps) — the
+#     cue parser used to mount the LAST FILE line (the CD-DA audio bin) as the
+#     whole disc, so redump-style Track 1/Track 2 dumps booted to a black
+#     screen (Tomba2Recomp GH issue #1). Byte-equivalence + boot verified
+#     against a split of the validated single-bin dump.
+#   d537423 release hygiene: DEFAULT_BIOS_PATH can no longer bake an absolute
+#     build-machine path into the exe (dev trees resolve via a
+#     psxrecomp-v4/bios upward-search rung); malformed settings.toml warns
+#     loudly and is preserved as settings.toml.bad; package guards refuse
+#     baked BIOS paths and stray BIOS/disc/save/sidecar files in the stage.
+# Also first Tomba2 pin to include the kernel-bless merge 8f23892
+#   (byte-verified static dispatch for the relocated kernel window) and the
+#   full-rate OpenGL merge 34ca37c (v0.0.4 shipped the pre-merge branch
+#   commit fb58554).
+# CODEGEN: NO regen of generated/ (same policy as v0.0.2-v0.0.4) — the
+#   checked-in generated/ is the validated bits; regenerating with the current
+#   emitter requires a fresh user playthrough first. The kernel-bless merge
+#   DID change the emitter (full_function_emitter.cpp), so the overlay cache
+#   tag ROLLED off cg4_fa2a5191: the v0.0.5 cache is resharded from
+#   _coverage_vault/SCUS-94454 with the same-tree recompiler under the new
+#   tag. Old-static + new-shard + new-runtime was boot-validated to attract
+#   gameplay in build-cuemt before this bump.
 #   (NOTE: runtime/include/overlay_codegen_hash.h is stamped by whichever
 #   build tree ran last; STALE-configured sibling build dirs stamp OLD source
 #   lists. Fresh-configure both the game build and recompiler build-t2 before
-#   computing the tag / compiling the cache â€” packager does this).
-# RELEASE GATE: extract the packaged zip OUTSIDE any git checkout and verify
-#   it boots to gameplay visually before publishing.
+#   computing the tag / compiling the cache — packager does this.)
+# RELEASE GATE: extract the packaged zip OUTSIDE any git checkout, with NO
+#   bios.cfg/disc.cfg sidecars, and verify (a) the BIOS+disc pickers appear
+#   (the clean-install flow), (b) it boots to gameplay visually from a
+#   settings.toml, INCLUDING a multi-file (Track 1/Track 2) cue, and (c) 21:9
+#   is selectable in the launcher.
