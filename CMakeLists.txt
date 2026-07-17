@@ -40,8 +40,6 @@ set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "Tomba2Recomp")
 # launcher. recomp-ui is a real git submodule (github.com/mstan/recomp-ui,
 # pinned via the recomp-ui gitlink); locally it is a directory junction to the
 # working checkout so builds stay offline and reproducible like everything else.
-# Tomba! 2 ships no dedicated cover art, so BOXART is the generic PSX disc
-# placeholder (parity: prior Tomba2 releases shipped this same default disc).
 include("${CMAKE_SOURCE_DIR}/recomp-ui/recomp_ui.cmake")
 recomp_target_launcher_ui(psx-runtime
     BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
