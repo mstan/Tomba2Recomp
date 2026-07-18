@@ -3,7 +3,7 @@
 _How much of the played reference set did the play-free static extractor reproduce, and how much lies in compiled static code?_
 
 - Static shard cache: `build-aot/cache-purestatic/SCUS-94454/gcc/win-x64/cg5_84eaacd4`
-- Static manifest entries: **8710**
+- Static manifest entries: **8716**
 
 - Base BIOS native dispatch entries: **1314**; relocated kernel body ranges: **37**
 - Combined metrics below count both the play-free overlay cache and the separately generated, live-byte-guarded base BIOS.
@@ -61,21 +61,10 @@ _How much of the played reference set did the play-free static extractor reprodu
 
 ## vs live capture history
 
-- Sources: **verified append-only history**
-- Verified immutable snapshots: **436**; invalid records: **0**
-- Dispatch entries exercised: **764**
-- Discovered by static: **154** (**20.2%** entry-level recall)
-- Covered by compiled static code ranges: **679** (**88.9%** code-range recall)
-- Including base BIOS native code ranges: **758** (**99.2%**)
-- **MISSED live: 610**
-
-## vs pre-history persisted live-session gaps (separate monotonic roll-forward)
-
-- This older needed set predates append-only history. It is reported separately because the old report retained misses, not enough addresses to compute an honest set union.
-
-- Dispatch entries the persisted session exercised: **826**
-- Discovered by current static: **248** (**30.0%** entry-level recall)
-- Covered by current static code ranges: **743** (**90.0%** code-range recall)
-- Including base BIOS native code ranges: **820** (**99.3%**)
-- **MISSED live: 578**
-- Provenance: caller explicitly asserted that the current static entry set retains every prior static entry.
+- Sources: **latest capture + verified append-only history**
+- Verified immutable snapshots: **496**; invalid records: **0**
+- Dispatch entries exercised: **765**
+- Discovered by static: **160** (**20.9%** entry-level recall)
+- Covered by compiled static code ranges: **685** (**89.5%** code-range recall)
+- Including base BIOS native code ranges: **765** (**100.0%**)
+- **MISSED live: 605**
