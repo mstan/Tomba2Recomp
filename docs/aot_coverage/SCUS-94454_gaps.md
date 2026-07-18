@@ -3,14 +3,14 @@
 _How much of what the game actually runs did the play-free static extractor discover? Misses are the gap the runtime autocompile (or better discovery) must still cover._
 
 - Static shard cache: `build-aot/cache-purestatic/SCUS-94454/gcc/win-x64/cg5_d0a05489`
-- Static-covered overlay functions: **8201**
+- Static-covered overlay functions: **8272**
 
 ## vs played vault (most complete needed-set)
 
 - Functions the full playthrough ran: **1856**
-- Discovered by static: **1219** (**65.7%** entry-level recall)
-- Byte-identical (entry+code_crc): **1102** (**59.4%**) _(cg-version differences lower this vs entry-level)_
-- **MISSED: 637** functions the game needs but static did not find
+- Discovered by static: **1264** (**68.1%** entry-level recall)
+- Byte-identical (entry+code_crc): **1144** (**61.6%**) _(cg-version differences lower this vs entry-level)_
+- **MISSED: 592** functions the game needs but static did not find
 
 ### Misses grouped by overlay region
 
@@ -199,26 +199,22 @@ _How much of what the game actually runs did the play-free static extractor disc
   8010753C 80107544 80107584 8010758C 801075BC 801075C4 8010761C 80107624
   8010762C 801076D8 801076E8
   ```
-- region `0x80109000`: 23 misses
+- region `0x80109000`: 18 misses
   ```
-  80109164 801091B4 801091D8 801091EC 801091F8 8010920C 80109218 80109230
-  801092B4 80109394 80109400 80109450 801094B0 801094C8 801094D0 801094D8
-  801095E4 801096AC 801096F4 80109A14 80109C80 80109F98 80109FE0
+  801091B4 801091D8 801091EC 801091F8 8010920C 80109218 80109230 80109394
+  80109400 801094B0 801094C8 801094D0 801094D8 801095E4 801096AC 801096F4
+  80109A14 80109F98
   ```
-- region `0x8010A000`: 30 misses
+- region `0x8010A000`: 27 misses
   ```
-  8010A048 8010A058 8010A070 8010A0D8 8010A0E0 8010A164 8010A18C 8010A3E8
-  8010A468 8010A58C 8010A5BC 8010A6A8 8010A6B0 8010A6C0 8010A704 8010A74C
-  8010A75C 8010A89C 8010A8B4 8010A8D4 8010A8E4 8010A8F8 8010A94C 8010AC6C
-  8010AC80 8010AC98 8010ACB0 8010ACF4 8010AD98 8010ADC0
+  8010A048 8010A058 8010A070 8010A0D8 8010A164 8010A18C 8010A3E8 8010A468
+  8010A58C 8010A5BC 8010A6A8 8010A6B0 8010A6C0 8010A74C 8010A75C 8010A89C
+  8010A8B4 8010A8E4 8010A8F8 8010A94C 8010AC6C 8010AC80 8010AC98 8010ACB0
+  8010ACF4 8010AD98 8010ADC0
   ```
-- region `0x8010B000`: 1 misses
+- region `0x8010C000`: 2 misses
   ```
-  8010BFFC
-  ```
-- region `0x8010C000`: 3 misses
-  ```
-  8010C26C 8010C7E0 8010C8D4
+  8010C7E0 8010C8D4
   ```
 - region `0x8010F000`: 1 misses
   ```
@@ -289,39 +285,27 @@ _How much of what the game actually runs did the play-free static extractor disc
   ```
   8014649C 801464AC 801465DC 80146608 801466C0 80146758 801467D8 80146958
   ```
-- region `0x8018A000`: 10 misses
+- region `0x8018A000`: 7 misses
   ```
-  8018A1E8 8018A238 8018A260 8018A274 8018A288 8018A29C 8018A428 8018AEB8
-  8018AF34 8018AFF0
+  8018A238 8018A260 8018A274 8018A288 8018A29C 8018AF34 8018AFF0
   ```
-- region `0x8018B000`: 12 misses
+- region `0x8018B000`: 5 misses
   ```
-  8018B020 8018B1A4 8018B478 8018B660 8018B7E4 8018BA68 8018BDD0 8018BDEC
-  8018BDFC 8018BE1C 8018BF74 8018BFE8
+  8018BDD0 8018BDEC 8018BDFC 8018BE1C 8018BFE8
   ```
-- region `0x8018C000`: 19 misses
+- region `0x8018C000`: 15 misses
   ```
   8018C018 8018C02C 8018C040 8018C054 8018C0F0 8018C0FC 8018C108 8018C114
-  8018C128 8018C13C 8018C150 8018C164 8018C2B4 8018C2BC 8018C2E0 8018C4B4
-  8018C790 8018CCCC 8018CE40
+  8018C128 8018C13C 8018C150 8018C164 8018C2B4 8018C2BC 8018C2E0
   ```
-- region `0x8018D000`: 7 misses
+- region `0x8018F000`: 2 misses
   ```
-  8018D26C 8018D418 8018D74C 8018DB28 8018DC2C 8018DD38 8018DFEC
+  8018F818 8018FBF8
   ```
-- region `0x8018E000`: 7 misses
-  ```
-  8018E2B4 8018E54C 8018E6BC 8018E95C 8018EC00 8018ED94 8018EFDC
-  ```
-- region `0x8018F000`: 9 misses
-  ```
-  8018F280 8018F414 8018F548 8018F660 8018F818 8018F854 8018FA88 8018FBCC
-  8018FBF8
-  ```
-## vs preserved live-session gap manifest (pre-smoke drive)
 
-_The runtime smoke rotated the ignored captures file. These exact metrics are rolled forward from the persisted prior gap manifest; the static entry set was verified monotonic._
+## vs persisted live-session gaps (monotonic roll-forward)
 
-- Functions that session exercised: **826**
-- Discovered by static: **231** (**28%** entry-level recall)
+- Functions the persisted session exercised: **826**
+- Discovered by current static: **231** (**28.0%** entry-level recall)
 - **MISSED live: 595**
+- Provenance: caller explicitly asserted that the current static entry set retains every prior static entry.
