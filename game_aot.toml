@@ -45,6 +45,8 @@ memcard_dir = "saves"
 # No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
 # matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
 overlay_cache = true
+overlay_capture_history = true
+overlay_capture_persist_dir = ".aot_capture_history/SCUS-94454"
 # "auto" = gcc when a gcc toolchain is present, else the toolchain-free tcc tier
 # (post-2026-06-25 tcc refactor). On a dev machine with mingw this resolves to gcc,
 # so behaviour matches the old explicit "gcc"; on a clean install it falls back to
