@@ -2,8 +2,8 @@
 
 _How much of the played reference set did the play-free static extractor reproduce, and how much lies in compiled static code?_
 
-- Static shard cache: `F:\Projects\psxrecomp\Tomba2Recomp\build-aot\cache-purestatic\SCUS-94454\gcc\win-x64\cg5_d0a05489`
-- Static manifest entries: **8285**
+- Static shard cache: `build-aot/cache-purestatic/SCUS-94454/gcc/win-x64/cg5_e67f41cb`
+- Static manifest entries: **8295**
 
 - Base BIOS native dispatch entries: **1311**; relocated kernel body ranges: **36**
 - Combined metrics below count both the play-free overlay cache and the separately generated, live-byte-guarded base BIOS.
@@ -14,7 +14,7 @@ _How much of the played reference set did the play-free static extractor reprodu
 - Discovered by static: **1270** (**68.4%** entry-level recall)
 - Covered by compiled static code ranges: **1811** (**97.6%** code-range recall)
   - Code-range recall answers whether the played entry PC is in byte-guarded native code. Exact-entry recall is stricter manifest granularity; runtime fragment caches can contain one entry per instruction, so it substantially understates broad static shards.
-- Byte-identical (entry+code_crc): **1150** (**62.0%**) _(cg-version differences lower this vs entry-level)_
+- Byte-identical (entry+code_crc): **1149** (**61.9%**) _(cg-version differences lower this vs entry-level)_
 - **MISSED exact entries: 586**
 - **TRUE CODE-RANGE GAPS: 45** played entry PCs outside all compiled static ranges
 

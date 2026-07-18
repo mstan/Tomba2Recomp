@@ -1,6 +1,6 @@
 {
  "game": "SCUS-94454",
- "static_entries": 8285,
+ "static_entries": 8295,
  "sources": {
   "vault": {
    "needed": 1856,
@@ -10,8 +10,8 @@
    "covered_by_code_range": 1811,
    "missed_code_range": 45,
    "recall_code_range": 0.9757543103448276,
-   "covered_entry_crc": 1150,
-   "recall_entry_crc": 0.6196120689655172
+   "covered_entry_crc": 1149,
+   "recall_entry_crc": 0.619073275862069
   },
   "vault_combined_bios": {
    "needed": 1856,
@@ -43,7 +43,7 @@
    "provenance": "rolled forward from the persisted live gap manifest; caller asserted the current static entry set is a superset"
   }
  },
- "bios_dispatch": "F:\\Projects\\psxrecomp\\psxrecomp\\generated\\SCPH1001_dispatch.c",
+ "bios_dispatch": "../psxrecomp/generated/SCPH1001_dispatch.c",
  "bios_static_entries": 1311,
  "bios_static_ranges": 36,
  "vault_misses": [
