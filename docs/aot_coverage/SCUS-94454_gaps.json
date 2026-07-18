@@ -3,24 +3,24 @@
  "static_entries": 8295,
  "sources": {
   "vault": {
-   "needed": 1856,
+   "needed": 1855,
    "covered_here": 1270,
-   "missed": 586,
-   "recall_entry": 0.6842672413793104,
+   "missed": 585,
+   "recall_entry": 0.6846361185983828,
    "covered_by_code_range": 1811,
-   "missed_code_range": 45,
-   "recall_code_range": 0.9757543103448276,
+   "missed_code_range": 44,
+   "recall_code_range": 0.9762803234501348,
    "covered_entry_crc": 1149,
-   "recall_entry_crc": 0.619073275862069
+   "recall_entry_crc": 0.6194070080862534
   },
   "vault_combined_bios": {
-   "needed": 1856,
-   "covered_here": 1291,
-   "missed": 565,
-   "recall_entry": 0.6955818965517241,
-   "covered_by_code_range": 1852,
-   "missed_code_range": 4,
-   "recall_code_range": 0.9978448275862069
+   "needed": 1855,
+   "covered_here": 1294,
+   "missed": 561,
+   "recall_entry": 0.6975741239892184,
+   "covered_by_code_range": 1855,
+   "missed_code_range": 0,
+   "recall_code_range": 1.0
   },
   "live_session": {
    "needed": 826,
@@ -34,18 +34,26 @@
   },
   "live_session_combined_bios": {
    "needed": 826,
-   "covered_here": 241,
-   "missed": 585,
-   "recall_entry": 0.2917675544794189,
-   "covered_by_code_range": 805,
-   "missed_code_range": 21,
-   "recall_code_range": 0.9745762711864406,
+   "covered_here": 244,
+   "missed": 582,
+   "recall_entry": 0.29539951573849876,
+   "covered_by_code_range": 808,
+   "missed_code_range": 18,
+   "recall_code_range": 0.9782082324455206,
    "provenance": "rolled forward from the persisted live gap manifest; caller asserted the current static entry set is a superset"
   }
  },
+ "static_quarantined_zero_ranges": [],
  "bios_dispatch": "../psxrecomp/generated/SCPH1001_dispatch.c",
- "bios_static_entries": 1311,
- "bios_static_ranges": 36,
+ "bios_static_entries": 1314,
+ "bios_static_ranges": 37,
+ "vault_quarantined_zero_ranges": [
+  {
+   "entry": "0x8000EE7C",
+   "code_crc": "5685ADBF",
+   "size": 388
+  }
+ ],
  "vault_misses": [
   "0x800000A0",
   "0x800000B0",
@@ -91,7 +99,6 @@
   "0x8000641C",
   "0x80006594",
   "0x80006B90",
-  "0x8000EE7C",
   "0x8001CC1C",
   "0x8001CC24",
   "0x8001CC2C",
@@ -678,15 +685,9 @@
   "0x80004C70",
   "0x8000641C",
   "0x80006594",
-  "0x80006B90",
-  "0x8000EE7C"
+  "0x80006B90"
  ],
- "vault_combined_range_misses": [
-  "0x800000A0",
-  "0x800000B0",
-  "0x800000C0",
-  "0x8000EE7C"
- ],
+ "vault_combined_range_misses": [],
  "live_misses": [
   "0x800000A0",
   "0x800000B0",
@@ -1377,9 +1378,6 @@
   "0x8006E0B4"
  ],
  "live_combined_range_misses": [
-  "0x800000A0",
-  "0x800000B0",
-  "0x800000C0",
   "0x8000DF80",
   "0x8000DF98",
   "0x8000DFA4",
