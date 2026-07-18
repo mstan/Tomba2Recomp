@@ -1,0 +1,150 @@
+[game]
+name = "Tomba! 2 - The Evil Swine Return"
+id = "SCUS-94454"
+exe = "tomba2/SCUS_944.54"
+disc = "tomba2/Tomba! 2 - The Evil Swine Return (USA).cue"
+load_address = "0x80010000"
+entry_pc = "0x80018B6C"
+text_size = "0x00028800"
+stack_base = "0x801FFFF0"
+
+[recompiler]
+seeds = "seeds/ghidra_funcs.txt"
+# bios_thunks = "seeds/tomba2_bios_thunks.txt"  # optional; add once inventoried
+out_dir = "generated"
+strict = true
+
+[runtime]
+# HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
+# HLE tier's one-shot shell intercept; kernel init + game EXE load still run
+# on the real recompiled BIOS at host speed. Set false to watch BIOS logos.
+# Full HLE kernel tier (bios_hle) stays OFF here — LLE is the baseline; Tomba1
+# is the HLE validation title.
+fast_boot = true
+# Tomba2's OWN debug port — 4500 collides with the SNES mmx_cosim processes.
+# Taken elsewhere: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
+debug_port = 4515
+window_title = "Tomba! 2 Recompiled"
+controller = "digital"
+memcard_dir = "saves"
+
+# Overlay cache (the real perf fix). Tomba 2's title/menu/level/FMV-driver code
+# is runtime-loaded overlay, not in the 474 compiled boot-EXE funcs, so by
+# default it ALL interprets (~4fps game logic). The cache JITs those overlays to
+# native via the *gcc* backend: autocapture writes overlay_captures.json, the
+# autocompile_cmd spawns the recompiler+gcc in the background to produce CPS
+# overlay DLLs in build-t2/cache, and the loader hot-swaps them in live.
+#
+# overlay_backend = "gcc" (NOT sljit): on 2026-06-23 the in-process sljit backend
+# declined ~31/39 Tomba 2 shards (no payoff) and hard-HUNG the boot on the
+# Whoopee-Camp logo. With gcc selected the loader runs gcc>interp and never
+# starts sljit live (overlay_loader_apply_live_policy forces sljit off when the
+# active backend is gcc), so the gap before DLLs land is the interpreter (slow
+# but correct), never the sljit hang path.
+#
+# No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
+# matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
+overlay_cache = true
+# "auto" = gcc when a gcc toolchain is present, else the toolchain-free tcc tier
+# (post-2026-06-25 tcc refactor). On a dev machine with mingw this resolves to gcc,
+# so behaviour matches the old explicit "gcc"; on a clean install it falls back to
+# tcc instead of leaving overlays interpreted. The in-process sljit producer stays
+# OFF in every case (it hung Tomba 2's Whoopee-Camp logo â€” see below).
+overlay_backend = "auto"
+# Keep the timing-sensitive splash/FMV task setup routines on the interpreter.
+# Native execution of these small setup paths leaves the Whoopee-Camp logo stuck
+# before the intro FMV; the rest of the overlay cache still runs native.
+overlay_native_block = [
+  "0x80096A90",
+  "0x80052078",
+  "0x800520C0",
+]
+# All paths are RELATIVE to the project root (the runtime spawns this with cwd =
+# project root), so the shipped config is portable across machines. The
+# recompiler exe + runtime-include are resolved to absolute by compile_overlays.py
+# itself (a relative Windows exe path isn't resolved against the child cwd).
+overlay_autocompile_cmd = "C:/Users/Matthew/AppData/Local/Programs/Python/Python312/python.exe psxrecomp-v4/tools/compile_overlays.py --game-toml game.toml --recompiler F:/Projects/psxrecomp/psxrecomp/recompiler/build/psxrecomp-game.exe --runtime-include psxrecomp-v4/runtime/include"
+
+# Tomba 2 is a d-pad platformer. Real PS1 hardware powers a DualShock up in
+# DIGITAL mode (analog LED off, controller id 0x41) and Tomba 2's pad driver
+# only runs the DualShock config-mode handshake (0x43/0x4D...) when it sees the
+# analog id 0x73. The framework's default HYBRID mode boots analog-on (0x73),
+# which triggers that handshake every frame; our SIO config emulation doesn't
+# satisfy the driver, so it intermittently reads 0x00 button bytes (all buttons
+# "pressed") -> menu unresponsive + idle timer never reaches the attract demo.
+# Booting DIGITAL (id 0x41, never 0x73) matches the Beetle oracle exactly: the
+# game just polls with 0x42 and reads clean 0xFFFF idle.
+#
+# Analog / Hybrid are NOT offered for Tomba 2: the DualShock config-mode
+# handshake emulation is incomplete, so any non-digital mode re-triggers the
+# phantom-input bug above. lock_mode hides the launcher's whole pad-mode
+# selector (Hybrid | Analog | D-Pad) and forces every port to default_mode, so
+# the player can never pick a broken mode. allow_hybrid=false is redundant under
+# lock_mode but documents intent. Re-enable the selector (drop lock_mode) only
+# once the analog config handshake is emulated end-to-end.
+[controller]
+default_mode = "digital"
+allow_hybrid = false
+lock_mode    = true
+
+# --- Renderer: optimized hardware path. Supersampling stays at 1 for the
+# performance baseline; users can raise it on faster GPUs.
+[video]
+renderer          = "opengl"
+supersampling     = 1
+texture_filtering = "nearest"
+# Presentation-only blending on >=90 Hz displays. Guest simulation remains
+# 59.94 Hz, so gameplay/audio behavior is unchanged.
+frame_interpolation = true
+# 0 follows the display; launcher presets: 90, 120, 144, 165, and 240 FPS.
+frame_interpolation_fps = 0
+# FMV auto-skip (debug iteration speed). Tomba2's streamed movies end on a
+# frame-total cell (single u32 at 0x8010271C, checked by the sector pump
+# FUN_8008d110 against the streamed frame counter 0x801026E8; 0 = play to EOF)
+# rather than Tomba1's per-movie table — the START-hold fallback handles the
+# START-skippable ones. The Whoopee Camp logo is a SILENT RAM-preloaded movie
+# (no CD sectors, no XA during playback): fmv_skip_no_xa broadens detection to
+# MDEC activity alone so it fast-forwards too (presentation-side only).
+# The longer silent-MDEC hold also covers the logo's post-decode wait while
+# auto-skip is enabled. Disable auto_skip_fmv for release-faithful behavior.
+auto_skip_fmv     = true
+fmv_skip_no_xa    = true
+fmv_skip_no_xa_hold = 600
+
+# Native-wide gameplay. The runtime keeps BIOS, FMV, and true 2D screens at
+# their authored 4:3 aspect; GTE-active gameplay uses the wider compositor.
+[widescreen]
+gte_game_mode  = true
+offer_ultrawide = true
+nw_hud_corners = false
+nw_backdrop    = false
+nw_flat_backdrop = true
+nw_phase_backdrop = true
+
+[widescreen.cull]
+# Tomba 2's overlay render funnels reject projected vertices against the
+# original 320x240 bounds. Widen the horizontal comparisons only while a wide
+# aspect is active. The explicit height immediate qualifies the signature but
+# is not itself changed.
+auto_screen_x = true
+screen_w_imms = ["0x140"]
+screen_h_imms = ["0xF0"]
+
+# â”€â”€ Audit-specific config (consumed by psxrecomp/tools/*.py and tests) â”€â”€
+# Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
+# project root.
+
+[audit]
+# Dynamic discovery â€” functions are found by walking control flow from
+# entry_pc. No Ghidra function-starts file is required to bootstrap.
+
+# Code region: text segment is contiguous from load_address for text_size bytes.
+[[audit.regions]]
+name        = "Text"
+rom_start   = "0x800"          # offset within the PS-X EXE file (skip header)
+rom_end     = "0x29000"        # rom_start + text_size
+vaddr_base  = "0x80010000"
+
+# Address normalization: KSEG masking only (game loads contiguously, no remaps).
+[audit.normalize]
+kseg_mask = "0x1FFFFFFF"
