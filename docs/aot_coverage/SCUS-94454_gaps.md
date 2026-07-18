@@ -2,8 +2,11 @@
 
 _How much of the played reference set did the play-free static extractor reproduce, and how much lies in compiled static code?_
 
-- Static shard cache: `build-aot/cache-purestatic/SCUS-94454/gcc/win-x64/cg5_d0a05489`
+- Static shard cache: `F:\Projects\psxrecomp\Tomba2Recomp\build-aot\cache-purestatic\SCUS-94454\gcc\win-x64\cg5_d0a05489`
 - Static manifest entries: **8285**
+
+- Base BIOS native dispatch entries: **1311**; relocated kernel body ranges: **36**
+- Combined metrics below count both the play-free overlay cache and the separately generated, live-byte-guarded base BIOS.
 
 ## vs played vault (most complete needed-set)
 
@@ -14,6 +17,23 @@ _How much of the played reference set did the play-free static extractor reprodu
 - Byte-identical (entry+code_crc): **1150** (**62.0%**) _(cg-version differences lower this vs entry-level)_
 - **MISSED exact entries: 586**
 - **TRUE CODE-RANGE GAPS: 45** played entry PCs outside all compiled static ranges
+
+### Combined with base recompiled BIOS
+
+- Exact native dispatch entries: **1291** (**69.6%**)
+- Covered by native code ranges: **1852** (**99.8%**)
+- **COMBINED CODE-RANGE GAPS: 4**
+
+#### Combined gaps grouped by region
+
+- region `0x80000000`: 3 misses
+  ```
+  800000A0 800000B0 800000C0
+  ```
+- region `0x8000E000`: 1 misses
+  ```
+  8000EE7C
+  ```
 
 ### Code-range gaps grouped by overlay region
 
@@ -54,5 +74,6 @@ _How much of the played reference set did the play-free static extractor reprodu
 - Dispatch entries the persisted session exercised: **826**
 - Discovered by current static: **236** (**28.6%** entry-level recall)
 - Covered by current static code ranges: **731** (**88.5%** code-range recall)
+- Including base BIOS native code ranges: **805** (**97.5%**)
 - **MISSED live: 590**
 - Provenance: caller explicitly asserted that the current static entry set retains every prior static entry.

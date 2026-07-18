@@ -13,6 +13,15 @@
    "covered_entry_crc": 1150,
    "recall_entry_crc": 0.6196120689655172
   },
+  "vault_combined_bios": {
+   "needed": 1856,
+   "covered_here": 1291,
+   "missed": 565,
+   "recall_entry": 0.6955818965517241,
+   "covered_by_code_range": 1852,
+   "missed_code_range": 4,
+   "recall_code_range": 0.9978448275862069
+  },
   "live_session": {
    "needed": 826,
    "covered_here": 236,
@@ -22,8 +31,21 @@
    "missed_code_range": 95,
    "recall_code_range": 0.8849878934624698,
    "provenance": "rolled forward from the persisted live gap manifest; caller asserted the current static entry set is a superset"
+  },
+  "live_session_combined_bios": {
+   "needed": 826,
+   "covered_here": 241,
+   "missed": 585,
+   "recall_entry": 0.2917675544794189,
+   "covered_by_code_range": 805,
+   "missed_code_range": 21,
+   "recall_code_range": 0.9745762711864406,
+   "provenance": "rolled forward from the persisted live gap manifest; caller asserted the current static entry set is a superset"
   }
  },
+ "bios_dispatch": "F:\\Projects\\psxrecomp\\psxrecomp\\generated\\SCPH1001_dispatch.c",
+ "bios_static_entries": 1311,
+ "bios_static_ranges": 36,
  "vault_misses": [
   "0x800000A0",
   "0x800000B0",
@@ -657,6 +679,12 @@
   "0x8000641C",
   "0x80006594",
   "0x80006B90",
+  "0x8000EE7C"
+ ],
+ "vault_combined_range_misses": [
+  "0x800000A0",
+  "0x800000B0",
+  "0x800000C0",
   "0x8000EE7C"
  ],
  "live_misses": [
@@ -1329,6 +1357,29 @@
   "0x80006588",
   "0x8000658C",
   "0x80006594",
+  "0x8000DF80",
+  "0x8000DF98",
+  "0x8000DFA4",
+  "0x8000DFAC",
+  "0x8000DFC0",
+  "0x8000DFD4",
+  "0x8005597C",
+  "0x800561BC",
+  "0x8005628C",
+  "0x80056290",
+  "0x800564C4",
+  "0x80056594",
+  "0x80056598",
+  "0x800567C8",
+  "0x80056870",
+  "0x8005B174",
+  "0x8006C844",
+  "0x8006E0B4"
+ ],
+ "live_combined_range_misses": [
+  "0x800000A0",
+  "0x800000B0",
+  "0x800000C0",
   "0x8000DF80",
   "0x8000DF98",
   "0x8000DFA4",
