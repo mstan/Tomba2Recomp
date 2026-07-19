@@ -2,8 +2,8 @@
 
 _How much of the played reference set did the play-free static extractor reproduce, and how much lies in compiled static code?_
 
-- Static shard cache: `build-aot/cache-fullstatic-b053/SCUS-94454/gcc/win-x64/cg5_b0538be8`
-- Static manifest entries: **7428**
+- Static shard cache: `build-aot\cache-fullstatic-b053\SCUS-94454\gcc\win-x64\cg5_b0538be8`
+- Static manifest entries: **7440**
 
 - Base BIOS native dispatch entries: **1314**; relocated kernel body ranges: **37**
 - Combined metrics below count both the play-free overlay cache and the separately generated, live-byte-guarded base BIOS.
@@ -61,26 +61,26 @@ _How much of the played reference set did the play-free static extractor reprodu
 
 ## vs live capture history
 
-- Sources: **2 capture files + verified append-only history**
-- FNV-verified immutable snapshots: **1**; invalid records: **0**
-- Superseded session snapshots **not FNV-verified** (their parsed entry sets were subsets of a verified head): **97** (131.3 MiB parsed under bounds)
-- Dispatch entries exercised: **712**
-- Discovered by static: **123** (**17.3%** entry-level recall)
-- Covered by compiled static code ranges: **623** (**87.5%** code-range recall)
-- Overlay-only true code-range gaps: **89**
-- Including base BIOS native code ranges: **700** (**98.3%**)
-- Combined true code-range gaps: **12**
-- Exact-entry misses (diagnostic; may be interior fragments): **589**
+- Sources: **1 capture file + verified append-only history**
+- FNV-verified immutable snapshots: **25**; invalid records: **0**
+- Superseded session snapshots **not FNV-verified** (their parsed entry sets were subsets of a verified head): **688** (993.0 MiB parsed under bounds)
+- Dispatch entries exercised: **888**
+- Discovered by static: **150** (**16.9%** entry-level recall)
+- Covered by compiled static code ranges: **808** (**91.0%** code-range recall)
+- Overlay-only true code-range gaps: **80**
+- Including base BIOS native code ranges: **888** (**100.0%**)
+- Combined true code-range gaps: **0**
+- Exact-entry misses (diagnostic; may be interior fragments): **738**
 
 ## vs pre-history persisted live-session gaps (separate monotonic roll-forward)
 
 - This older needed set predates append-only history. It is reported separately because the old report retained misses, not enough addresses to compute an honest set union.
 
 - Dispatch entries the persisted session exercised: **888**
-- Discovered by current static: **152** (**17.1%** entry-level recall)
-- Covered by current static code ranges: **796** (**89.6%** code-range recall)
-- Overlay-only true code-range gaps: **92**
-- Including base BIOS native code ranges: **876** (**98.6%**)
-- Combined true code-range gaps: **12**
-- Exact-entry misses (diagnostic; may be interior fragments): **736**
+- Discovered by current static: **164** (**18.5%** entry-level recall)
+- Covered by current static code ranges: **808** (**91.0%** code-range recall)
+- Overlay-only true code-range gaps: **80**
+- Including base BIOS native code ranges: **888** (**100.0%**)
+- Combined true code-range gaps: **0**
+- Exact-entry misses (diagnostic; may be interior fragments): **724**
 - Provenance: caller explicitly asserted that the current static entry set retains every prior static entry.
