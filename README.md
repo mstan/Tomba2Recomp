@@ -1,5 +1,11 @@
 # Tomba2Recomp
 
+> _Tomba! 2 Recompiled is a byproduct of developing **psxrecomp**, the
+> static-recompilation framework it's built on. Driving the framework forward is
+> the priority, so my time for this particular title is limited — I ask for your
+> patience with its continued development, and community contributions are warmly
+> welcomed._
+
 Static recompilation of **Tomba! 2 - The Evil Swine Return (USA)** (serial
 **SCUS-94454**) to native code, built on the shared **psxrecomp** framework —
 the same toolchain that powers TombaRecomp, ApeEscapeRecomp and MegaManX6Recomp.
