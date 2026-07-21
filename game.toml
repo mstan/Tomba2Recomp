@@ -91,11 +91,15 @@ default_mode = "digital"
 allow_hybrid = false
 lock_mode    = true
 
-# --- Renderer: optimized hardware path. Supersampling stays at 1 for the
-# performance baseline; users can raise it on faster GPUs.
+# --- Renderer: optimized hardware path.
+# Supersampling: internal-resolution SSAA factor. 2 is the quality default now
+# that Tomba 2 holds full speed on the OpenGL path; lower to 1 for slower GPUs.
+# Antialiasing: linear present filtering for the sampled frame. The launcher
+# exposes both controls on the Video page and persists overrides to settings.toml.
 [video]
 renderer          = "opengl"
-supersampling     = 1
+supersampling     = 2
+antialiasing      = true
 texture_filtering = "nearest"
 # Presentation-only blending on >=90 Hz displays. Guest simulation remains
 # 59.94 Hz, so gameplay/audio behavior is unchanged.
@@ -152,3 +156,18 @@ vaddr_base  = "0x80010000"
 # Address normalization: KSEG masking only (game loads contiguously, no remaps).
 [audit.normalize]
 kseg_mask = "0x1FFFFFFF"
+
+# Conservative load-time optimization.
+# Verified against SCUS_944.54's PsyQ VSync(mode) routine: VSync(-1) returns
+# the guest VBlank counter at 0x800267B4. The adjacent GPUSTAT and Timer1 reads
+# are used only to stabilize the query path; the framework hook preserves the
+# original instruction timing, stack traffic, cache fetches, and IRQ checkpoints
+# while bypassing those side-effect-free MMIO handlers. This is intentionally
+# not a turbo/speedhack path: no CD speed, pacing, idle-skip, or event-horizon
+# fast-forward is enabled here.
+[load_accel.vsync_query]
+func = "0x80017E4C"
+counter_addr = "0x800267B4"
+gpustat_ptr_addr = "0x8002567C"
+timer1_ptr_addr = "0x80025680"
+timer1_cache_addr = "0x80025684"
