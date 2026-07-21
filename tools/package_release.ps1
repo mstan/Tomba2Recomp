@@ -122,7 +122,8 @@ overlay_native_block = [
 # renderer: "opengl" (hardware renderer, default) or "software" (reference).
 renderer          = "opengl"
 # supersampling: render at this multiple of native resolution. 1 = native PSX.
-supersampling     = 1
+supersampling     = 2
+antialiasing      = true
 texture_filtering = "nearest"
 frame_interpolation = true
 # 0 follows the current display; the launcher also offers fixed FPS targets.
@@ -164,6 +165,16 @@ screen_h_imms = ["0xF0"]
 default_mode = "digital"
 allow_hybrid = false
 lock_mode    = true
+
+# Conservative load-time optimization for SCUS_944.54's VSync(-1) query path.
+# The hook preserves original instruction timing/checkpoints while bypassing
+# side-effect-free GPUSTAT/Timer1 reads used only to stabilize the query.
+[load_accel.vsync_query]
+func = "0x80017E4C"
+counter_addr = "0x800267B4"
+gpustat_ptr_addr = "0x8002567C"
+timer1_ptr_addr = "0x80025680"
+timer1_cache_addr = "0x80025684"
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "game.toml")
 
 # Prebuilt overlay cache: DLLs, range manifests, and exact-hash BIOS-resident
@@ -306,6 +317,9 @@ start = start
 select = back
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "input.ini")
 
+$TombaSha = (& git -C $Root rev-parse --short HEAD).Trim()
+$PsxRecompSha = (& git -C (Join-Path $Root "psxrecomp-v4") rev-parse --short HEAD).Trim()
+
 @"
 Tomba2Recomp $Version
 
@@ -315,22 +329,16 @@ with working controller input and no known crashes. It has not been verified
 through a full playthrough yet, so treat it as a very playable preview.
 
 New in this release:
-- Multi-track disc dumps now work (fixes "Blank screen and no audio", GitHub
-  issue #1). Dumps in the common redump layout - a .cue with one .bin file
-  per track (Track 1 data + Track 2 audio) - previously mounted the audio
-  track as the whole disc and booted to a black screen. Both multi-file and
-  single-file .bin/.cue dumps are now supported.
-- 21:9 ultrawide is actually selectable. v0.0.3/v0.0.4 advertised it but
-  shipped a game.toml that clamped 21:9 back to 16:9 and hid the launcher
-  option.
-- A settings.toml with a syntax error is no longer silently ignored: the
-  runtime tells you, keeps your file as settings.toml.bad, and boots with
-  defaults instead of quietly overwriting your edits.
-- This build never falls back to files from the developer's machine: on a
-  machine without a configured BIOS/disc it always asks (earlier builds baked
-  a developer path into the exe, which hid setup problems from testing).
-- OpenGL full-rate presentation, frame interpolation, experimental 16:9/21:9
-  widescreen, and memory card support carry forward from v0.0.4.
+- Based on Tomba2Recomp master $TombaSha and psxrecomp master $PsxRecompSha.
+- Tomba 2 now defaults to 2x SSAA with antialiasing enabled for the OpenGL
+  renderer; lower supersampling to 1 in the launcher/settings on slower GPUs.
+- Adds the conservative VSync(-1) query acceleration path used during loading,
+  preserving guest timing checkpoints while bypassing side-effect-free status
+  reads.
+- Carries the latest psxrecomp widescreen interpreter fix, mirroring native-wide
+  range sites consistently between native and interpreted execution.
+- Multi-track disc support, clean first-run BIOS/disc picking, 21:9 ultrawide,
+  frame interpolation, and memory card support carry forward.
 
 This package does not include the Tomba! 2 disc, the PlayStation BIOS, save
 data, or any game assets - you supply those from your own collection, and
