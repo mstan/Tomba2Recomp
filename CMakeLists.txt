@@ -19,13 +19,12 @@ file(GLOB GAME_GENERATED_FULL CONFIGURE_DEPENDS
 set(GAME_GENERATED_DISPATCH
     "${CMAKE_CURRENT_SOURCE_DIR}/generated/SCUS_944.54_dispatch.c")
 
-# Isolated-worktree process-identity overrides (interp/game-isolated branch
-# only — never on master). A sibling investigation (e.g. the AOT overlay
-# spike) may build this same game repo from a DIFFERENT worktree at the same
-# time; without a distinct exe name / debug port the two builds' runtimes
-# collide on process name (taskkill / Task Manager confusion) and on the TCP
-# debug port. Empty by default so an ordinary configure (no override passed)
-# is byte-identical to master: OUTPUT_NAME "Tomba2Recomp", DEBUG_PORT 4515.
+# Isolated-worktree process-identity overrides. A sibling investigation may
+# build this same game repo from a DIFFERENT worktree at the same time; without
+# a distinct exe name / debug port the two builds' runtimes collide on process
+# name (taskkill / Task Manager confusion) and on the TCP debug port. Empty by
+# default so an ordinary configure uses OUTPUT_NAME "Tomba2Recomp", DEBUG_PORT
+# 4515.
 set(PSXRECOMP_GAME_EXE_NAME_OVERRIDE "" CACHE STRING
     "Override this game's runtime OUTPUT_NAME (default: Tomba2Recomp)")
 set(PSXRECOMP_GAME_DEBUG_PORT_OVERRIDE "" CACHE STRING
