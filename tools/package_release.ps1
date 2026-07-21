@@ -166,7 +166,8 @@ allow_hybrid = false
 lock_mode    = true
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "game.toml")
 
-# Prebuilt overlay cache: only .dll + .ranges, only THIS build's codegen tag.
+# Prebuilt overlay cache: DLLs, range manifests, and exact-hash BIOS-resident
+# sidecars; only THIS build's codegen tag.
 $RecompTools = Resolve-Path (Join-Path $Root "psxrecomp-v4\tools")
 $RecompInc   = Resolve-Path (Join-Path $Root "psxrecomp-v4\runtime\include")
 $tagScript = Join-Path $env:TEMP ("psx_cgtag_{0}.py" -f $PID)
@@ -183,7 +184,7 @@ Write-Host "Release codegen tag: $CgTag (only this cache namespace is shipped)"
 $CacheSrc = Join-Path $Root "$CacheBuildDir/cache/SCUS-94454"
 if (Test-Path $CacheSrc) {
     $CacheDst = Join-Path $Stage "cache/SCUS-94454"
-    $cacheFiles = @(Get-ChildItem $CacheSrc -Recurse -File -Include *.dll,*.ranges |
+    $cacheFiles = @(Get-ChildItem $CacheSrc -Recurse -File -Include *.dll,*.ranges,*.resident |
         Where-Object { $_.FullName -notmatch '[\\/]sljit[\\/]' -and $_.FullName -match "[\\/]$CgTag[\\/]" })
     if ($cacheFiles.Count -eq 0) {
         # A tag mismatch means the accumulated cache predates this build's

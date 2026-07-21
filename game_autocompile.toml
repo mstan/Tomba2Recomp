@@ -1,4 +1,4 @@
-﻿[game]
+[game]
 name = "Tomba! 2 - The Evil Swine Return"
 id = "SCUS-94454"
 exe = "tomba2/SCUS_944.54"
@@ -45,10 +45,8 @@ memcard_dir = "saves"
 # No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
 # matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
 overlay_cache = true
-# Preserve each coherent runtime discovery without replacing earlier launches.
-# Production keeps the append-only addendum beside the executable; dev configs
-# additionally opt into immutable project-local snapshots.
 overlay_capture_history = true
+overlay_capture_persist_dir = ".aot_capture_history/SCUS-94454"
 # "auto" = gcc when a gcc toolchain is present, else the toolchain-free tcc tier
 # (post-2026-06-25 tcc refactor). On a dev machine with mingw this resolves to gcc,
 # so behaviour matches the old explicit "gcc"; on a clean install it falls back to
@@ -67,7 +65,7 @@ overlay_native_block = [
 # project root), so the shipped config is portable across machines. The
 # recompiler exe + runtime-include are resolved to absolute by compile_overlays.py
 # itself (a relative Windows exe path isn't resolved against the child cwd).
-overlay_autocompile_cmd = "python psxrecomp-v4/tools/compile_overlays.py --captures build-t2/overlay_captures.json --game-toml game.toml --recompiler psxrecomp-v4/recompiler/build-t2/psxrecomp-game.exe --runtime-include psxrecomp-v4/runtime/include --out-dir build-t2/cache && python psxrecomp-v4/tools/coverage_vault.py merge --vault ../_coverage_vault/SCUS-94454 --captures build-t2/overlay_captures.json --cache build-t2/cache/SCUS-94454"
+overlay_autocompile_cmd = "C:/Users/Matthew/AppData/Local/Programs/Python/Python312/python.exe psxrecomp-v4/tools/compile_overlays.py --game-toml game.toml --recompiler F:/Projects/psxrecomp/psxrecomp/recompiler/build/psxrecomp-game.exe --runtime-include psxrecomp-v4/runtime/include"
 
 # Tomba 2 is a d-pad platformer. Real PS1 hardware powers a DualShock up in
 # DIGITAL mode (analog LED off, controller id 0x41) and Tomba 2's pad driver
