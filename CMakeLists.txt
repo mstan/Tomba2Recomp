@@ -57,19 +57,8 @@ psxrecomp_add_runtime_target(psx-runtime
     # "bios/SCPH1001.BIN"). Dev trees resolve it via the exe-dir upward search
     # (psxrecomp-v4/bios); user installs use bios.cfg / the picker.
     DEFAULT_GAME_CONFIG_PATH "game.toml"
+    LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
 )
 
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
-
-# Shared recomp-ui Dear ImGui launcher. Wires in the PSX-themed launcher UI
-# (see main.cpp RECOMP_LAUNCHER gate) instead of the framework's default RmlUi
-# launcher. recomp-ui is a real git submodule (github.com/mstan/recomp-ui,
-# pinned via the recomp-ui gitlink); locally it is a directory junction to the
-# working checkout so builds stay offline and reproducible like everything else.
-include("${CMAKE_SOURCE_DIR}/recomp-ui/recomp_ui.cmake")
-recomp_target_launcher_ui(psx-runtime
-    BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
-    PAD    "${CMAKE_SOURCE_DIR}/recomp/launcher/pad.tga"
-    BRAND  "${CMAKE_SOURCE_DIR}/recomp/launcher/brand.tga"
-)
