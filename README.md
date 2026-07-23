@@ -45,6 +45,17 @@ cmake --build build-master --target psx-runtime -j 16
 The boot EXE is a small loader; the bulk of the game streams from disc as code
 overlays at runtime (same architecture as Tomba! 1).
 
+## Adaptive widescreen
+
+Select **Adaptive** under **Aspect ratio** in the launcher to make Tomba 2's
+native-wide 3D view follow the live window or fullscreen aspect. Resizing wider
+reveals more of the world instead of stretching a fixed 16:9 image; narrowing
+back to 4:3 restores the authentic viewport. The selected fixed aspect controls
+the initial window shape, and the live view is capped at Tomba 2's offered 21:9
+limit. BIOS, FMVs,
+menus, and other true-2D screens remain pillarboxed at their authored 4:3
+aspect.
+
 ---
 
 <p align="center">

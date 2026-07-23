@@ -147,6 +147,7 @@ gte_game_mode    = true
 # Without this the runtime clamps 21:9 to 16:9 and the launcher hides the
 # Ultrawide option (v0.0.3/v0.0.4 shipped without it by mistake).
 offer_ultrawide  = true
+adaptive_view    = true
 nw_flat_backdrop = true
 nw_phase_backdrop = true
 
@@ -156,6 +157,14 @@ nw_phase_backdrop = true
 auto_screen_x = true
 screen_w_imms = ["0x140"]
 screen_h_imms = ["0xF0"]
+bias_sites = [
+    "0x80069B84", "0x80069BA8", "0x80069BCC", "0x80110A08",
+    "0x8013F138", "0x8013F190", "0x8013F224", "0x8013F244",
+]
+range_sites = [
+    "0x80069B8C", "0x80069BB0", "0x80069BD8", "0x80110A10",
+]
+screen_x_sites = ["0x8003E228"]
 
 # ---- Controller ---------------------------------------------------------
 # Tomba! 2 is a d-pad platformer: real hardware boots a DualShock in DIGITAL

@@ -120,6 +120,7 @@ fmv_skip_no_xa_hold = 600
 [widescreen]
 gte_game_mode  = true
 offer_ultrawide = true
+adaptive_view  = true
 nw_hud_corners = false
 nw_backdrop    = false
 nw_flat_backdrop = true
@@ -133,6 +134,14 @@ nw_phase_backdrop = true
 auto_screen_x = true
 screen_w_imms = ["0x140"]
 screen_h_imms = ["0xF0"]
+bias_sites = [
+    "0x80069B84", "0x80069BA8", "0x80069BCC", "0x80110A08",
+    "0x8013F138", "0x8013F190", "0x8013F224", "0x8013F244",
+]
+range_sites = [
+    "0x80069B8C", "0x80069BB0", "0x80069BD8", "0x80110A10",
+]
+screen_x_sites = ["0x8003E228"]
 
 # â”€â”€ Audit-specific config (consumed by psxrecomp/tools/*.py and tests) â”€â”€
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
