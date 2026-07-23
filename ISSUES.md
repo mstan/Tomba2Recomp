@@ -35,7 +35,7 @@ most recent completed display images at the host refresh rate while the guest,
 audio, and input continue at their original cadence. It adds one source-frame
 of display latency but does not accelerate game logic. Set
 `frame_interpolation = false` under `[video]`, or set
-`PSX_FRAME_INTERPOLATION=0`, to disable it. The RmlUi launcher exposes both the
+`PSX_FRAME_INTERPOLATION=0`, to disable it. The launcher exposes both the
 toggle and a presentation target (display refresh, 90, 120, 144, 165, or 240
 FPS); the equivalent config key is `frame_interpolation_fps` and `0` means the
 current display refresh.

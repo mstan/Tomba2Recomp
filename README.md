@@ -38,7 +38,7 @@ build/boot bring-up in progress.
 cmake -S . -B build-master -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe \
   -DCMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe \
-  -DPSX_DEBUG_TOOLS=ON -DPSX_LAUNCHER=OFF
+  -DPSX_DEBUG_TOOLS=ON
 cmake --build build-master --target psx-runtime -j 16
 ```
 
