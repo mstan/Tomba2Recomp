@@ -74,11 +74,15 @@ set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
 set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
 
 if(EXISTS "${TOMBA2_PRELOADED_MODS}/packages")
-    add_custom_command(TARGET psx-runtime POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${TOMBA2_PRELOADED_MODS}"
-            "$<TARGET_FILE_DIR:psx-runtime>/mods"
-        COMMENT "Preloading the Tomba 2 mod catalog")
+    foreach(TOMBA2_RUNTIME_TARGET psx-runtime psx-runtime-pgxp)
+        if(TARGET ${TOMBA2_RUNTIME_TARGET})
+            add_custom_command(TARGET ${TOMBA2_RUNTIME_TARGET} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${TOMBA2_PRELOADED_MODS}"
+                    "$<TARGET_FILE_DIR:${TOMBA2_RUNTIME_TARGET}>/mods"
+                COMMENT "Preloading the Tomba 2 mod catalog")
+        endif()
+    endforeach()
 endif()
 
 if(BUILD_TESTING)

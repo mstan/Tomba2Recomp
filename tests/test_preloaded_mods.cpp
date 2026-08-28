@@ -54,13 +54,11 @@ int main(int argc, char** argv) {
              "tomba2.widescreen.16-9",
              "tomba2.widescreen.21-9",
              "tomba2.widescreen.adaptive",
-             "tomba2.framerate.display",
              "tomba2.framerate.60",
-             "tomba2.framerate.90",
              "tomba2.framerate.120",
              "tomba2.framerate.144",
              "tomba2.framerate.165",
-             "tomba2.framerate.240",
+             "tomba2.framerate.uncapped",
              "tomba2.fmv.skip",
              "tomba2.debug.menu"}) {
         if (!PSXRecompV4::mod_register_activation_plugin(id, no_op_plugin)) {
@@ -112,13 +110,11 @@ int main(int argc, char** argv) {
         return fail(error);
     }
     for (const auto& [choice, plugin] :
-         {std::pair{"display", "tomba2.framerate.display"},
-          std::pair{"60", "tomba2.framerate.60"},
-          std::pair{"90", "tomba2.framerate.90"},
+         {std::pair{"60", "tomba2.framerate.60"},
           std::pair{"120", "tomba2.framerate.120"},
           std::pair{"144", "tomba2.framerate.144"},
           std::pair{"165", "tomba2.framerate.165"},
-          std::pair{"240", "tomba2.framerate.240"}}) {
+          std::pair{"uncapped", "tomba2.framerate.uncapped"}}) {
         if (!manager.set_feature_option(
                 "tomba2.experimental.interpolated-frame-rate",
                 "interpolated-frame-rate", "rate", choice, &error)) {
@@ -162,7 +158,7 @@ int main(int argc, char** argv) {
 
     fs::remove_all(root, ec);
     std::cout << "Tomba 2 preloaded mods: 4 packages, "
-                 "3 widescreen choices, 7 interpolated frame-rate choices, "
+                 "3 widescreen choices, 5 interpolated frame-rate choices, "
                  "motion-adaptive clarity blend, game-owned FMV skipping, "
                  "visible default-off debug menu, stock guest code untouched\n";
     return 0;

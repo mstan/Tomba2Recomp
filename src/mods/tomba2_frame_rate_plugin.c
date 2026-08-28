@@ -11,17 +11,8 @@ static void tomba2_frame_rate_set(unsigned frames_per_second) {
     (void)psx_mod_set_frame_interpolation(frames_per_second);
 }
 
-static void tomba2_frame_rate_display_activate(void) {
-    /* Zero follows the measured display refresh; it must never busy-loop. */
-    tomba2_frame_rate_set(0u);
-}
-
 static void tomba2_frame_rate_60_activate(void) {
     tomba2_frame_rate_set(60u);
-}
-
-static void tomba2_frame_rate_90_activate(void) {
-    tomba2_frame_rate_set(90u);
 }
 
 static void tomba2_frame_rate_120_activate(void) {
@@ -36,17 +27,13 @@ static void tomba2_frame_rate_165_activate(void) {
     tomba2_frame_rate_set(165u);
 }
 
-static void tomba2_frame_rate_240_activate(void) {
-    tomba2_frame_rate_set(240u);
+static void tomba2_frame_rate_display_activate(void) {
+    tomba2_frame_rate_set(0u);
 }
 
 PSX_MOD_CONSTRUCTOR(tomba2_register_frame_rate_plugins) {
     (void)psx_mod_register_activation_plugin(
-        "tomba2.framerate.display", tomba2_frame_rate_display_activate);
-    (void)psx_mod_register_activation_plugin(
         "tomba2.framerate.60", tomba2_frame_rate_60_activate);
-    (void)psx_mod_register_activation_plugin(
-        "tomba2.framerate.90", tomba2_frame_rate_90_activate);
     (void)psx_mod_register_activation_plugin(
         "tomba2.framerate.120", tomba2_frame_rate_120_activate);
     (void)psx_mod_register_activation_plugin(
@@ -54,5 +41,5 @@ PSX_MOD_CONSTRUCTOR(tomba2_register_frame_rate_plugins) {
     (void)psx_mod_register_activation_plugin(
         "tomba2.framerate.165", tomba2_frame_rate_165_activate);
     (void)psx_mod_register_activation_plugin(
-        "tomba2.framerate.240", tomba2_frame_rate_240_activate);
+        "tomba2.framerate.uncapped", tomba2_frame_rate_display_activate);
 }
