@@ -1,0 +1,45 @@
+format_version = 5
+id = "psx.enhancement.fast-loading"
+version = "1.0.0"
+name = "Caricamento rapido (pacing host)"
+author = "psxrecomp"
+description = "Accelera il tempo reale dei caricamenti senza cambiare nulla che il gioco possa osservare. Ogni frame guest, interrupt CD e callback resta schedulato normalmente."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "*"
+
+[[feature]]
+id = "fast-loading"
+name = "Caricamento rapido (pacing host)"
+description = "Disattivato per impostazione predefinita. Il pacing host e l'acceleratore piu sicuro: cambia solo quanto rapidamente il tempo reale viene fornito a un caricamento, quindi il guest non puo desincronizzarsi. Il gioco accelera mentre un caricamento e rilevato; se una route speedrun dipende dal timing originale, lascialo disattivato e usa Velocita CD."
+group = "Qualita della vita"
+default_enabled = false
+
+[[option]]
+feature = "fast-loading"
+id = "multiplier"
+label = "Moltiplicatore velocita host"
+description = "Quanto piu veloce del tempo reale puo andare un caricamento. 1 e autentico. 2-32 e l'intervallo utile; valori maggiori funzionano ma smettono di aiutare quando il limite diventa l'host. Ignorato quando Senza limite e selezionato."
+group = "Qualita della vita"
+type = "integer"
+min = 1
+max = 1024
+step = 1
+default = 4
+disabled_by = "uncapped"
+
+[[option]]
+feature = "fast-loading"
+id = "uncapped"
+label = "Senza limite (massima velocita host)"
+description = "Esegue i caricamenti alla massima velocita gestibile da questa macchina, ignorando il moltiplicatore sopra."
+group = "Qualita della vita"
+type = "boolean"
+default = "false"
+
+[[plugin]]
+feature = "fast-loading"
+id = "psx.fast-loading"
+

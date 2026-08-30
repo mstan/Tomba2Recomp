@@ -1,0 +1,57 @@
+format_version = 5
+id = "psx.enhancement.cd-speed"
+version = "1.0.0"
+name = "Velocita CD"
+author = "psxrecomp"
+description = "Velocita del lettore CD emulato. Riduce i caricamenti senza accelerare il gioco, quindi non altera movimento o route basate sul timing."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "*"
+
+[[feature]]
+id = "cd-speed"
+name = "Velocita CD"
+description = "Disattivata per impostazione predefinita. Divide il ritardo dei settori emulati, quindi il lettore consegna i dati prima mentre il gioco continua alla velocita normale. Valori alti possono esporre bug di timing: aumenta gradualmente e riduci se un caricamento si blocca. FMV e audio CD mantengono sempre il timing autentico."
+group = "Qualita della vita"
+default_enabled = false
+
+[[option]]
+feature = "cd-speed"
+id = "multiplier"
+label = "Moltiplicatore velocita CD"
+description = "1 e l'autentico 1x. Prova 2-32; valori piu alti sono piu rapidi ma piu inclini a bug di timing. Qualsiasi valore positivo e accettato per trovare il limite di questo gioco. Ignorato quando Istantaneo e selezionato."
+group = "Qualita della vita"
+type = "integer"
+min = 1
+max = 1024
+step = 1
+default = 4
+disabled_by = "instant"
+
+[[option]]
+feature = "cd-speed"
+id = "instant"
+label = "Istantaneo (scheduler limitato)"
+description = "Consegna i settori alla massima velocita consentita dallo scheduler istantaneo limitato invece di usare un moltiplicatore. E la modalita piu rapida e piu rischiosa."
+group = "Qualita della vita"
+type = "boolean"
+default = "false"
+
+[[option]]
+feature = "cd-speed"
+id = "instant_budget"
+label = "Settori istantanei per frame"
+description = "Quanti settori lo scheduler istantaneo puo consegnare per frame. Valori piu bassi sono piu delicati per i giochi che non gradiscono burst. Usato solo quando Istantaneo e selezionato."
+group = "Qualita della vita"
+type = "integer"
+min = 1
+max = 256
+step = 1
+default = 32
+
+[[plugin]]
+feature = "cd-speed"
+id = "psx.cd-speed"
+

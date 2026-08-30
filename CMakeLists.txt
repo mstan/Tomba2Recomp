@@ -142,7 +142,7 @@ psxrecomp_add_runtime_target(psx-runtime-ita
 set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
     "${_tomba2_ita_exe_name}")
 
-target_compile_definitions(psx-runtime-ita PRIVATE RECOMP_UI_LANG_IT=1)
+recomp_target_launcher_language(psx-runtime-ita it)
 
 if(EXISTS "${TOMBA2_PRELOADED_MODS_ITA}/packages")
     add_custom_command(TARGET psx-runtime-ita POST_BUILD

@@ -236,7 +236,7 @@ int main(int argc, char** argv) {
         return 1;
 
     PSXRecompV4::ModPackageManager ita_manager;
-    if (load_catalog(ita_root, ita_manager, 3, 3) != 0) return 1;
+    if (load_catalog(ita_root, ita_manager, 7, 7) != 0) return 1;
     if (ita_manager.packages().find(kUsDebugMenuPackage) !=
         ita_manager.packages().end()) {
         return fail("Italian catalog must not include Debug Menu");
@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
     fs::remove_all(us_root, ec);
     fs::remove_all(ita_root, ec);
     std::cout << "Tomba 2 preloaded mods: 4 US packages, "
-                 "3 localized Italian packages, no Italian debug menu, "
+                 "7 localized Italian packages, no Italian debug menu, "
                  "3 widescreen choices, 7 interpolated frame-rate choices, "
                  "motion-adaptive clarity blend, game-owned FMV skipping, "
                  "stock guest code untouched\n";

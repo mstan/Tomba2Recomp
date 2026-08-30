@@ -1,0 +1,32 @@
+format_version = 5
+id = "psx.enhancement.pgxp"
+version = "1.0.0"
+name = "Precisione PGXP (geometria + texture)"
+author = "psxrecomp"
+description = "Precisione sub-pixel dei vertici e texture corrette in prospettiva: il runtime segue le proiezioni full-precision della GTE fino alla GPU, riducendo il tremolio dei poligoni 3D e la distorsione di pavimenti e pareti. Solo visivo: matematica, culling e readback del gioco restano identici all'hardware reale."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "*"
+
+[[feature]]
+id = "pgxp"
+name = "Precisione PGXP"
+description = "Disattivata per impostazione predefinita. Le correzioni sono validate per vertice contro i packet word esatti disegnati dal gioco e limitate a mezzo pixel, quindi sprite e UI 2D non vengono toccati. Se il tracker non puo provare un vertice, viene disegnato in modo fedele. Piu efficace con una build compilata con variante hook PGXP; sulle altre build la copertura e ridotta ma non dannosa. Richiede supersampling >= 2 per essere visibile."
+group = "Video"
+default_enabled = false
+
+[[option]]
+feature = "pgxp"
+id = "cpu_mode"
+label = "Propagazione modalita CPU"
+description = "Traccia la precisione anche tramite aritmetica CPU. Off corrisponde al default delle implementazioni di riferimento; On puo aumentare la copertura nei giochi che ricostruiscono vertici con matematica intera. Sempre sicuro: la validazione rifiuta dati stantii."
+group = "Video"
+type = "boolean"
+default = "false"
+
+[[plugin]]
+feature = "pgxp"
+id = "psx.pgxp"
+
