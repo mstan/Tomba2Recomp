@@ -12,6 +12,11 @@ namespace {
 constexpr const char* kGameId = "SCUS-94454";
 constexpr const char* kDiscSha256 =
     "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab";
+// Italian PAL release (Tombi! 2 - The Evil Swine Return). Every package
+// carries a second [[target]] block for it; resolve() must match it too.
+constexpr const char* kItaGameId = "SCES-02686";
+constexpr const char* kItaDiscSha256 =
+    "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188";
 
 int fail(const std::string& message) {
     std::cerr << "FAIL: " << message << "\n";
@@ -84,6 +89,14 @@ int main(int argc, char** argv) {
         return fail("default-disabled catalog produced runtime operations");
     }
 
+    const auto ita_default_plan =
+        manager.resolve(kItaGameId, "", kItaDiscSha256);
+    if (!ita_default_plan.ok || !ita_default_plan.writes.empty() ||
+        !ita_default_plan.plugins.empty()) {
+        return fail("default-disabled catalog produced runtime operations "
+                    "for the Italian target");
+    }
+
     if (!manager.set_feature_enabled(
             "tomba2.enhancement.widescreen", "widescreen", true, &error)) {
         return fail(error);
@@ -101,6 +114,12 @@ int main(int argc, char** argv) {
         if (!plan.ok || plan.plugins.size() != 1 ||
             plan.plugins.front().id != plugin) {
             return fail(std::string("wrong widescreen plugin for ") + choice);
+        }
+        const auto ita_plan = manager.resolve(kItaGameId, "", kItaDiscSha256);
+        if (!ita_plan.ok || ita_plan.plugins.size() != 1 ||
+            ita_plan.plugins.front().id != plugin) {
+            return fail(std::string("wrong ITALIAN widescreen plugin for ") +
+                        choice);
         }
     }
 
@@ -131,6 +150,14 @@ int main(int argc, char** argv) {
                 std::string("wrong interpolated frame-rate plan for ") +
                 choice);
         }
+        const auto ita_plan = manager.resolve(kItaGameId, "", kItaDiscSha256);
+        if (!ita_plan.ok || !ita_plan.writes.empty() ||
+            ita_plan.plugins.size() != 1 ||
+            ita_plan.plugins.front().id != plugin) {
+            return fail(
+                std::string("wrong ITALIAN interpolated frame-rate plan for ") +
+                choice);
+        }
     }
 
     if (!manager.set_feature_enabled(
@@ -146,6 +173,12 @@ int main(int argc, char** argv) {
         skip_plan.plugins.front().id != "tomba2.fmv.skip") {
         return fail("Skip FMVs did not resolve its trusted activation plugin");
     }
+    const auto ita_skip_plan = manager.resolve(kItaGameId, "", kItaDiscSha256);
+    if (!ita_skip_plan.ok || !ita_skip_plan.writes.empty() ||
+        ita_skip_plan.plugins.size() != 1 ||
+        ita_skip_plan.plugins.front().id != "tomba2.fmv.skip") {
+        return fail("Skip FMVs did not resolve its trusted activation plugin for Italian target");
+    }
 
     if (!manager.set_feature_enabled(
             "tomba2.enhancement.skip-fmvs", "skip-fmvs", false, &error) ||
@@ -158,6 +191,12 @@ int main(int argc, char** argv) {
         debug_plan.plugins.size() != 1 ||
         debug_plan.plugins.front().id != "tomba2.debug.menu") {
         return fail("Debug Menu did not resolve its trusted plugin alone");
+    }
+    const auto ita_debug_plan = manager.resolve(kItaGameId, "", kItaDiscSha256);
+    if (!ita_debug_plan.ok || !ita_debug_plan.writes.empty() ||
+        ita_debug_plan.plugins.size() != 1 ||
+        ita_debug_plan.plugins.front().id != "tomba2.debug.menu") {
+        return fail("Debug Menu did not resolve its trusted plugin alone for Italian target");
     }
 
     fs::remove_all(root, ec);

@@ -11,6 +11,11 @@ save_compatibility = "shared"
 game_id = "SCUS-94454"
 disc_sha256 = "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
 
+# Italian PAL release (Tombi! 2 - The Evil Swine Return, SCES-02686).
+[[target]]
+game_id = "SCES-02686"
+disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
+
 [[feature]]
 id = "interpolated-frame-rate"
 name = "Temporal Frame Blending (Experimental)"

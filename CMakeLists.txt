@@ -98,3 +98,35 @@ if(BUILD_TESTING)
                 "${TOMBA2_PRELOADED_MODS}"
     )
 endif()
+
+# ---------------------------------------------------------------------------
+# Italian PAL release (Tombi! 2 - The Evil Swine Return, SCES-02686).
+# Same runtime, same mod plugins; only the game image differs. The recompiler
+# writes generated_ita/SCES_026.86_* shards from game_ita.toml.
+file(GLOB GAME_ITA_GENERATED_FULL CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/generated_ita/SCES_026.86_full_*.c")
+set(GAME_ITA_GENERATED_DISPATCH
+    "${CMAKE_CURRENT_SOURCE_DIR}/generated_ita/SCES_026.86_dispatch.c")
+
+set(_tomba2_ita_exe_name "Tombi2Recomp-ita")
+
+psxrecomp_add_runtime_target(psx-runtime-ita
+    GAME_GENERATED_FULL_C "${GAME_ITA_GENERATED_FULL}"
+    GAME_GENERATED_DISPATCH_C "${GAME_ITA_GENERATED_DISPATCH}"
+    EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
+    DEBUG_PORT 4516
+    WINDOW_TITLE "Tombi! 2 (Italian) Recompiled"
+    DEFAULT_GAME_CONFIG_PATH "game_ita.toml"
+    LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
+)
+
+set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
+    "${_tomba2_ita_exe_name}")
+
+if(EXISTS "${TOMBA2_PRELOADED_MODS}/packages")
+    add_custom_command(TARGET psx-runtime-ita POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${TOMBA2_PRELOADED_MODS}"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods"
+        COMMENT "Preloading the Tombi 2 (ITA) mod catalog")
+endif()
