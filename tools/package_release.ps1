@@ -3,6 +3,8 @@ param(
     # shared with tools/package_appimage.sh so the two platforms cannot ship
     # different version strings.
     [string]$Version = "",
+    [ValidateSet("usa", "ita")]
+    [string]$Variant = "usa",
     [string]$BuildDir = "build-release",
     # Where the accumulated overlay cache lives (compile_overlays.py --out-dir,
     # per game.toml overlay_autocompile_cmd). Bundled as a head start; optional.
@@ -39,8 +41,28 @@ if (-not $Version) {
 }
 $BuildPath = Join-Path $Root $BuildDir
 $StageRoot = Join-Path $Root "release-stage"
-$Stage = Join-Path $StageRoot "Tomba2Recomp-windows-x64"
-$ZipPath = Join-Path $Root ("Tomba2Recomp-{0}-windows-x64.zip" -f $Version)
+$RuntimeTarget = "psx-runtime"
+$ExeStem = "Tomba2Recomp"
+$StageName = "Tomba2Recomp-windows-x64"
+$GameConfigName = "game.toml"
+$GameConfigSource = Join-Path $PackagingRelease $GameConfigName
+$RegenConfig = Join-Path $Root "game.toml"
+$CacheGameId = "SCUS-94454"
+$ExpectedMods = 8
+$ReleaseTitle = "Tomba! 2 Recompiled"
+if ($Variant -eq "ita") {
+    $RuntimeTarget = "psx-runtime-ita"
+    $ExeStem = "Tombi2Recomp-ita"
+    $StageName = "Tombi2Recomp-ita-windows-x64"
+    $GameConfigName = "game_ita.toml"
+    $GameConfigSource = Join-Path $PackagingRelease $GameConfigName
+    $RegenConfig = Join-Path $Root "game_ita.toml"
+    $CacheGameId = "SCES-02686"
+    $ExpectedMods = 7
+    $ReleaseTitle = "Tombi! 2 (Italian) Recompiled"
+}
+$Stage = Join-Path $StageRoot $StageName
+$ZipPath = Join-Path $Root ("{0}-{1}-windows-x64.zip" -f $ExeStem, $Version)
 $MingwBin = "C:\msys64\mingw64\bin"
 
 $env:PATH = "$MingwBin;$env:PATH"
@@ -54,8 +76,8 @@ if (-not $NormalPriority) {
     [System.Diagnostics.Process]::GetCurrentProcess().PriorityClass =
         [System.Diagnostics.ProcessPriorityClass]::BelowNormal
 }
-Write-Host ("Packaging Tomba2Recomp {0} (jobs={1}, priority={2})" -f `
-    $Version, $Jobs, [System.Diagnostics.Process]::GetCurrentProcess().PriorityClass)
+Write-Host ("Packaging {0} {1} ({2}, jobs={3}, priority={4})" -f `
+    $ExeStem, $Version, $Variant, $Jobs, [System.Diagnostics.Process]::GetCurrentProcess().PriorityClass)
 
 # ---- Path helpers ---------------------------------------------------------
 # PowerShell's Copy-Item decides "is the destination a file or a directory?"
@@ -194,7 +216,7 @@ Ensure-BiosBackends -FrameworkRoot (Join-Path $Root "psxrecomp-v4")
 if ($SkipRegen) {
     Write-Host "SkipRegen: shipping checked-in generated/ code (validated bits) without regeneration"
 } else {
-    & (Join-Path $RecompDir "psxrecomp-game.exe") --config (Join-Path $Root "game.toml")
+    & (Join-Path $RecompDir "psxrecomp-game.exe") --config $RegenConfig
     if ($LASTEXITCODE -ne 0) { throw "game regen failed" }
 }
 
@@ -208,7 +230,7 @@ Invoke-Native {
         -DPSX_DEBUG_TOOLS=OFF `
         "-DCMAKE_EXE_LINKER_FLAGS=-Wl,--no-insert-timestamp"
 } "cmake configure"
-Invoke-Native { cmake --build $BuildPath -j $Jobs } "cmake build"
+Invoke-Native { cmake --build $BuildPath --target $RuntimeTarget -j $Jobs } "cmake build"
 
 if (Test-Path -LiteralPath $StageRoot) {
     Remove-Item -LiteralPath $StageRoot -Recurse -Force
@@ -216,9 +238,9 @@ if (Test-Path -LiteralPath $StageRoot) {
 New-Dir $Stage | Out-Null
 New-Dir (Join-Path $Stage "saves") | Out-Null
 
-$DevExe = Join-Path $BuildPath "Tomba2Recomp.exe"
-if (-not (Test-Path -LiteralPath $DevExe)) { $DevExe = Join-Path $BuildPath "psx-runtime.exe" }
-Copy-FileTo $DevExe (Join-Path $Stage "Tomba2Recomp.exe")
+$DevExe = Join-Path $BuildPath "$ExeStem.exe"
+if (-not (Test-Path -LiteralPath $DevExe)) { $DevExe = Join-Path $BuildPath "$RuntimeTarget.exe" }
+Copy-FileTo $DevExe (Join-Path $Stage "$ExeStem.exe")
 Copy-FileInto (Join-Path $Root "README.md") $Stage
 Copy-FileInto (Join-Path $Root "LICENSE") $Stage
 Copy-FileInto (Join-Path $PackagingRelease "START_HERE.txt") $Stage
@@ -256,8 +278,8 @@ if (-not (Test-Path (Join-Path $ModsSrc "packages"))) {
 }
 Copy-TreeTo $ModsSrc (Join-Path $Stage "mods")
 $modManifestCount = (Get-ChildItem (Join-Path $Stage "mods/packages") -Recurse -Filter manifest.toml).Count
-if ($modManifestCount -ne 5) {
-    throw "Expected 5 mod manifests (3 game-owned + 2 framework loading-speed), found $modManifestCount"
+if ($modManifestCount -ne $ExpectedMods) {
+    throw "Expected $ExpectedMods mod manifests for $Variant, found $modManifestCount"
 }
 Write-Host "Bundled Tomba 2 mod catalog: $modManifestCount package(s)"
 
@@ -265,7 +287,7 @@ Write-Host "Bundled Tomba 2 mod catalog: $modManifestCount package(s)"
 # minus dev-only sections (debug port, overlay autocompile command, [audit]).
 # Player-facing game.toml comes from packaging/release/game.toml, the same
 # file tools/package_appimage.sh ships, so Windows and Linux cannot drift.
-Copy-FileTo (Join-Path $PackagingRelease "game.toml") (Join-Path $Stage "game.toml")
+Copy-FileTo $GameConfigSource (Join-Path $Stage $GameConfigName)
 
 # Prebuilt overlay cache: DLLs, range manifests, and exact-hash BIOS-resident
 # sidecars; only THIS build's codegen tag.
@@ -278,18 +300,18 @@ s = importlib.util.spec_from_file_location('co', r'$RecompTools\compile_overlays
 m = importlib.util.module_from_spec(s); s.loader.exec_module(m)
 inc = r'$RecompInc'
 print('cg%d_%08x_gc%08x' % (
-    m.codegen_ver(inc),
-    m.codegen_hash(inc),
-    m.overlay_config_hash(
-        r'$(Join-Path $RecompDir "psxrecomp-game.exe")',
-        r'$(Join-Path $Stage "game.toml")')))
+        m.codegen_ver(inc),
+        m.codegen_hash(inc),
+        m.overlay_config_hash(
+            r'$(Join-Path $RecompDir "psxrecomp-game.exe")',
+            r'$(Join-Path $Stage $GameConfigName)')))
 "@ | Set-Content -Encoding ASCII $tagScript
 $CgTag = (& py -3 $tagScript).Trim()
 Remove-Item -Force $tagScript
 Write-Host "Release codegen tag: $CgTag (only this cache namespace is shipped)"
-$CacheSrc = Join-Path $Root "$CacheBuildDir/cache/SCUS-94454"
+$CacheSrc = Join-Path $Root "$CacheBuildDir/cache/$CacheGameId"
 if (Test-Path $CacheSrc) {
-    $CacheDst = Join-Path $Stage "cache/SCUS-94454"
+    $CacheDst = Join-Path $Stage "cache/$CacheGameId"
     $cacheFiles = @(Get-ChildItem $CacheSrc -Recurse -File -Include *.dll,*.ranges,*.resident |
         Where-Object { $_.FullName -notmatch '[\\/]sljit[\\/]' -and $_.FullName -match "[\\/]$CgTag[\\/]" })
     if ($cacheFiles.Count -eq 0) {
@@ -411,7 +433,7 @@ Write-Host "Bundled overlay toolchain (embedded python + tcc + recompiler): ~$tc
 
 # Assert self-containment (imports only Windows system DLLs).
 $objdump = Join-Path $MingwBin "objdump.exe"
-$imports = & $objdump -p (Join-Path $Stage "Tomba2Recomp.exe") |
+$imports = & $objdump -p (Join-Path $Stage "$ExeStem.exe") |
     Select-String "DLL Name: (.+)" | ForEach-Object { $_.Matches[0].Groups[1].Value.Trim() }
 $systemDlls = @("kernel32.dll","user32.dll","gdi32.dll","shell32.dll","msvcrt.dll",
                 "advapi32.dll","ws2_32.dll","comdlg32.dll","dbghelp.dll","ole32.dll",
@@ -427,11 +449,11 @@ Write-Host "Verified self-contained: imports only system DLLs ($($imports.Count)
 # makes it silently load the BUILDER'S BIOS wherever that path exists, so the
 # clean-install picker flow is never exercised where releases are validated
 # (this shipped in v0.0.4 and masked GH issue #1's setup on the dev machine).
-$exeBytes = [System.IO.File]::ReadAllBytes((Join-Path $Stage "Tomba2Recomp.exe"))
+$exeBytes = [System.IO.File]::ReadAllBytes((Join-Path $Stage "$ExeStem.exe"))
 $exeText  = [System.Text.Encoding]::ASCII.GetString($exeBytes)
 $bakedBios = [regex]::Matches($exeText, '[A-Za-z]:[/\\][ -~]*?SCPH1001\.BIN') | ForEach-Object { $_.Value } | Select-Object -Unique
 if ($bakedBios) {
-    throw "Release exe contains baked absolute BIOS path(s): $($bakedBios -join '; ') -- build with a relative DEFAULT_BIOS_PATH"
+        throw "Release exe contains baked absolute BIOS path(s): $($bakedBios -join '; ') -- build with a relative DEFAULT_BIOS_PATH"
 }
 Write-Host "Verified no baked absolute BIOS path in the exe"
 
@@ -456,7 +478,7 @@ $TombaSha = (& git -C $Root rev-parse --short HEAD).Trim()
 $PsxRecompSha = (& git -C (Join-Path $Root "psxrecomp-v4") rev-parse --short HEAD).Trim()
 
 @"
-Tomba2Recomp $Version
+$ReleaseTitle $Version
 
 Tomba! 2: The Evil Swine Return boots from the PlayStation BIOS and plays -
 through the intro, the title screen, the attract demos, and into gameplay,
@@ -465,6 +487,7 @@ through a full playthrough yet, so treat it as a very playable preview.
 
 New in this release:
 - Based on Tomba2Recomp master $TombaSha and psxrecomp master $PsxRecompSha.
+- Variant: $Variant.
 - Tomba 2 now defaults to 2x SSAA with antialiasing enabled for the OpenGL
   renderer; lower supersampling to 1 in the launcher/settings on slower GPUs.
 - Adds the conservative VSync(-1) query acceleration path used during loading,

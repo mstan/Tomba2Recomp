@@ -6,8 +6,14 @@
 # its seeding and print the data directory instead of exec'ing the runtime.
 # Then asserts the layout the release promises.
 #
-# Usage: bash tools/test_appimage_layout.sh path/to/<Title>-<ver>-linux-x86_64.AppImage
+# Usage: bash tools/test_appimage_layout.sh [--variant usa|ita] path/to/<Title>-<ver>-linux-x86_64.AppImage
 set -euo pipefail
+
+variant=usa
+if [ "${1:-}" = "--variant" ]; then
+    variant=${2:-}
+    shift 2
+fi
 
 appimage=${1:-}
 [ -n "$appimage" ] || { echo "usage: $0 <AppImage>" >&2; exit 2; }
@@ -19,6 +25,16 @@ expected_version=$(tr -d ' \t\r\n' < "$root/packaging/release/VERSION")
 # EXPECTED_MODS the size of the shipped catalog.
 # shellcheck source=/dev/null
 . "$root/packaging/release/app.conf"
+GAME_TOML=${GAME_TOML:-game.toml}
+case "$variant" in
+    usa) ;;
+    ita)
+        ENV_PREFIX="TOMBI2_RECOMP_ITA"
+        EXPECTED_MODS=7
+        GAME_TOML="game_ita.toml"
+        ;;
+    *) echo "unknown variant: $variant" >&2; exit 2;;
+esac
 
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
@@ -32,7 +48,7 @@ check_file() { [ -f "$data_dir/$1" ] || { echo "MISSING file: $1" >&2; fail=1; }
 check_dir()  { [ -d "$data_dir/$1" ] || { echo "MISSING dir:  $1" >&2; fail=1; }; }
 
 for d in saves cache mods assets bios; do check_dir "$d"; done
-for f in game.toml input.ini START_HERE.txt LICENSE README.md \
+for f in "$GAME_TOML" input.ini START_HERE.txt LICENSE README.md \
          bios/openbios.bin bios/OpenBIOS.LICENSE .appimage-layout-version; do
     check_file "$f"
 done
