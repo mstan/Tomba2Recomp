@@ -6,14 +6,18 @@
 # its seeding and print the data directory instead of exec'ing the runtime.
 # Then asserts the layout the release promises.
 #
-# Usage: bash tools/test_appimage_layout.sh [--variant usa|ita] path/to/<Title>-<ver>-linux-x86_64.AppImage
+# Usage: bash tools/test_appimage_layout.sh [--variant usa|ita] [--allow-no-cache] path/to/<Title>-<ver>-linux-x86_64.AppImage
 set -euo pipefail
 
 variant=usa
-if [ "${1:-}" = "--variant" ]; then
-    variant=${2:-}
-    shift 2
-fi
+allow_no_cache=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --variant) variant=${2:-}; shift 2;;
+        --allow-no-cache) allow_no_cache=1; shift;;
+        *) break;;
+    esac
+done
 
 appimage=${1:-}
 [ -n "$appimage" ] || { echo "usage: $0 <AppImage>" >&2; exit 2; }
@@ -69,7 +73,7 @@ fi
 # gcc/linux-x64; a .dll here would mean the Windows cache was staged and the
 # loader (which dlopen()s OVERLAY_SHARED_EXT) would ignore every one of them.
 seeded_so=$(find "$data_dir/cache" -name '*.so' 2>/dev/null | wc -l)
-if [ "$seeded_so" -eq 0 ]; then
+if [ "$seeded_so" -eq 0 ] && [ "$allow_no_cache" = "0" ]; then
     echo "seeded cache holds no .so shards" >&2
     fail=1
 fi
