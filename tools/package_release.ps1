@@ -210,13 +210,20 @@ function Ensure-BiosBackends {
 
 # Framework via THIS repo's junction (psxrecomp-v4), so the release always
 # builds against the pinned framework tree, never a sibling checkout.
-$RecompDir = Resolve-Path (Join-Path $Root "psxrecomp-v4\recompiler\build-t2")
+$RecompSourceDir = Join-Path $Root "psxrecomp-v4\recompiler"
+$RecompDir = Join-Path $RecompSourceDir "build-t2"
+$RecompBin = Join-Path $RecompDir "psxrecomp-game.exe"
+if (-not (Test-Path -LiteralPath $RecompBin)) {
+    Invoke-Native {
+        cmake -S $RecompSourceDir -B $RecompDir -G Ninja -DCMAKE_BUILD_TYPE=Release
+    } "recompiler configure"
+}
 Invoke-Native { cmake --build $RecompDir --target psxrecomp-game -j $Jobs } "recompiler build"
 Ensure-BiosBackends -FrameworkRoot (Join-Path $Root "psxrecomp-v4")
 if ($SkipRegen) {
     Write-Host "SkipRegen: shipping checked-in generated/ code (validated bits) without regeneration"
 } else {
-    & (Join-Path $RecompDir "psxrecomp-game.exe") --config $RegenConfig
+    & $RecompBin --config $RegenConfig
     if ($LASTEXITCODE -ne 0) { throw "game regen failed" }
 }
 
@@ -303,7 +310,7 @@ print('cg%d_%08x_gc%08x' % (
         m.codegen_ver(inc),
         m.codegen_hash(inc),
         m.overlay_config_hash(
-            r'$(Join-Path $RecompDir "psxrecomp-game.exe")',
+            r'$RecompBin',
             r'$(Join-Path $Stage $GameConfigName)')))
 "@ | Set-Content -Encoding ASCII $tagScript
 $CgTag = (& py -3 $tagScript).Trim()
@@ -420,7 +427,7 @@ if (Test-Path -LiteralPath $TccTmp) { Remove-Item -LiteralPath $TccTmp -Recurse 
 Expand-Archive -LiteralPath $TccZip -DestinationPath $TccTmp -Force
 Copy-TreeTo (Join-Path $TccTmp "tcc") (Join-Path $Toolchain "tcc")
 
-Copy-Item (Join-Path $RecompDir "psxrecomp-game.exe") $Toolchain
+Copy-Item $RecompBin $Toolchain
 foreach ($d in @("libgcc_s_seh-1.dll","libstdc++-6.dll","libwinpthread-1.dll")) {
     Copy-Item (Join-Path $MingwBin $d) $Toolchain
 }
