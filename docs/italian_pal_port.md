@@ -231,8 +231,9 @@ queue_guard = false
 
 ## 6. Built-in Mod Manifests & Test Coverage
 
-The Italian release uses localized, Italian-only package manifests for the
-preloaded user-facing enhancements:
+The Italian release stages a separate localized preloaded catalog from
+`mods/preloaded_ita`. It carries Italian-only package manifests for the
+user-facing enhancements:
 
 * `tombi2.enhancement.widescreen`
 * `tombi2.experimental.interpolated-frame-rate`
@@ -245,9 +246,10 @@ game_id = "SCES-02686"
 disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
 ```
 The test suite in `tests/test_preloaded_mods.cpp` validates declarative
-resolution for the 4 US packages and the 3 localized Italian packages. The
-Italian target intentionally has no Debug Menu package until its PAL hook and
-signature addresses are mapped and validated.
+resolution for the 4 US packages in `mods/preloaded` and the 3 localized
+Italian packages in `mods/preloaded_ita`. The Italian target intentionally has
+no Debug Menu package until its PAL hook and signature addresses are mapped and
+validated.
 
 ---
 
