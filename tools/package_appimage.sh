@@ -276,6 +276,13 @@ game_id=$(sed -n 's/^[[:space:]]*id[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' 
 
 recompiler_bin=$fw/$bios_build/psxrecomp-game
 [ -x "$recompiler_bin" ] || recompiler_bin=$fw/recompiler/build-linux/psxrecomp-game
+if [ ! -x "$recompiler_bin" ]; then
+    recompiler_build=$(dirname -- "$recompiler_bin")
+    gen=Ninja
+    command -v ninja >/dev/null 2>&1 || gen="Unix Makefiles"
+    cmake -S "$fw/recompiler" -B "$recompiler_build" -G "$gen" -DCMAKE_BUILD_TYPE=Release
+    cmake --build "$recompiler_build" --target psxrecomp-game -j "$jobs"
+fi
 cg_tag=$(python3 - "$fw/tools/compile_overlays.py" "$fw/runtime/include" \
                    "$recompiler_bin" "$player_toml" <<'PY'
 import importlib.util, os, sys
