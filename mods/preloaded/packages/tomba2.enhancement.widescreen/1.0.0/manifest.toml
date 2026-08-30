@@ -11,6 +11,10 @@ save_compatibility = "shared"
 game_id = "SCUS-94454"
 disc_sha256 = "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
 
+[[target]]
+game_id = "SCUS-94454"
+disc_sha256 = "56bb2164df4e49acce2560acca7ce90829bec0762f53a12ad8e2008ff0f6fada"
+
 [[feature]]
 id = "widescreen"
 name = "Widescreen (Experimental)"

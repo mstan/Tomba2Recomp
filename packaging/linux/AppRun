@@ -30,7 +30,7 @@ fi
 payload=$APPDIR/usr/share/@PAYLOAD_DIR@
 runtime=$APPDIR/usr/bin/@EXE_NAME@
 
-if [ ! -x "$runtime" ] || [ ! -f "$payload/game.toml" ]; then
+if [ ! -x "$runtime" ] || [ ! -f "$payload/@GAME_TOML@" ]; then
     echo "@APP_NAME@: AppImage payload is incomplete." >&2
     exit 1
 fi
@@ -63,7 +63,7 @@ if [ -d "$payload/cache" ]; then
     chmod -R u+rwX "$data_dir/cache"
 fi
 
-for file in game.toml LICENSE README.md RELEASE.txt START_HERE.txt; do
+for file in @GAME_TOML@ LICENSE README.md RELEASE.txt START_HERE.txt; do
     if [ -f "$payload/$file" ]; then
         cp -f "$payload/$file" "$data_dir/$file"
         chmod u+rw "$data_dir/$file"

@@ -6,6 +6,7 @@
 
 # Recompiler output (derivative of copyrighted game code — regenerate locally)
 /generated/
+/generated_ita/
 
 # Release packaging artifacts
 /release-stage/
@@ -13,8 +14,11 @@
 
 # Local PlayStation assets (disc image, extracted boot EXE, memory cards)
 /tomba2/
+/tombi2/
+/third_party/
 /isos/
 /saves/
+/saves_ita/
 /_extract/
 
 # Disc / image / memcard formats

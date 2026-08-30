@@ -68,13 +68,19 @@ psxrecomp_add_runtime_target(psx-runtime
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
 
-# Ship Tomba 2's trusted, game-owned mods beside the runtime. The authentic
+# Ship Tomba 2's trusted, game-owned mods beside each runtime. The authentic
 # 4:3/non-interpolated presentation and stock guest code remain the disabled
-# baseline.
+# baseline. The Italian runtime stages a separate localized catalog so
+# unsupported US-only packages (notably Debug Menu) never appear in its launcher.
 set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
+set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
 
 if(EXISTS "${TOMBA2_PRELOADED_MODS}/packages")
     add_custom_command(TARGET psx-runtime POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rm -rf
+            "$<TARGET_FILE_DIR:psx-runtime>/mods/packages/tombi2.enhancement.skip-fmvs"
+            "$<TARGET_FILE_DIR:psx-runtime>/mods/packages/tombi2.enhancement.widescreen"
+            "$<TARGET_FILE_DIR:psx-runtime>/mods/packages/tombi2.experimental.interpolated-frame-rate"
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${TOMBA2_PRELOADED_MODS}"
             "$<TARGET_FILE_DIR:psx-runtime>/mods"
@@ -96,5 +102,60 @@ if(BUILD_TESTING)
         NAME tomba2_preloaded_mods_test
         COMMAND "$<TARGET_FILE:tomba2_preloaded_mods_test>"
                 "${TOMBA2_PRELOADED_MODS}"
+                "${TOMBA2_PRELOADED_MODS_ITA}"
     )
+endif()
+
+# ---------------------------------------------------------------------------
+# Italian PAL release (Tombi! 2 - The Evil Swine Return, SCES-02686).
+# Same runtime, same mod plugins; only the game image differs. The recompiler
+# writes generated_ita/SCES_026.86_* shards from game_ita.toml.
+file(GLOB GAME_ITA_GENERATED_FULL CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/generated_ita/SCES_026.86_full_*.c")
+set(GAME_ITA_GENERATED_DISPATCH
+    "${CMAKE_CURRENT_SOURCE_DIR}/generated_ita/SCES_026.86_dispatch.c")
+
+set(PSXRECOMP_GAME_ITA_EXE_NAME_OVERRIDE "" CACHE STRING
+    "Override the Italian runtime OUTPUT_NAME (default: Tombi2Recomp-ita)")
+set(PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE "" CACHE STRING
+    "Override the Italian runtime TCP debug port (default: 4516)")
+
+set(_tomba2_ita_exe_name "Tombi2Recomp-ita")
+if(PSXRECOMP_GAME_ITA_EXE_NAME_OVERRIDE)
+    set(_tomba2_ita_exe_name "${PSXRECOMP_GAME_ITA_EXE_NAME_OVERRIDE}")
+endif()
+set(_tomba2_ita_debug_port 4516)
+if(PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE)
+    set(_tomba2_ita_debug_port "${PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE}")
+endif()
+
+psxrecomp_add_runtime_target(psx-runtime-ita
+    GAME_GENERATED_FULL_C "${GAME_ITA_GENERATED_FULL}"
+    GAME_GENERATED_DISPATCH_C "${GAME_ITA_GENERATED_DISPATCH}"
+    EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
+    DEBUG_PORT ${_tomba2_ita_debug_port}
+    WINDOW_TITLE "Tombi! 2 (Italian) Recompiled"
+    DEFAULT_GAME_CONFIG_PATH "game_ita.toml"
+    LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
+)
+
+set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
+    "${_tomba2_ita_exe_name}")
+
+recomp_target_launcher_language(psx-runtime-ita it)
+
+if(EXISTS "${TOMBA2_PRELOADED_MODS_ITA}/packages")
+    add_custom_command(TARGET psx-runtime-ita POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rm -rf
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.debug.debug-menu"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.enhancement.skip-fmvs"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.enhancement.widescreen"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.experimental.interpolated-frame-rate"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tombi2.enhancement.skip-fmvs"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tombi2.enhancement.widescreen"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tombi2.experimental.interpolated-frame-rate"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${TOMBA2_PRELOADED_MODS_ITA}"
+            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods"
+        COMMENT "Preloading the Tombi 2 (ITA) mod catalog")
 endif()

@@ -1,0 +1,150 @@
+[game]
+name = "Tombi! 2 - The Evil Swine Return"
+id = "SCES-02686"
+exe = "tombi2/SCES_026.86"
+disc = "tombi2/Tombi! 2 (Italy).cue"
+load_address = "0x80010000"
+entry_pc = "0x80017B90"
+text_size = "0x00028000"
+stack_base = "0x801FFFF0"
+
+[recompiler]
+seeds = "seeds/ghidra_funcs_ita.txt"
+out_dir = "generated_ita"
+strict = true
+
+[runtime]
+window_title = "Tombi! 2 (Italian) Recompiled"
+memcard_dir = "saves_ita"
+fast_boot = true
+overlay_cache = true
+overlay_capture_history = true
+overlay_backend = "auto"
+overlay_native_block = [
+  "0x80097818",
+  "0x800529D8",
+  "0x80052A20",
+]
+
+[controller]
+default_mode = "digital"
+allow_hybrid = false
+lock_mode    = true
+
+[video]
+renderer          = "opengl"
+supersampling     = 2
+antialiasing      = true
+texture_filtering = "nearest"
+pgxp_tolerance    = -1.0
+geometry_correction = true
+frame_interpolation = false
+frame_interpolation_fps = 0
+offer_frame_interpolation = false
+aspect_ratio = "4:3"
+auto_skip_fmv       = false
+offer_skip_fmv      = false
+fmv_skip_no_xa      = true
+fmv_skip_no_xa_hold = 600
+
+[widescreen]
+offer = false
+gte_game_mode  = true
+offer_ultrawide = true
+adaptive_view  = true
+nw_hud_corners = false
+nw_backdrop    = false
+nw_flat_backdrop = true
+nw_phase_backdrop = true
+
+[widescreen.cull]
+auto_screen_x = true
+screen_w_imms = ["0x140", "0x141", "0x142"]
+screen_h_imms = ["0xF0", "0xFE", "0xFF", "0x100", "0x101", "0x102", "0x103"]
+guard_pixels = 52
+activation_guard_pixels = 256
+bias_sites = [
+    "0x8006A4F8", "0x8006A51C",
+]
+range_sites = [
+    "0x8006A500", "0x8006A528",
+]
+screen_x_sites = ["0x8003EB24"]
+
+[[widescreen.cull.angle]]
+address = "0x8010B5E8"
+expected = "0x240301C7"
+
+[[widescreen.cull.angle]]
+address = "0x80130360"
+expected = "0x2403012C"
+
+[[widescreen.cull.angle]]
+address = "0x801405D0"
+expected = "0x24020155"
+
+[[widescreen.cull.angle]]
+address = "0x80140628"
+expected = "0x240301C7"
+
+[[widescreen.cull.angle]]
+address = "0x801406BC"
+expected = "0x2402013E"
+
+[[widescreen.cull.angle]]
+address = "0x801406DC"
+expected = "0x240201C7"
+
+[widescreen.cull.aspect_cone]
+forward_addr = "0x1F8000E8"
+object_type_offset = 12
+object_reg = 19
+x_reg = 16
+z_reg = 17
+y_reg = 18
+hysteresis_pixels = 24
+queue_reserve = 4
+queue_count_addrs = ["0x1F800144", "0x1F800150", "0x1F80015C"]
+queue_capacities = [24, 40, 28]
+queue_type_masks = ["0x00000204", "0x00000010", "0x00000020"]
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x8002BAA4"
+expected = "0x0082202A"
+cosine_threshold = 856
+object_reg = 20
+x_reg = 19
+z_reg = 18
+y_reg = 17
+queue_guard = false
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077C18"
+expected = "0x28620370"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077CAC"
+expected = "0x28620358"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077D58"
+expected = "0x28620358"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077DEC"
+expected = "0x28620370"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077E80"
+expected = "0x28620350"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077F14"
+expected = "0x28620368"
+
+[load_accel.vsync_query]
+func = "0x80016E70"
+counter_addr = "0x80025ED8"
+gpustat_ptr_addr = "0x80024DA0"
+timer1_ptr_addr = "0x80024DA4"
+timer1_cache_addr = "0x80024DA8"

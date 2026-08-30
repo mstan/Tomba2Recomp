@@ -1,0 +1,91 @@
+format_version = 5
+id = "tombi2.experimental.interpolated-frame-rate"
+version = "1.0.0"
+name = "Frame blending di Tombi! 2"
+author = "mstan"
+description = "Blending temporale solo di presentazione. Logica di gioco, timer, input e audio restano alla cadenza originale PAL."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-02686"
+disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
+
+[[feature]]
+id = "interpolated-frame-rate"
+name = "Blending temporale (sperimentale)"
+description = "Fonde le immagini completate alla frequenza scelta senza accelerare gameplay, timer, input o audio. Non e generazione di fotogrammi con vettori di movimento."
+group = "Frame rate"
+default_enabled = false
+
+[[option]]
+feature = "interpolated-frame-rate"
+id = "rate"
+label = "Frequenza presentazione"
+description = "La frequenza dello schermo e consigliata per una cadenza regolare. La chiarezza motion-adaptive riduce le doppie immagini. Richiede OpenGL."
+group = "Frame rate"
+type = "choice"
+default = "display"
+
+[[option.choice]]
+value = "display"
+label = "Frequenza schermo (consigliata)"
+
+[[option.choice]]
+value = "60"
+label = "60 FPS"
+
+[[option.choice]]
+value = "90"
+label = "90 FPS"
+
+[[option.choice]]
+value = "120"
+label = "120 FPS"
+
+[[option.choice]]
+value = "144"
+label = "144 FPS"
+
+[[option.choice]]
+value = "165"
+label = "165 FPS"
+
+[[option.choice]]
+value = "240"
+label = "240 FPS"
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.display"
+when = { rate = "display" }
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.60"
+when = { rate = "60" }
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.90"
+when = { rate = "90" }
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.120"
+when = { rate = "120" }
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.144"
+when = { rate = "144" }
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.165"
+when = { rate = "165" }
+
+[[plugin]]
+feature = "interpolated-frame-rate"
+id = "tomba2.framerate.240"
+when = { rate = "240" }

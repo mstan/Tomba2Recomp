@@ -43,6 +43,7 @@ orig_args=("$@")
 
 version=""
 out_dir=""
+variant=usa
 skip_build=0
 allow_no_cache=0
 build_dir=${BUILD_DIR:-"$root/build-appimage"}
@@ -54,6 +55,7 @@ jobs=${BUILD_JOBS:-$(( _cores > 4 ? _cores - 2 : 2 ))}
 while [ $# -gt 0 ]; do
     case "$1" in
         --version) version=$2; shift 2;;
+        --variant) variant=$2; shift 2;;
         --out)     out_dir=$2; shift 2;;
         --build-dir) build_dir=$2; shift 2;;
         --jobs)    jobs=$2; shift 2;;
@@ -89,6 +91,22 @@ for v in APP_NAME EXE_NAME PAYLOAD_DIR DESKTOP_ID ENV_PREFIX ICON_SOURCE EXPECTE
     eval "val=\${$v:-}"
     [ -n "$val" ] || { echo "$app_conf does not set $v" >&2; exit 1; }
 done
+GAME_TOML=${GAME_TOML:-game.toml}
+runtime_target=psx-runtime
+case "$variant" in
+    usa) ;;
+    ita)
+        APP_NAME="Tombi! 2 (Italian) Recompiled"
+        EXE_NAME="Tombi2Recomp-ita"
+        PAYLOAD_DIR="tombi2recomp-ita"
+        DESKTOP_ID="io.github.mstan.Tombi2RecompIta"
+        ENV_PREFIX="TOMBI2_RECOMP_ITA"
+        EXPECTED_MODS=7
+        GAME_TOML="game_ita.toml"
+        runtime_target=psx-runtime-ita
+        ;;
+    *) echo "unknown variant: $variant" >&2; exit 2;;
+esac
 
 # --- path handling ---------------------------------------------------------
 # Accept Windows-style output paths so the same command works from a WSL shell
@@ -209,7 +227,7 @@ if [ "$skip_build" = "0" ]; then
         -DCMAKE_BUILD_TYPE=Release \
         -DPSX_DEBUG_TOOLS=OFF \
         -DCMAKE_EXE_LINKER_FLAGS="-Wl,--build-id=none"
-    cmake --build "$build_dir" --target psx-runtime -j "$jobs"
+    cmake --build "$build_dir" --target "$runtime_target" -j "$jobs"
 fi
 
 elf=$build_dir/$EXE_NAME
@@ -226,7 +244,7 @@ file -b "$elf" | grep -q ELF || { echo "$elf is not an ELF binary" >&2; exit 1; 
 #       cannot drift from the config that was validated)
 # The codegen tag is computed from whichever file results, so the bundled
 # cache always matches what the player actually runs.
-player_toml=$root/packaging/release/game.toml
+player_toml=$root/packaging/release/$GAME_TOML
 derived_toml=""
 if [ ! -f "$player_toml" ]; then
     [ -f "$root/game.toml" ] || { echo "no packaging/release/game.toml and no game.toml" >&2; exit 1; }
@@ -277,11 +295,14 @@ install -m 0755 "$elf" "$appdir/usr/bin/$EXE_NAME"
 # AppRun carries the version marker; stamp it rather than hardcoding.
 sed -e "s|@VERSION@|$version|g" -e "s|@APP_NAME@|$APP_NAME|g" \
     -e "s|@EXE_NAME@|$EXE_NAME|g" -e "s|@PAYLOAD_DIR@|$PAYLOAD_DIR|g" \
-    -e "s|@ENV_PREFIX@|$ENV_PREFIX|g" \
+    -e "s|@ENV_PREFIX@|$ENV_PREFIX|g" -e "s|@GAME_TOML@|$GAME_TOML|g" \
     "$root/packaging/linux/AppRun" > "$appdir/AppRun"
 chmod 0755 "$appdir/AppRun"
-install -m 0644 "$root/packaging/linux/$DESKTOP_ID.desktop" \
-    "$appdir/$DESKTOP_ID.desktop"
+sed -e "s|^Name=.*|Name=$APP_NAME|" \
+    -e "s|^Exec=.*|Exec=$EXE_NAME|" \
+    -e "s|^Icon=.*|Icon=$DESKTOP_ID|" \
+    "$root/packaging/linux/io.github.mstan.Tomba2Recomp.desktop" \
+    > "$appdir/$DESKTOP_ID.desktop"
 
 for tree in assets bios mods; do
     [ -d "$build_dir/$tree" ] || { echo "build did not stage $tree/" >&2; exit 1; }
@@ -347,7 +368,7 @@ EOF
     exit 1
 fi
 
-cp "$player_toml" "$payload/game.toml"
+cp "$player_toml" "$payload/$GAME_TOML"
 cp "$root/packaging/release/input.ini"      "$payload/input.ini"
 cp "$root/packaging/release/START_HERE.txt" "$payload/START_HERE.txt"
 cp "$root/LICENSE" "$root/README.md" "$payload/"
