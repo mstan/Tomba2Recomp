@@ -6,14 +6,16 @@
 # its seeding and print the data directory instead of exec'ing the runtime.
 # Then asserts the layout the release promises.
 #
-# Usage: bash tools/test_appimage_layout.sh [--variant usa|ita] [--allow-no-cache] path/to/<Title>-<ver>-linux-x86_64.AppImage
+# Usage: bash tools/test_appimage_layout.sh [--variant usa|ita] [--version <ver>] [--allow-no-cache] path/to/<Title>-<ver>-linux-x86_64.AppImage
 set -euo pipefail
 
 variant=usa
+expected_version=""
 allow_no_cache=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --variant) variant=${2:-}; shift 2;;
+        --version) expected_version=${2:-}; shift 2;;
         --allow-no-cache) allow_no_cache=1; shift;;
         *) break;;
     esac
@@ -24,7 +26,7 @@ appimage=${1:-}
 [ -x "$appimage" ] || { echo "not executable: $appimage" >&2; exit 1; }
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-expected_version=$(tr -d ' \t\r\n' < "$root/packaging/release/VERSION")
+[ -n "$expected_version" ] || expected_version=$(tr -d ' \t\r\n' < "$root/packaging/release/VERSION")
 # Per-game identity: ENV_PREFIX names the AppImage's env overrides and
 # EXPECTED_MODS the size of the shipped catalog.
 # shellcheck source=/dev/null
