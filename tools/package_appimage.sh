@@ -93,6 +93,7 @@ for v in APP_NAME EXE_NAME PAYLOAD_DIR DESKTOP_ID ENV_PREFIX ICON_SOURCE EXPECTE
 done
 GAME_TOML=${GAME_TOML:-game.toml}
 runtime_target=psx-runtime
+generated_dir=generated
 case "$variant" in
     usa) ;;
     ita)
@@ -104,6 +105,7 @@ case "$variant" in
         EXPECTED_MODS=7
         GAME_TOML="game_ita.toml"
         runtime_target=psx-runtime-ita
+        generated_dir=generated_ita
         ;;
     *) echo "unknown variant: $variant" >&2; exit 2;;
 esac
@@ -152,9 +154,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [ -z "$(ls "$root"/generated/*_dispatch.c 2>/dev/null)" ]; then
-    echo "Missing generated game sources (generated/*_dispatch.c)." >&2
-    echo "Run the recompiler first: $FRAMEWORK_DIR/recompiler/build*/psxrecomp-game --config game.toml" >&2
+if [ -z "$(ls "$root"/"$generated_dir"/*_dispatch.c 2>/dev/null)" ]; then
+    echo "Missing generated game sources ($generated_dir/*_dispatch.c)." >&2
+    echo "Run the recompiler first: $FRAMEWORK_DIR/recompiler/build*/psxrecomp-game --config $GAME_TOML" >&2
     exit 1
 fi
 
