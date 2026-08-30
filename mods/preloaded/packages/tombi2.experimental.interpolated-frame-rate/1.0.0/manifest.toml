@@ -1,35 +1,35 @@
 format_version = 5
-id = "tomba2.experimental.interpolated-frame-rate"
+id = "tombi2.experimental.interpolated-frame-rate"
 version = "1.0.0"
-name = "Tomba 2 Frame Blending"
+name = "Frame blending di Tombi! 2"
 author = "mstan"
-description = "Presentation-only temporal frame blending. Game logic, timers, input, and audio remain at their stock cadence."
+description = "Blending temporale solo di presentazione. Logica di gioco, timer, input e audio restano alla cadenza originale PAL."
 resolver = "declarative"
 save_compatibility = "shared"
 
 [[target]]
-game_id = "SCUS-94454"
-disc_sha256 = "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
+game_id = "SCES-02686"
+disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
 
 [[feature]]
 id = "interpolated-frame-rate"
-name = "Temporal Frame Blending (Experimental)"
-description = "Blend completed display images at the selected presentation rate without accelerating gameplay, timers, input, or audio. This is not motion-vector frame generation."
-group = "Frame Rate"
+name = "Blending temporale (sperimentale)"
+description = "Fonde le immagini completate alla frequenza scelta senza accelerare gameplay, timer, input o audio. Non e generazione di fotogrammi con vettori di movimento."
+group = "Frame rate"
 default_enabled = false
 
 [[option]]
 feature = "interpolated-frame-rate"
 id = "rate"
-label = "Presentation rate"
-description = "Display refresh is recommended for even cadence. Motion-adaptive clarity reduces double-image trails. Requires OpenGL."
-group = "Frame Rate"
+label = "Frequenza presentazione"
+description = "La frequenza dello schermo e consigliata per una cadenza regolare. La chiarezza motion-adaptive riduce le doppie immagini. Richiede OpenGL."
+group = "Frame rate"
 type = "choice"
 default = "display"
 
 [[option.choice]]
 value = "display"
-label = "Display refresh (Recommended)"
+label = "Frequenza schermo (consigliata)"
 
 [[option.choice]]
 value = "60"

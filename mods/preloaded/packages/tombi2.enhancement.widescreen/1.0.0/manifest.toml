@@ -1,0 +1,55 @@
+format_version = 5
+id = "tombi2.enhancement.widescreen"
+version = "1.0.0"
+name = "Widescreen di Tombi! 2"
+author = "mstan"
+description = "Renderizza il gameplay di Tombi! 2 con un campo visivo piu ampio usando gli hook specifici della versione italiana per proiezione, culling, fondali e modelli."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-02686"
+disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
+
+[[feature]]
+id = "widescreen"
+name = "Widescreen (sperimentale)"
+description = "Abilita il rendering nativo widescreen del gameplay e scegli un rapporto fisso o adattivo."
+group = "Schermo"
+default_enabled = false
+
+[[option]]
+feature = "widescreen"
+id = "aspect"
+label = "Rapporto schermo"
+description = "Adattivo segue la dimensione della finestra da 4:3 fino a 21:9."
+group = "Schermo"
+type = "choice"
+default = "16:9"
+
+[[option.choice]]
+value = "16:9"
+label = "16:9"
+
+[[option.choice]]
+value = "21:9"
+label = "21:9"
+
+[[option.choice]]
+value = "adaptive"
+label = "Adattivo"
+
+[[plugin]]
+feature = "widescreen"
+id = "tomba2.widescreen.16-9"
+when = { aspect = "16:9" }
+
+[[plugin]]
+feature = "widescreen"
+id = "tomba2.widescreen.21-9"
+when = { aspect = "21:9" }
+
+[[plugin]]
+feature = "widescreen"
+id = "tomba2.widescreen.adaptive"
+when = { aspect = "adaptive" }

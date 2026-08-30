@@ -108,13 +108,25 @@ file(GLOB GAME_ITA_GENERATED_FULL CONFIGURE_DEPENDS
 set(GAME_ITA_GENERATED_DISPATCH
     "${CMAKE_CURRENT_SOURCE_DIR}/generated_ita/SCES_026.86_dispatch.c")
 
+set(PSXRECOMP_GAME_ITA_EXE_NAME_OVERRIDE "" CACHE STRING
+    "Override the Italian runtime OUTPUT_NAME (default: Tombi2Recomp-ita)")
+set(PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE "" CACHE STRING
+    "Override the Italian runtime TCP debug port (default: 4516)")
+
 set(_tomba2_ita_exe_name "Tombi2Recomp-ita")
+if(PSXRECOMP_GAME_ITA_EXE_NAME_OVERRIDE)
+    set(_tomba2_ita_exe_name "${PSXRECOMP_GAME_ITA_EXE_NAME_OVERRIDE}")
+endif()
+set(_tomba2_ita_debug_port 4516)
+if(PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE)
+    set(_tomba2_ita_debug_port "${PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE}")
+endif()
 
 psxrecomp_add_runtime_target(psx-runtime-ita
     GAME_GENERATED_FULL_C "${GAME_ITA_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_ITA_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
-    DEBUG_PORT 4516
+    DEBUG_PORT ${_tomba2_ita_debug_port}
     WINDOW_TITLE "Tombi! 2 (Italian) Recompiled"
     DEFAULT_GAME_CONFIG_PATH "game_ita.toml"
     LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"

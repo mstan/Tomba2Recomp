@@ -1,0 +1,23 @@
+format_version = 5
+id = "tombi2.enhancement.skip-fmvs"
+version = "1.0.0"
+name = "Salta FMV di Tombi! 2"
+author = "mstan"
+description = "Avanza rapidamente i filmati e il logo Whoopee Camp silenzioso mantenendo il completamento normale gestito dal gioco."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-02686"
+disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
+
+[[feature]]
+id = "skip-fmvs"
+name = "Salta FMV"
+description = "Disattiva l'audio e avanza rapidamente i filmati invece di riprodurli in tempo reale."
+group = "Gioco"
+default_enabled = false
+
+[[plugin]]
+feature = "skip-fmvs"
+id = "tomba2.fmv.skip"

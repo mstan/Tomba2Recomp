@@ -231,23 +231,33 @@ queue_guard = false
 
 ## 6. Built-in Mod Manifests & Test Coverage
 
-All preloaded mod manifests (`mods/preloaded/packages/*/manifest.toml`) declare support for the Italian release:
+The Italian release uses localized, Italian-only package manifests for the
+preloaded user-facing enhancements:
+
+* `tombi2.enhancement.widescreen`
+* `tombi2.experimental.interpolated-frame-rate`
+* `tombi2.enhancement.skip-fmvs`
+
+Each Italian package declares the SCES-02686 target:
 ```toml
 [[target]]
 game_id = "SCES-02686"
 disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
 ```
-The test suite in `tests/test_preloaded_mods.cpp` validates declarative resolution for all 4 packages (Widescreen, Temporal Frame Blending, FMV Skipping, and Developer Debug Menu) across both targets (`SCUS-94454` and `SCES-02686`).
+The test suite in `tests/test_preloaded_mods.cpp` validates declarative
+resolution for the 4 US packages and the 3 localized Italian packages. The
+Italian target intentionally has no Debug Menu package until its PAL hook and
+signature addresses are mapped and validated.
 
 ---
 
-## 7. Developer Debug Menu Safety Architecture
+## 7. Developer Debug Menu PAL Status
 
 The developer debug menu payload (`tomba2_debug_menu_payload.h`) was originally authored for `SCUS-94454`.
 
-* **Safety Guard (`module_resident()`)**:
-  * In `src/mods/tomba2_debug_menu_plugin.c`, the installer verifies the signature of four callee routines (`0x800788AC`, `0x80080F6C`, `0x800896E0`, `0x8009B0C0`).
-  * On the Italian PAL binary, these addresses contain different instructions. The plugin detects the mismatch and **safely disables itself at runtime**, completely eliminating the possibility of memory corruption.
+The Italian PAL release does not expose this package for now. Its manifest
+target remains US-only because the payload detours and callee signatures have
+not been ported to the SCES-02686 overlay layout.
 
 ---
 
