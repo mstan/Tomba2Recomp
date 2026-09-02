@@ -288,3 +288,50 @@ pgxp_tolerance      = -1.0
    * By default, `psxrecomp-v4/runtime/src/pgxp.cpp` applies a conservative `0.5px` tolerance filter (`s_tolerance = 0.5f`), rejecting any sub-pixel vertex displacement greater than half a pixel back to the stock integer grid (`s_stats.tolerance_reject++`).
    * In Tomba 2, complex segmented meshes and winding 2.5D terrain paths trigger this tolerance clamp extensively, causing widespread fallback to uncorrected integer coordinates and rendering PGXP visually indistinguishable from stock.
    * Setting `pgxp_tolerance = -1.0` disables the tolerance gate (`s_tolerance < 0.0f`), allowing full sub-pixel floating-point vertex stability across all 3D geometry and completely eliminating polygon jitter.
+
+---
+
+## 9. CD-XA Streaming Audio Architecture & Looping Fix
+
+### 9.1 Overview & Dual Audio Architecture in Tomba 2
+
+*Tomba! 2* uses a hybrid audio architecture across different areas and gameplay sequences:
+1. **Sequenced SPU ADPCM Synthesis (MIDI-like)**: The majority of areas (e.g. Donglin Forest, Coal Mine) load compressed ADPCM sample banks (`TOMBA2.SND` / `TOMBA2.DAT`) into the SPU 512 KB RAM and sequence music note commands internally. These loops are handled entirely in CPU/SPU memory without polling the CD drive.
+2. **Real-time CD-XA Audio Streaming**: Special atmospheric locations — notably **Fisherman's Village / Beach Village** (Town of the Fishermen) — stream high-fidelity multi-channel CD-XA Mode 2 Form 2 ADPCM audio directly from `/CD/BGM.XA`.
+
+### 9.2 Structure of `/CD/BGM.XA` & Channel Interleaving
+
+The file `/CD/BGM.XA;1` starts at disc LBA `23793` and contains **8 interleaved stereo channels** (Channels 0 to 7):
+
+| Channel | Track Description | Start LBA (Offset) | End LBA (Offset) | Sectors | Duration |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **0** | Atmospheric Ambient Stream | `23793` (`+0`) | `91432` (`+67639`) | 67,639 | ~15.03 min |
+| **1** | Cinematic Ambient Theme | `23794` (`+1`) | `71002` (`+47209`) | 47,208 | ~10.49 min |
+| **2** | Town Background Variation | `23795` (`+2`) | `91427` (`+67634`) | 67,632 | ~15.03 min |
+| **3** | Event Theme Stream | `23796` (`+3`) | `81324` (`+57531`) | 57,528 | ~12.78 min |
+| **4** | Dynamic Theme Variation | `23797` (`+4`) | `71157` (`+47364`) | 47,360 | ~10.52 min |
+| **5** | Special Area Theme | `23798` (`+5`) | `76462` (`+52669`) | 52,664 | ~11.70 min |
+| **6** | Coastal Area Ambience | `23799` (`+6`) | `64159` (`+40366`) | 40,360 | ~8.97 min |
+| **7** | **Fisherman's Village BGM** | **`23800` (`+7`)** | **`34616` (`+10823`)** | **10,816** | **~144.2 s (2.40 min)** |
+
+### 9.3 The Bug Mechanism: Missing `INT4` (`CDIRQ_DATA_END`) on XA EOF
+
+1. **Hardware Behavior**:
+   * Channel 7 (Fisherman's Village) reaches its conclusion after 10,816 sectors (144.2 seconds).
+   * The final sector at LBA `34616` contains the subheader `Submode = 0xE4` (`XA_SUBMODE_EOF` = `0x80u` | `XA_SUBMODE_REALTIME` = `0x40u` | `XA_SUBMODE_FORM2` = `0x20u` | `XA_SUBMODE_AUDIO` = `0x04u`).
+   * On genuine PlayStation hardware, encountering `XA_SUBMODE_EOF` triggers an asynchronous **`INT4` (`CDIRQ_DATA_END`)** interrupt from the CD-ROM controller to the MIPS CPU.
+   * The game's CD-ROM callback receives `CdlDataEnd` and immediately issues a `CdControl(CdlSeekL)` and `CdControl(CdlReadS)` to loop back to the start LBA of the track (`23800`).
+
+2. **The Defect in `psxrecomp` (`cdrom.c`)**:
+   * Prior to this fix, `psxrecomp-v4/runtime/src/cdrom.c` only delivered `CDIRQ_DATA_END` for Redbook audio (`CD-DA`) tracks via `deliver_cdda_data_end()`.
+   * During XA read streaming, `cdrom.c` classified the subheaders but completely ignored the `XA_SUBMODE_EOF` (`0x80u`) bit.
+   * Because `CDIRQ_DATA_END` was never raised, the guest CD callback was never invoked, and the virtual CD head kept streaming indefinitely past LBA `34616` into subsequent sectors, playing unintended audio.
+
+3. **The Implementation**:
+   * Defined `#define XA_SUBMODE_EOF 0x80u` in `cdrom.c`.
+   * In `read_sector_at()`, when `delivery.xa_audio_delivered` is true and `(delivery.xa_submode & XA_SUBMODE_EOF)` is detected:
+     * `xa_data_end_pending` is latched.
+     * If `mode_reg & 0x02u` (Auto-Pause), the read stream is automatically paused.
+   * In `deliver_read_sector()` and `cdrom_advance()`, `deliver_xa_data_end()` raises `CDIRQ_DATA_END` (INT4) with `stat_reg` to the CPU.
+   * This cleanly notifies the guest driver, resulting in continuous, seamless BGM looping.
+
