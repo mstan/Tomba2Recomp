@@ -30,9 +30,40 @@
 #   bash tools/package_appimage.sh --out /mnt/f/drop   # or --out 'F:\drop'
 #   bash tools/package_appimage.sh --skip-build        # reuse existing build dir
 #
+# There is deliberately no --allow-no-cache. Shipping an AppImage with no
+# overlay cache means every player's first visit to every area runs on the
+# dirty-RAM interpreter, and that relaxation is exactly what let a packager
+# which staged ZERO shards look like a successful build. If a package genuinely
+# has to ship without one, the framework tool takes
+# --ship-without-overlay-cache-because '<reason>', which prints the reason.
+#
 # Prereqs: cmake, ninja or make, a C/C++ toolchain, libsdl2-dev,
-# libgl1-mesa-dev, curl, ImageMagick (for the icon), and a generated/ tree
-# (the recompiler runs on Windows; generated C is committed).
+# libgl1-mesa-dev, curl, ImageMagick (for the icon), python3, and a generated/
+# tree (produced by the recompiler; generated/ is NOT tracked in this repo, so
+# either run the recompiler first or copy a generated/ tree in).
+#
+# SHARED STAGING (bead beads-eio.3.102)
+# -------------------------------------
+# The overlay cache tag, the shard selection, the overlay toolchain and the mod
+# catalog are NOT implemented here. They are implemented once, in the framework,
+# and this script calls them:
+#
+#   psxrecomp-v4/tools/release_overlay_stage.sh   the surface sourced below
+#   psxrecomp-v4/tools/release_stage.py           the single implementation
+#
+# They used to be implemented here, in a fork of a fork: three titles each
+# carried their own copy of this file and each hand-built the cache tag inside a
+# python heredoc that had just imported the module owning it. When the framework
+# appended an `_f<flavor>` field to the tag, ApeEscapeRecomp's copy was
+# hand-patched and this one was not, so `find -path "*/$cg_tag/*"` could not
+# match the real `..._f0/` directory: shards evaluated to 0 and this script
+# exited 1. That is why Tomba 2 v0.0.9 shipped Windows-only -- there is no
+# AppImage asset in that release at all.
+#
+# So: do not reintroduce a tag format string, a shard filter, an extension list,
+# an arch-abi string or a mod count here. runtime/tests/
+# test_packagers_never_format_cache_tag.py in the framework fails if you do, and
+# tools/test_no_local_cache_tag.sh runs it against this repository.
 set -euo pipefail
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -45,7 +76,6 @@ version=""
 out_dir=""
 variant=usa
 skip_build=0
-allow_no_cache=0
 build_dir=${BUILD_DIR:-"$root/build-appimage"}
 # Leave two cores for the rest of the machine; packaging must not make the box
 # unusable. Override with --jobs / BUILD_JOBS.
@@ -60,7 +90,6 @@ while [ $# -gt 0 ]; do
         --build-dir) build_dir=$2; shift 2;;
         --jobs)    jobs=$2; shift 2;;
         --skip-build) skip_build=1; shift;;
-        --allow-no-cache) allow_no_cache=1; shift;;
         --nice) nice_level=$2; shift 2;;
         -h|--help) sed -n '2,36p' "$0"; exit 0;;
         *) echo "unknown arg: $1" >&2; exit 2;;
@@ -87,7 +116,10 @@ app_conf=$root/packaging/release/app.conf
 [ -f "$app_conf" ] || { echo "missing $app_conf" >&2; exit 1; }
 # shellcheck source=/dev/null
 . "$app_conf"
-for v in APP_NAME EXE_NAME PAYLOAD_DIR DESKTOP_ID ENV_PREFIX ICON_SOURCE EXPECTED_MODS FRAMEWORK_DIR; do
+# EXPECTED_MODS is deliberately NOT required: the catalog is verified against
+# the manifest the BUILD publishes (psx_mod_catalog_<target>.txt), so no number
+# is written down anywhere to go stale. See psx_add_mod_catalog below.
+for v in APP_NAME EXE_NAME PAYLOAD_DIR DESKTOP_ID ENV_PREFIX ICON_SOURCE FRAMEWORK_DIR; do
     eval "val=\${$v:-}"
     [ -n "$val" ] || { echo "$app_conf does not set $v" >&2; exit 1; }
 done
@@ -102,7 +134,6 @@ case "$variant" in
         PAYLOAD_DIR="tombi2recomp-ita"
         DESKTOP_ID="io.github.mstan.Tombi2RecompIta"
         ENV_PREFIX="TOMBI2_RECOMP_ITA"
-        EXPECTED_MODS=7
         GAME_TOML="game_ita.toml"
         runtime_target=psx-runtime-ita
         generated_dir=generated_ita
@@ -182,6 +213,15 @@ echo "version=$version  SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
 # OpenBIOS (MIT, no dump required) and SCPH1001 when a dump is present, rather
 # than failing at cmake with a message about a script we could have run.
 fw=$root/$FRAMEWORK_DIR
+
+# THE shared staging surface. Sourcing this is what makes the tag, the shard
+# selection, the toolchain and the catalog framework-owned instead of forked per
+# title. If the pinned submodule predates it, this fails HERE, loudly, rather
+# than falling back to a local copy -- there is no local copy any more.
+# shellcheck source=/dev/null
+. "$fw/tools/release_overlay_stage.sh"
+psx_release_stage_init "$fw"
+
 # A CMake build directory records absolute paths and its generator's compiler,
 # so a tree configured by Windows cmake (F:/..., ninja.exe) cannot be reused
 # from WSL. Keep a Linux-only directory; never share build-t2 with Windows.
@@ -283,17 +323,24 @@ if [ ! -x "$recompiler_bin" ]; then
     cmake -S "$fw/recompiler" -B "$recompiler_build" -G "$gen" -DCMAKE_BUILD_TYPE=Release
     cmake --build "$recompiler_build" --target psxrecomp-game -j "$jobs"
 fi
-cg_tag=$(python3 - "$fw/tools/compile_overlays.py" "$fw/runtime/include" \
-                   "$recompiler_bin" "$player_toml" <<'PY'
-import importlib.util, os, sys
-mod_path, inc, exe, gt = sys.argv[1:5]
-spec = importlib.util.spec_from_file_location('co', mod_path)
-m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-print('cg%d_%08x_gc%08x' % (m.codegen_ver(inc), m.codegen_hash(inc),
-                            m.overlay_config_hash(os.path.abspath(exe),
-                                                  os.path.abspath(gt))))
-PY
-)
+# The tag comes from compile_overlays.cache_tag(), via the shared tool. What
+# used to be here was a python heredoc that imported compile_overlays and then
+# reformatted its tag itself, one field short -- see the header.
+#
+# The FLAVOR is read from what the build published
+# (psxrecomp_overlay_flavor-<target>.txt, written by runtime.cmake), not
+# assumed to be 0. Flavor is a property of the runtime BINARY (0 base, 2 pgxp)
+# and is NOT platform-dependent; a packager that assumes 0 for a PGXP build
+# stages a cache namespace the shipped binary never reads, and nothing
+# anywhere fails. This is also why --skip-build against a build directory made
+# by an older framework fails here: it carries no flavor publication, and
+# guessing is worse than stopping.
+cg_tag=$(psx_overlay_cg_tag \
+    --runtime-include   "$fw/runtime/include" \
+    --recompiler        "$recompiler_bin" \
+    --game-toml         "$player_toml" \
+    --flavor-from-build "$build_dir" \
+    --runtime-target    "$runtime_target")
 [ -n "$cg_tag" ] || { echo "could not compute codegen tag" >&2; exit 1; }
 echo "game=$game_id  codegen tag=$cg_tag"
 
@@ -316,17 +363,31 @@ sed -e "s|^Name=.*|Name=$APP_NAME|" \
     "$root/packaging/linux/io.github.mstan.Tomba2Recomp.desktop" \
     > "$appdir/$DESKTOP_ID.desktop"
 
-for tree in assets bios mods; do
+for tree in assets bios; do
     [ -d "$build_dir/$tree" ] || { echo "build did not stage $tree/" >&2; exit 1; }
     cp -a "$build_dir/$tree" "$payload/$tree"
 done
 
-# The Mods page must never ship empty: assert the three preloaded packages.
-mod_manifests=$(find "$payload/mods" -name manifest.toml | wc -l)
-if [ "$mod_manifests" -ne "$EXPECTED_MODS" ]; then
-    echo "expected $EXPECTED_MODS preloaded mod manifests, found $mod_manifests" >&2
-    exit 1
-fi
+# --- mod catalog -----------------------------------------------------------
+# mods/ is NOT part of the loop above any more. It needs three things the loop
+# cannot do: drop mods/installed and mods/state.toml (this machine's own
+# installed archives and its own enable/disable selection over a catalog that
+# ships default-off -- both used to ship), and verify the catalog against the
+# manifest the BUILD published instead of against a written-down number.
+#
+# The number is what makes this worth changing. This script asserted
+# EXPECTED_MODS=8 for the USA variant and hard-coded 7 in the Italian branch:
+# two counts of shared framework content plus game content, going stale
+# independently, in a title that controls neither half. Tomba 2 has already been
+# unreleasable once for exactly that -- it demanded 5 while the true catalog was
+# 7, because the FRAMEWORK had gained a mod.
+#
+# The Italian catalog legitimately OVERRIDES framework psx.* packages with
+# localized manifests at the same ids, so its id set is smaller than the sum of
+# its sources. runtime.cmake deduplicates the published id list, so the derived
+# check handles that with no per-variant number at all.
+psx_add_mod_catalog --build-path "$build_dir" --stage "$payload" \
+                    --runtime-target "$runtime_target"
 
 # OpenBIOS must ride along with its notice; a retail BIOS must not.
 [ -f "$payload/bios/openbios.bin" ] || { echo "missing bundled OpenBIOS" >&2; exit 1; }
@@ -337,48 +398,44 @@ if [ -f "$fw/runtime/licenses/libchdr-NOTICES.txt" ]; then
     cp "$fw/runtime/licenses/libchdr-NOTICES.txt" "$payload/licenses/"
 fi
 
-# --- prebuilt overlay cache ------------------------------------------------
-# Parity with the Windows packager: without a bundled cache every overlay runs
-# interpreted until the player's own cache fills. Linux shards are .so under
-# gcc/linux-x64/ (overlay_loader.c's OVERLAY_SHARED_EXT / PSX_OVERLAY_ARCH_ABI,
-# matched by compile_overlays.cache_arch_abi), and only THIS build's codegen
-# tag is shippable -- the loader ignores foreign tag namespaces.
-cache_src=${OVERLAY_CACHE_DIR:-"$root/build-linux-cache/cache"}/$game_id
-if [ -d "$cache_src" ]; then
-    shards=$(find "$cache_src" -path "*/$cg_tag/*" \( -name '*.so' -o -name '*.ranges' -o -name '*.resident' \) 2>/dev/null | wc -l)
-    if [ "$shards" -eq 0 ]; then
-        echo "Overlay cache at $cache_src holds no shards for this build's tag $cg_tag." >&2
-        echo "Rebuild it with compile_overlays.py against this runtime, or pass --allow-no-cache." >&2
-        [ "$allow_no_cache" = "1" ] || exit 1
-    else
-        mkdir -p "$payload/cache/$game_id"
-        ( cd "$cache_src" && find . -path "*/$cg_tag/*" -type f \
-            \( -name '*.so' -o -name '*.ranges' -o -name '*.resident' \) \
-            -exec cp --parents {} "$payload/cache/$game_id/" \; )
-        so_count=$(find "$payload/cache" -name '*.so' | wc -l)
-        echo "Bundled overlay cache: $so_count native overlay .so"
-    fi
-elif [ "$allow_no_cache" = "1" ]; then
-    echo "No overlay cache at $cache_src - shipping without one (--allow-no-cache)" >&2
-else
-    cat >&2 <<EOF
-No overlay cache found at $cache_src, so this AppImage would ship without one
-and every player's first session would run overlays interpreted.
+# --- prebuilt overlay cache + overlay toolchain ---------------------------
+# Both go through the shared framework staging, which is the same code the
+# Windows packager runs. Nothing about shard selection is decided here.
+#
+# The cache namespace the loader reads is
+# cache/<game_id>/<tier>/<arch-abi>/<cg_tag>/. Linux shards are .so under
+# linux-x64 and Windows are .dll under win-x64; release_stage.py takes both the
+# suffix and the arch-abi from compile_overlays (overlay_ext /
+# cache_arch_abi), so this script does not name either and the two platforms
+# cannot disagree about them.
+#
+# There is no --allow-no-cache. Staging nothing is a hard failure, and the
+# framework tool prints the exact compile_overlays.py invocation to build a
+# cache for THIS tag.
+cache_src_root=${OVERLAY_CACHE_DIR:-"$root/build-linux-cache/cache"}
+psx_add_overlay_cache --game-id "$game_id" \
+                      --cache-src-root "$cache_src_root" \
+                      --stage "$payload" \
+                      --cg-tag "$cg_tag"
 
-Build one for this release's tag ($cg_tag) with the Linux python, so the
-shards are .so under gcc/linux-x64:
-
-  PSX_OVERLAY_CACHE_DIR="$root/build-linux-cache/cache" \\
-  PSX_OVERLAY_CAPTURES="<coverage vault>/overlay_captures.json" \\
-  python3 $FRAMEWORK_DIR/tools/compile_overlays.py \\
-      --game-toml _release_game.toml \\
-      --recompiler $FRAMEWORK_DIR/recompiler/build-linux/psxrecomp-game \\
-      --runtime-include $FRAMEWORK_DIR/runtime/include --gcc \$(command -v gcc)
-
-Then re-run this script. Pass --allow-no-cache to ship without one anyway.
-EOF
-    exit 1
-fi
+# The self-contained overlay toolchain: a pinned relocatable CPython plus
+# compile_overlays.py, the recompiler and the runtime headers. It is what lets a
+# player whose machine has no compiler turn a newly captured overlay into native
+# code instead of interpreting it forever, and NO Linux packager has ever staged
+# one -- measured 2026-09-02, `grep -c overlay_toolchain` was 0 in all three
+# forked copies of this file. So the shipped cache was all a Linux player ever
+# got, with no way to extend it.
+#
+# The runtime gates this on <exe-dir>/overlay_toolchain/python/bin/python3
+# existing; packaging/linux/AppRun links the payload copy into the writable data
+# directory so that path resolves at runtime (the payload itself is a read-only
+# squashfs mount, and the exe-dir anchor is the data directory).
+psx_add_overlay_toolchain --stage "$payload" \
+                          --recomp-dir "$(dirname -- "$recompiler_bin")" \
+                          --recomp-tools "$fw/tools" \
+                          --recomp-include "$fw/runtime/include" \
+                          --dl-cache "$tools_dir" \
+                          --platform linux
 
 cp "$player_toml" "$payload/$GAME_TOML"
 cp "$root/packaging/release/input.ini"      "$payload/input.ini"
