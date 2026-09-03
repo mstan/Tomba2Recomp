@@ -27,8 +27,9 @@ fast_boot = true
 # Distinct debug port allowing side-by-side execution with the US release (4515).
 debug_port = 4516
 window_title = "Tombi! 2 (Italian) Recompiled"
-controller = "digital"
+controller = "dualshock"
 memcard_dir = "saves_ita"
+
 
 # Overlay cache (the real perf fix). Tomba 2's title/menu/level/FMV-driver code
 # is runtime-loaded overlay, not in the compiled boot-EXE funcs, so by
@@ -91,9 +92,9 @@ overlay_autocompile_cmd = "py -3 psxrecomp-v4/tools/compile_overlays.py --captur
 # lock_mode but documents intent. Re-enable the selector (drop lock_mode) only
 # once the analog config handshake is emulated end-to-end.
 [controller]
-default_mode = "digital"
-allow_hybrid = false
-lock_mode    = true
+default_mode = "analog"
+allow_hybrid = true
+lock_mode    = false
 
 # --- Renderer: optimized hardware path.
 # Supersampling: internal-resolution SSAA factor. 2 is the quality default now
@@ -138,6 +139,7 @@ offer = false
 gte_game_mode  = true
 offer_ultrawide = true
 adaptive_view  = true
+clear_reveal   = true
 nw_hud_corners = false
 nw_backdrop    = false
 nw_flat_backdrop = true
