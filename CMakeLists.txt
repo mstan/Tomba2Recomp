@@ -43,10 +43,36 @@ if(PSXRECOMP_GAME_DEBUG_PORT_OVERRIDE)
     set(_tomba2_debug_port "${PSXRECOMP_GAME_DEBUG_PORT_OVERRIDE}")
 endif()
 
+# Tomba 2's trusted, game-owned mod catalogs. The authentic 4:3/non-interpolated
+# presentation and stock guest code remain the disabled baseline. The Italian
+# runtime ships a SEPARATE localized catalog: Italian psx.* manifests that
+# override the framework's English ones at the same id and version, the three
+# tombi2.* packages, and deliberately NO tomba2.debug.debug-menu (its payload is
+# US-layout-specific).
+#
+# The FRAMEWORK stages both, one per runtime target, via PRELOADED_MODS_DIR
+# below. Each target's POST_BUILD wipes <exe-dir>/mods/bundled and re-stages
+# exactly the framework's builtin packages plus that target's own catalog, so
+# the US and Italian runtimes -- which share one output directory -- can no
+# longer contaminate each other and the old hand-written
+#
+#     COMMAND ${CMAKE_COMMAND} -E rm -rf .../mods/packages/tombi2.*
+#
+# exclusion lists are gone. Those lists existed only because the previous
+# hand-rolled copy MERGED into a directory the other target had already
+# written; they were also the sharpest edge of the mods/packages ->
+# mods/bundled rename in framework 4cc04be3, since a find-and-replace of the
+# copy destination alone would have left them pointing at a directory nothing
+# writes any more and the Italian build would have silently shipped Debug Menu.
+# Bead beads-eio.3.101.
+set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
+set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
+
 psxrecomp_add_runtime_target(psx-runtime
     GAME_GENERATED_FULL_C "${GAME_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
+    PRELOADED_MODS_DIR "${TOMBA2_PRELOADED_MODS}"
     # (OUTPUT_NAME set below: the exe ships as Tomba2Recomp.exe so process
     # management — taskkill, port collisions, task manager — never confuses
     # this title with other psxrecomp games' psx-runtime.exe instances.
@@ -67,25 +93,6 @@ psxrecomp_add_runtime_target(psx-runtime
 
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
-
-# Ship Tomba 2's trusted, game-owned mods beside each runtime. The authentic
-# 4:3/non-interpolated presentation and stock guest code remain the disabled
-# baseline. The Italian runtime stages a separate localized catalog so
-# unsupported US-only packages (notably Debug Menu) never appear in its launcher.
-set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
-set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
-
-if(EXISTS "${TOMBA2_PRELOADED_MODS}/packages")
-    add_custom_command(TARGET psx-runtime POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E rm -rf
-            "$<TARGET_FILE_DIR:psx-runtime>/mods/packages/tombi2.enhancement.skip-fmvs"
-            "$<TARGET_FILE_DIR:psx-runtime>/mods/packages/tombi2.enhancement.widescreen"
-            "$<TARGET_FILE_DIR:psx-runtime>/mods/packages/tombi2.experimental.interpolated-frame-rate"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${TOMBA2_PRELOADED_MODS}"
-            "$<TARGET_FILE_DIR:psx-runtime>/mods"
-        COMMENT "Preloading the Tomba 2 mod catalog")
-endif()
 
 if(BUILD_TESTING)
     add_executable(tomba2_preloaded_mods_test
@@ -133,6 +140,7 @@ psxrecomp_add_runtime_target(psx-runtime-ita
     GAME_GENERATED_FULL_C "${GAME_ITA_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_ITA_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
+    PRELOADED_MODS_DIR "${TOMBA2_PRELOADED_MODS_ITA}"
     DEBUG_PORT ${_tomba2_ita_debug_port}
     WINDOW_TITLE "Tombi! 2 (Italian) Recompiled"
     DEFAULT_GAME_CONFIG_PATH "game_ita.toml"
@@ -144,18 +152,7 @@ set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
 
 recomp_target_launcher_language(psx-runtime-ita it)
 
-if(EXISTS "${TOMBA2_PRELOADED_MODS_ITA}/packages")
-    add_custom_command(TARGET psx-runtime-ita POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E rm -rf
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.debug.debug-menu"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.enhancement.skip-fmvs"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.enhancement.widescreen"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tomba2.experimental.interpolated-frame-rate"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tombi2.enhancement.skip-fmvs"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tombi2.enhancement.widescreen"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods/packages/tombi2.experimental.interpolated-frame-rate"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${TOMBA2_PRELOADED_MODS_ITA}"
-            "$<TARGET_FILE_DIR:psx-runtime-ita>/mods"
-        COMMENT "Preloading the Tombi 2 (ITA) mod catalog")
-endif()
+# (No mod-catalog POST_BUILD here: PRELOADED_MODS_DIR above hands
+# mods/preloaded_ita to the framework, which wipes mods/bundled and stages
+# exactly the Italian catalog for this target. The US packages that the old
+# hand-written rm -rf list stripped can no longer be present at all.)
