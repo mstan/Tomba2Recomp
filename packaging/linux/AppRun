@@ -63,6 +63,24 @@ if [ -d "$payload/cache" ]; then
     chmod -R u+rwX "$data_dir/cache"
 fi
 
+# The bundled overlay toolchain (pinned relocatable CPython + compile_overlays
+# + the recompiler + headers) is what lets a player with no compiler installed
+# turn a newly captured overlay into native code instead of interpreting it
+# forever. The runtime gates that on <exe-dir>/overlay_toolchain/python/bin/
+# python3 existing, and <exe-dir> is THIS data directory (the runtime is invoked
+# through the symlink below), not the payload.
+#
+# LINKED, not copied: it is ~78 MB and entirely read-only at runtime, so copying
+# it on every launch would be pure cost. The AppImage mounts at a fresh path
+# each run, so the link is repointed every launch rather than left to dangle.
+# A real directory here is left ALONE -- that is a toolchain the player or a
+# packaging variant put there on purpose, and it wins.
+if [ -d "$payload/overlay_toolchain" ]; then
+    if [ -L "$data_dir/overlay_toolchain" ] || [ ! -e "$data_dir/overlay_toolchain" ]; then
+        ln -sfn "$payload/overlay_toolchain" "$data_dir/overlay_toolchain"
+    fi
+fi
+
 for file in @GAME_TOML@ LICENSE README.md RELEASE.txt START_HERE.txt; do
     if [ -f "$payload/$file" ]; then
         cp -f "$payload/$file" "$data_dir/$file"

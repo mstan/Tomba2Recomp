@@ -20,11 +20,7 @@ param(
     # Packaging runs below normal priority BY DEFAULT (every cmake/ninja/gcc
     # child inherits it). Pass -NormalPriority when you want the machine's
     # full attention.
-    [switch]$NormalPriority,
-    # Ship without a bundled overlay cache. Off by default: a cache-less
-    # package makes every player's first session run overlays interpreted, so
-    # it has to be asked for rather than warned about.
-    [switch]$AllowNoCache
+    [switch]$NormalPriority
 )
 
 $ErrorActionPreference = "Stop"
@@ -322,7 +318,7 @@ $CgTag = Get-OverlayCgTag -RecompTools $RecompTools -RecompInc $RecompInc `
 Write-Host "Release codegen tag: $CgTag (only this cache namespace is shipped)"
 Add-OverlayCache -GameId $CacheGameId `
                  -CacheSrcRoot (Join-Path $Root "$CacheBuildDir/cache") `
-                 -Stage $Stage -CgTag $CgTag -AllowNoCache:$AllowNoCache | Out-Null
+                 -Stage $Stage -CgTag $CgTag | Out-Null
 Add-OverlayToolchain -Stage $Stage -RecompDir $RecompDir -RecompTools $RecompTools `
                      -RecompInc $RecompInc -MingwBin $MingwBin `
                      -DlCache (Join-Path $Root "tools\_toolchain_cache") | Out-Null

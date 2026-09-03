@@ -75,3 +75,8 @@ __pycache__/
 /release-stage/
 *.zip
 /tools/_toolchain_cache/
+
+# Local release output. tools/package_appimage.sh writes its AppImage into
+# release-linux/ by default (--out relocates it), and a 60 MB artifact must
+# never be committable by a stray `git add -A`.
+/release-linux/
