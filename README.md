@@ -85,6 +85,8 @@ edit event flags, so use a separate memory card for testing.
 
 ## License
 
+PolyForm Noncommercial 1.0.0. See `LICENSE`.
+
 This repository contains no Tomba! 2 game assets or disc data. Release packages
 include OpenBIOS under the MIT notice in `bios/OpenBIOS.LICENSE`; they contain
 no retail PlayStation BIOS.
