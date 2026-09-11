@@ -32,10 +32,8 @@ fast_boot = true
 turbo_loads = false
 offer_turbo_loads = false
 
-# Overlay cache: keeps converted native code for game areas in the cache
-# folder, and records newly visited areas into overlay_captures.json so your
-# own cache grows as you play. Keep that file private - it contains game code
-# from your disc (see README).
+# Disc-derived native overlays are prepared before gameplay. Runtime
+# capture/compilation remains available for gaps; captures stay private.
 overlay_cache = true
 # Small timing-sensitive splash/FMV setup routines stay on the interpreter.
 overlay_native_block = [
@@ -52,6 +50,7 @@ renderer          = "opengl"
 supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"
+geometry_correction = false
 # Widescreen and temporal frame blending are owned by Tomba 2's built-in
 # catalog on the Mods page. Keep the generic Display controls hidden and clamp
 # stale settings to the authentic baseline until a selected mod activates.
@@ -73,34 +72,138 @@ fmv_skip_no_xa_hold = 600
 # is byte-identical to the original presentation. Gameplay frames are
 # detected by GTE activity; menus/FMV stay authored 4:3.
 [widescreen]
-offer            = false
-gte_game_mode    = true
-# Without this the runtime clamps 21:9 to 16:9 and the launcher hides the
-# Ultrawide option (v0.0.3/v0.0.4 shipped without it by mistake).
-offer_ultrawide  = true
-adaptive_view    = true
+# Widescreen is game-owned on the Mods page, not a generic Display setting.
+offer = false
+gte_game_mode  = true
+offer_ultrawide = true
+adaptive_view  = true
+nw_hud_corners = false
+nw_backdrop    = false
 nw_flat_backdrop = true
 nw_phase_backdrop = true
 
 [widescreen.cull]
-# Widen the game's own screen-extent culls only while a wide aspect is
-# active (identity at 4:3).
+# Tomba 2's overlay render funnels reject projected vertices against the
+# original 320x240 bounds. Widen the horizontal comparisons only while a wide
+# aspect is active. The explicit height immediate qualifies the signature but
+# is not itself changed.
 auto_screen_x = true
 screen_w_imms = ["0x140"]
 screen_h_imms = ["0xF0"]
+# Keep a small resident-area guard beyond the live wide edge. The aspect-cone
+# hook below treats this separately from the visible field and reserves queue
+# headroom for candidates actually intersecting the wide frustum.
+guard_pixels = 16
+# Advance only the proven player-relative X/Z activation windows by the
+# maximum supported resident-area lead. This does not widen terrain-cell
+# angles or fixed-capacity model cones; at 21:9 the activation margin is
+# 120px visible reveal + 16px render guard + 256px activation lead = 392px.
+activation_guard_pixels = 256
+# Proven model participation windows. Overlay code at the same address is
+# opcode-checked and left untouched when it differs. FUN_80069B6C is a
+# behavior/teleport proximity trigger, not a pure render cull; retain only its
+# ground-plane X/Z pairs. Removing all three pairs caused missing nearby
+# composite scenery and terrain in the starting-area demo. Its Y pair
+# (0x80069B84/0x80069B8C) stays vanilla so vertical behavior reach is not
+# extended.
 bias_sites = [
-    "0x80069B84", "0x80069BA8", "0x80069BCC", "0x80110A08",
-    "0x8013F138", "0x8013F190", "0x8013F224", "0x8013F244",
+    "0x80069BA8", "0x80069BCC", "0x80110A08",
 ]
 range_sites = [
-    "0x80069B8C", "0x80069BB0", "0x80069BD8", "0x80110A10",
+    "0x80069BB0", "0x80069BD8", "0x80110A10",
 ]
 screen_x_sites = ["0x8003E228"]
 
-# ---- Controller ---------------------------------------------------------
-# Tomba! 2 is a d-pad platformer: real hardware boots a DualShock in DIGITAL
-# mode and the game expects it. Analog modes are not offered in this release
-# (the DualShock config-mode handshake is not fully emulated yet).
+# Three captured overlay producers build terrain-cell selection quads consumed
+# by bounded, deduplicating rasterizers. These are positive 12-bit angular
+# half-extents, not pixels: widen their tangent by the live horizontal aspect
+# factor. Full-word guards make overlay aliases inert; every observed producer
+# retains the fixed 0xFE terrain-list cap.
+[[widescreen.cull.angle]]
+address = "0x8010E9A0"
+expected = "0x240301C7"
+
+[[widescreen.cull.angle]]
+address = "0x8012EEB8"
+expected = "0x2403012C"
+
+[[widescreen.cull.angle]]
+address = "0x8013F138"
+expected = "0x24020155"
+
+[[widescreen.cull.angle]]
+address = "0x8013F190"
+expected = "0x240301C7"
+
+[[widescreen.cull.angle]]
+address = "0x8013F224"
+expected = "0x2402013E"
+
+[[widescreen.cull.angle]]
+address = "0x8013F244"
+expected = "0x240201C7"
+
+[widescreen.cull.aspect_cone]
+# FUN_8007712C clears model+1, applies a spherical camera cone, then inserts
+# accepted type 2/9, 4, and 5 models into fixed 24/40/28-entry scratch queues.
+# These full-word-guarded sites preserve every vanilla acceptance and widen
+# only camera-horizontal participation. Vertical reach and distance gates stay
+# vanilla. Hysteresis is outside the 16px activation guard.
+forward_addr = "0x1F8000E8"
+object_type_offset = 12
+object_reg = 19 # s3
+x_reg = 16      # s0
+z_reg = 17      # s1
+y_reg = 18      # s2
+hysteresis_pixels = 24
+queue_reserve = 4
+queue_count_addrs = ["0x1F800144", "0x1F800150", "0x1F80015C"]
+queue_capacities = [24, 40, 28]
+queue_type_masks = ["0x00000204", "0x00000010", "0x00000020"]
+
+# FUN_8002B278 is the lower-level per-model/per-child cone. It does not append
+# to the fixed scratch queues. Its SLT compares dot(camera_forward, delta)
+# against distance * 0xD60; 0xD60 Q12 is 0x358 in the hook's Q10 units.
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x8002B368"
+expected = "0x0082202A"
+cosine_threshold = 856
+object_reg = 20 # s4
+x_reg = 19      # s3
+z_reg = 18      # s2
+y_reg = 17      # s1
+queue_guard = false
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x800772D4"
+expected = "0x28620370"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077368"
+expected = "0x28620358"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x80077414"
+expected = "0x28620358"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x800774A8"
+expected = "0x28620370"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x8007753C"
+expected = "0x28620350"
+
+[[widescreen.cull.aspect_cone.sites]]
+address = "0x800775D0"
+expected = "0x28620368"
+
+# â”€â”€ Audit-specific config (consumed by psxrecomp/tools/*.py and tests) â”€â”€
+# Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
+# project root.
+
+
+# Digital controller baseline.
 [controller]
 default_mode = "digital"
 allow_hybrid = false

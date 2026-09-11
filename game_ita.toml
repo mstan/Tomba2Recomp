@@ -106,7 +106,7 @@ supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"
 pgxp_tolerance    = -1.0
-geometry_correction = true
+geometry_correction = false
 # Tomba 2 owns temporal frame blending through its built-in Frame Blending mod.
 # Hide the generic Display controls and ignore stale settings.toml values.
 frame_interpolation = false
