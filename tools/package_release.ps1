@@ -6,6 +6,10 @@ param(
     [ValidateSet("usa", "ita")]
     [string]$Variant = "usa",
     [string]$BuildDir = "build-release",
+    [string]$RecompilerBuildDir = "recompiler/build-t2",
+    # Private original-input inventory from tools/prepare_*_aot*.py.
+    [string]$AotInventory = "",
+    [int]$ExpectedAotPairs = 0,
     # Where the accumulated overlay cache lives (compile_overlays.py --out-dir,
     # per game.toml overlay_autocompile_cmd). Bundled as a head start; optional.
     [string]$CacheBuildDir = "build-t2",
@@ -26,6 +30,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
+if (-not $AotInventory -or -not (Test-Path -LiteralPath $AotInventory -PathType Leaf)) {
+    throw 'AOT releases require -AotInventory pointing to verified original-input recipes. See docs/AOT_RELEASE.md.'
+}
+$AotInventory = (Resolve-Path -LiteralPath $AotInventory).Path
 
 # Shared framework staging helpers. Dot-sourced HERE, before any caller, so a
 # function is never referenced before it exists (Add-ModCatalog is used well
@@ -69,6 +77,8 @@ if ($Variant -eq "ita") {
 $Stage = Join-Path $StageRoot $StageName
 $ZipPath = Join-Path $Root ("{0}-{1}-windows-x64.zip" -f $ExeStem, $Version)
 $MingwBin = "C:\msys64\mingw64\bin"
+$Cmake = Join-Path $MingwBin "cmake.exe"
+$AotPython = Join-Path $MingwBin "python.exe"
 
 $env:PATH = "$MingwBin;$env:PATH"
 
@@ -144,10 +154,22 @@ function Copy-TreeTo {
         throw "Copy-TreeTo: source directory not found: $Source"
     }
     if (Test-Path -LiteralPath $Destination) {
+        Assert-StagePath $Destination
         Remove-Item -LiteralPath $Destination -Recurse -Force
     }
     New-Dir (Split-Path -Parent $Destination) | Out-Null
     Copy-Item -LiteralPath $Source -Destination $Destination -Recurse -Force
+}
+
+function Assert-StagePath {
+    param([Parameter(Mandatory)][string]$Path)
+    $absolute = [System.IO.Path]::GetFullPath($Path)
+    $stageBase = [System.IO.Path]::GetFullPath($StageRoot)
+    $projectBase = [System.IO.Path]::GetFullPath([string]$Root)
+    if (-not $stageBase.StartsWith($projectBase + '\', [StringComparison]::OrdinalIgnoreCase) -or
+        ($absolute -ne $stageBase -and -not $absolute.StartsWith($stageBase + '\', [StringComparison]::OrdinalIgnoreCase))) {
+        throw "Refusing stage cleanup outside this project: $absolute"
+    }
 }
 
 # cmake writes benign warnings to STDERR; under Stop, PS 5.1 promotes native
@@ -216,14 +238,14 @@ function Ensure-BiosBackends {
 # Framework via THIS repo's junction (psxrecomp-v4), so the release always
 # builds against the pinned framework tree, never a sibling checkout.
 $RecompSourceDir = Join-Path $Root "psxrecomp-v4\recompiler"
-$RecompDir = Join-Path $RecompSourceDir "build-t2"
+$RecompDir = Join-Path (Join-Path $Root "psxrecomp-v4") $RecompilerBuildDir
 $RecompBin = Join-Path $RecompDir "psxrecomp-game.exe"
 if (-not (Test-Path -LiteralPath $RecompBin)) {
     Invoke-Native {
-        cmake -S $RecompSourceDir -B $RecompDir -G Ninja -DCMAKE_BUILD_TYPE=Release
+        & $Cmake -S $RecompSourceDir -B $RecompDir -G Ninja -DCMAKE_BUILD_TYPE=Release
     } "recompiler configure"
 }
-Invoke-Native { cmake --build $RecompDir --target psxrecomp-game -j $Jobs } "recompiler build"
+Invoke-Native { & $Cmake --build $RecompDir --target psxrecomp-game -j $Jobs } "recompiler build"
 Ensure-BiosBackends -FrameworkRoot (Join-Path $Root "psxrecomp-v4")
 if ($SkipRegen) {
     Write-Host "SkipRegen: shipping checked-in generated/ code (validated bits) without regeneration"
@@ -238,13 +260,15 @@ if ($SkipRegen) {
 # 18 MB binary). Release builds want the artifact to be a function of its
 # sources, not of the clock.
 Invoke-Native {
-    cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release `
+    & $Cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release `
         -DPSX_DEBUG_TOOLS=OFF `
+        -DPSX_PGXP_VARIANT=OFF `
         "-DCMAKE_EXE_LINKER_FLAGS=-Wl,--no-insert-timestamp"
 } "cmake configure"
-Invoke-Native { cmake --build $BuildPath --target $RuntimeTarget -j $Jobs } "cmake build"
+Invoke-Native { & $Cmake --build $BuildPath --target $RuntimeTarget -j $Jobs } "cmake build"
 
 if (Test-Path -LiteralPath $StageRoot) {
+    Assert-StagePath $StageRoot
     Remove-Item -LiteralPath $StageRoot -Recurse -Force
 }
 New-Dir $Stage | Out-Null
@@ -255,7 +279,8 @@ if (-not (Test-Path -LiteralPath $DevExe)) { $DevExe = Join-Path $BuildPath "$Ru
 Copy-FileTo $DevExe (Join-Path $Stage "$ExeStem.exe")
 Copy-FileInto (Join-Path $Root "README.md") $Stage
 Copy-FileInto (Join-Path $Root "LICENSE") $Stage
-Copy-FileInto (Join-Path $PackagingRelease "START_HERE.txt") $Stage
+$StartHere = if ($Variant -eq 'ita') { 'START_HERE_ITA.txt' } else { 'START_HERE.txt' }
+Copy-FileTo (Join-Path $PackagingRelease $StartHere) (Join-Path $Stage 'START_HERE.txt')
 $BundledBiosSrc = Join-Path $BuildPath "bios"
 if (!(Test-Path (Join-Path $BundledBiosSrc "openbios.bin")) -or
     (Get-Item (Join-Path $BundledBiosSrc "openbios.bin")).Length -ne 524288 -or
@@ -319,6 +344,17 @@ Write-Host "Release codegen tag: $CgTag (only this cache namespace is shipped)"
 Add-OverlayCache -GameId $CacheGameId `
                  -CacheSrcRoot (Join-Path $Root "$CacheBuildDir/cache") `
                  -Stage $Stage -CgTag $CgTag | Out-Null
+$AotAuditArgs = @(
+    (Join-Path $Root 'tools/audit_aot_cache.py'),
+    '--framework-root', (Join-Path $Root 'psxrecomp-v4'),
+    '--recompiler', $RecompBin,
+    '--game-toml', (Join-Path $Stage $GameConfigName),
+    '--cache-root', (Join-Path $Stage 'cache'),
+    '--inventory', $AotInventory, '--flavor', '0',
+    '--output', (Join-Path $Stage 'AOT_CACHE_AUDIT.json')
+)
+if ($ExpectedAotPairs -gt 0) { $AotAuditArgs += @('--expected-pairs', $ExpectedAotPairs) }
+Invoke-Native { & $AotPython @AotAuditArgs } 'staged original-input AOT audit'
 Add-OverlayToolchain -Stage $Stage -RecompDir $RecompDir -RecompTools $RecompTools `
                      -RecompInc $RecompInc -MingwBin $MingwBin `
                      -DlCache (Join-Path $Root "tools\_toolchain_cache") | Out-Null
@@ -330,8 +366,15 @@ $imports = & $objdump -p (Join-Path $Stage "$ExeStem.exe") |
 $systemDlls = @("kernel32.dll","user32.dll","gdi32.dll","shell32.dll","msvcrt.dll",
                 "advapi32.dll","ws2_32.dll","comdlg32.dll","dbghelp.dll","ole32.dll",
                 "oleaut32.dll","winmm.dll","imm32.dll","version.dll","setupapi.dll",
-                "dinput8.dll","rpcrt4.dll","hid.dll","cfgmgr32.dll","opengl32.dll")
-$nonSystem = $imports | Where-Object { $systemDlls -notcontains $_.ToLower() }
+                "dinput8.dll","rpcrt4.dll","hid.dll","cfgmgr32.dll","opengl32.dll",
+                "d2d1.dll","dwrite.dll","ucrtbase.dll")
+# The UCRT and these API-set forwarders are OS components on Windows 10+:
+# https://learn.microsoft.com/cpp/porting/upgrade-your-code-to-the-universal-crt
+# Keep rejecting toolchain/application DLLs such as libstdc++ and SDL3.dll.
+$nonSystem = $imports | Where-Object {
+    $systemDlls -notcontains $_.ToLower() -and
+    $_ -notmatch '^api-ms-win-crt-[a-z0-9-]+\.dll$'
+}
 if ($nonSystem) {
     throw "Release exe is NOT self-contained -- imports non-system DLL(s): $($nonSystem -join ', ')"
 }
@@ -372,23 +415,18 @@ $PsxRecompSha = (& git -C (Join-Path $Root "psxrecomp-v4") rev-parse --short HEA
 @"
 $ReleaseTitle $Version
 
-Tomba! 2: The Evil Swine Return boots from the PlayStation BIOS and plays -
-through the intro, the title screen, the attract demos, and into gameplay,
-with working controller input and no known crashes. It has not been verified
-through a full playthrough yet, so treat it as a very playable preview.
+Tomba! 2: The Evil Swine Return with native overlays prepared from the original
+disc before gameplay. Owner spot checks passed; a full playthrough and complete
+native execution coverage remain unproven.
 
 New in this release:
-- Based on Tomba2Recomp master $TombaSha and psxrecomp master $PsxRecompSha.
+- Sources: Tomba2Recomp $TombaSha and psxrecomp $PsxRecompSha.
 - Variant: $Variant.
-- Tomba 2 now defaults to 2x SSAA with antialiasing enabled for the OpenGL
-  renderer; lower supersampling to 1 in the launcher/settings on slower GPUs.
-- Adds the conservative VSync(-1) query acceleration path used during loading,
-  preserving guest timing checkpoints while bypassing side-effect-free status
-  reads.
-- Carries the latest psxrecomp widescreen interpreter fix, mirroring native-wide
-  range sites consistently between native and interpreted execution.
-- Multi-track disc support, clean first-run BIOS/disc picking, 21:9 ultrawide,
-  frame interpolation, and memory card support carry forward.
+- All 22 area files have disc-derived native candidates, plus shared code.
+- Native overlay bytes, load addresses and cache namespaces are region-specific.
+- Baseline geometry correction is disabled to match the validated AOT flavor.
+- Interpreter/runtime-compilation fallback remains available for gaps.
+- Existing display mods, memory cards and disc selection remain available.
 
 This package includes the MIT-licensed OpenBIOS from PCSX-Redux and its notice
 in bios/OpenBIOS.LICENSE. It does not include the Tomba! 2 disc, a retail
@@ -397,6 +435,8 @@ PlayStation BIOS, save data, or game assets.
 Known items in this release:
 - The software renderer remains available as a reference/fallback.
 - Analog controller modes are not offered (the game is digital-native).
+- One early Italian attract watchdog abort was not reproduced in longer
+  retesting. Its cause is unresolved; the watchdog remains enabled.
 "@ | Set-Content -Encoding ASCII (Join-Path $Stage "RELEASE.txt")
 
 # ---- Deterministic archive ------------------------------------------------

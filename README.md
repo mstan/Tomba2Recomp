@@ -15,9 +15,16 @@ the same toolchain that powers TombaRecomp, ApeEscapeRecomp and MegaManX6Recomp.
 
 ## Status
 
-Scaffolded 2026-06-21. Boot EXE extracted, headerless Ghidra dump prepared,
-`game.toml` / `CMakeLists.txt` mirror the Ape Escape minimal template. First
-build/boot bring-up in progress.
+Windows preview builds support the US disc (SCUS-94454) and Italian PAL disc
+(SCES-02686). Both include native code prepared from all 22 original area files,
+plus shared overlays, before gameplay. The owner accepted performance in water
+temple and Kujara Ranch. Full native coverage and a full playthrough remain
+unproven; interpreter and runtime-compilation fallback remain available.
+
+See [AOT release preparation](docs/AOT_RELEASE.md) for reproduction and validation,
+and the framework's [AOT sharding guide](https://github.com/RetroPortingToolKit/psxrecomp/blob/master/docs/AOT_SHARDING.md)
+for the reusable workflow. Full game decompilation is not required for these
+verified overlay layouts.
 
 ## Playing
 

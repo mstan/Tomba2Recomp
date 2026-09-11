@@ -1,0 +1,27 @@
+Tombi! 2 Recompiled - Italiano (SCES-02686)
+========================================
+
+REQUISITI
+  La tua immagine del disco italiano di Tombi! 2 (SCES-02686).
+  E' consigliata una coppia .cue + .bin. Il disco non e' incluso.
+  OpenBIOS e la relativa licenza MIT sono inclusi: non serve un BIOS esterno.
+  Puoi scegliere facoltativamente il tuo BIOS SCPH1001.BIN supportato.
+
+PRIMO AVVIO
+  1. Avvia Tombi2Recomp-ita.exe.
+  2. Seleziona il disco italiano nel launcher.
+  3. Premi Avvia. Le modifiche opzionali sono nella pagina Mods.
+
+FILE LOCALI
+  saves_ita/  schede di memoria
+  cache/      codice nativo degli overlay, preparato prima del gioco
+  mods/       modifiche incluse e installate dall'utente
+  input.ini   configurazione del controller
+
+COPERTURA
+  Sono inclusi overlay AOT per tutti i 22 file delle aree e codice condiviso.
+  L'interprete e la compilazione durante il gioco restano disponibili per il
+  codice non coperto. Non e' stata verificata una partita completa.
+  Conserva una copia dei tuoi salvataggi quando aggiorni l'installazione.
+
+  RELEASE_NOTES.md contiene i dettagli della versione e i limiti conosciuti.

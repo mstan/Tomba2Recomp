@@ -1,35 +1,36 @@
-# Tomba! 2 Recompiled — v0.0.8
+# Tomba! 2 / Tombi! 2 Italian - v0.0.10 AOT overlays
 
-Fixes memory cards, which could hang on "Checking MEMORY CARD…" in v0.0.7.
+Native overlay code is now prepared from the original discs before gameplay.
+Both regions include candidates from all 22 area files, plus shared code.
+The owner reported great performance in Italian water temple and Kujara Ranch.
 
-## Fixed
+| Windows x64 build | Disc | Audited native files | Manifest candidate rows |
+| --- | --- | ---: | ---: |
+| Tomba! 2 US | SCUS-94454 | 334 | 22,533 |
+| Tombi! 2 Italian PAL | SCES-02686 | 74 | 14,920 |
 
-- **Memory cards work again.** In v0.0.7 the memory card screen could stall
-  indefinitely — the card never finished being checked, and the game sat there
-  burning CPU. The cause was in the recompiler: it was not preserving MIPS-I
-  load-delay *value* semantics when translating certain code, and the BIOS's
-  own card fast-path depends on that behaviour, so the card routine was
-  miscompiled. Reported by a v0.0.7 player; thanks for flagging it.
-  (Framework fix by Alexbeav, psxrecomp PR #93.)
-- **Turbo loads is now owned by the Mods page.** Loading speed moved to the mod
-  catalog ("Fast Loading (host pacing)" and "CD Speed", both off by default),
-  but a `turbo_loads = true` left in an older build's `settings.toml` was still
-  being applied — and the launcher no longer shows a control for it, so there
-  was no way to switch it off. That stale value is now ignored.
+These are native candidate counts, not exhaustive function counts or coverage
+percentages. Each region uses its own bytes, load addresses and cache namespace.
+Multiple recipes can reuse matching guarded functions without another DLL.
 
-## Changed
+The framework recognizes an additional bounded switch-table scheduling pattern
+and explicitly marks disc records as having no capture trailer. The packager
+audits every staged pair against known original inputs. US packaged codegen
+settings now match the validated build. Both regions use the tested baseline
+with geometry correction disabled.
 
-- **Framework and launcher updated to current.** Brings DualShock rumble
-  output, mods re-applying executable patches after a save-state load,
-  cross-package overlay predicates, and clearer reporting when the overlay
-  compiler falls back to the interpreter.
-- **The bundled overlay cache was fully rebuilt** with the corrected compiler
-  (374 prebuilt overlays, up from 300 in v0.0.7). Caches are specific to the
-  build that produced them, so any cache your v0.0.7 install accumulated will
-  not carry over — this build ships its own and fills in the rest as you play.
+Validation includes original-input/guard and ABI checks, boot/attract testing,
+mining movement/interactions and area round trips, and owner water temple and
+Kujara Ranch checks. Historical captures were not AOT inputs or correctness
+oracles. The static-cache tests had runtime compilation disabled.
 
-## Known issues
+Interpreter and runtime-compilation fallback remain available for gaps. Complete
+static coverage and a full playthrough are unproven. One early Italian attract
+watchdog abort was not reproduced in longer retesting; its cause is unresolved
+and the watchdog remains enabled. Widescreen and other optional enhancements
+are outside the baseline AOT gameplay checks.
 
-- **`geometry_correction` in `settings.toml` has no launcher control.** If it
-  is set to `true` it can produce visible seams along polygon edges. Leave it
-  `false`; it is not offered in the UI and is not validated.
+These Windows x64 packages require the matching original disc image. OpenBIOS
+and its MIT notice are bundled; an optional supported retail BIOS may be
+selected. Disc images, retail BIOS dumps, player saves and capture JSON are not
+included. Keep a backup when moving memory cards to a new installation.
