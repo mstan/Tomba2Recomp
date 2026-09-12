@@ -439,6 +439,9 @@ if [ -n "$expected_aot_pairs" ]; then
     audit_args+=(--expected-pairs "$expected_aot_pairs")
 fi
 "${PSX_RELEASE_STAGE_PYTHON:-python3}" "$root/tools/audit_aot_cache.py" "${audit_args[@]}"
+# The audit takes pair locks while inspecting libraries. This private staging
+# cache has no producers; those newly created lock files are not release data.
+find "$payload/cache" -type f -name '*.pair-lock' -delete
 
 # The self-contained overlay toolchain: a pinned relocatable CPython plus
 # compile_overlays.py, the recompiler and the runtime headers. It is what lets a

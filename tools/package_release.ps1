@@ -355,6 +355,10 @@ $AotAuditArgs = @(
 )
 if ($ExpectedAotPairs -gt 0) { $AotAuditArgs += @('--expected-pairs', $ExpectedAotPairs) }
 Invoke-Native { & $AotPython @AotAuditArgs } 'staged original-input AOT audit'
+# Inspection creates pair locks. This private staging cache has no producers;
+# discard its audit locks before archiving, preserving the source cache.
+Get-ChildItem -LiteralPath (Join-Path $Stage 'cache') -Recurse -File -Filter '*.pair-lock' |
+    ForEach-Object { Remove-Item -LiteralPath $_.FullName }
 Add-OverlayToolchain -Stage $Stage -RecompDir $RecompDir -RecompTools $RecompTools `
                      -RecompInc $RecompInc -MingwBin $MingwBin `
                      -DlCache (Join-Path $Root "tools\_toolchain_cache") | Out-Null
