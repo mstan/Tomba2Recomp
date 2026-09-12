@@ -463,7 +463,8 @@ cp "$player_toml" "$payload/$GAME_TOML"
 cp "$root/packaging/release/input.ini"      "$payload/input.ini"
 start_here=$root/packaging/release/START_HERE.txt
 [ "$variant" != ita ] || start_here=$root/packaging/release/START_HERE_ITA.txt
-cp "$start_here" "$payload/START_HERE.txt"
+sed "s|$EXE_NAME.exe|$EXE_NAME-$version-linux-x86_64.AppImage|g" \
+    "$start_here" > "$payload/START_HERE.txt"
 cp "$root/LICENSE" "$root/README.md" "$root/RELEASE_NOTES.md" "$payload/"
 
 # recomp-ui resolves fonts/textures through SDL_GetBasePath(), which points at
