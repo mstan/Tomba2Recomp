@@ -29,7 +29,7 @@
 #   bash tools/package_appimage.sh --version v0.0.7
 #   bash tools/package_appimage.sh --out /mnt/f/drop   # or --out 'F:\drop'
 #   bash tools/package_appimage.sh --skip-build        # reuse existing build dir
-#   Add --aot-inventory <verified-inventory.json> for every release.
+#   Original-disc extraction and AOT compilation run for every release.
 #
 # There is deliberately no --allow-no-cache. Shipping an AppImage with no
 # overlay cache means every player's first visit to every area runs on the
@@ -77,8 +77,6 @@ version=""
 out_dir=""
 variant=usa
 skip_build=0
-aot_inventory=""
-expected_aot_pairs=""
 build_dir=${BUILD_DIR:-"$root/build-appimage"}
 # Leave two cores for the rest of the machine; packaging must not make the box
 # unusable. Override with --jobs / BUILD_JOBS.
@@ -93,18 +91,12 @@ while [ $# -gt 0 ]; do
         --build-dir) build_dir=$2; shift 2;;
         --jobs)    jobs=$2; shift 2;;
         --skip-build) skip_build=1; shift;;
-        --aot-inventory) aot_inventory=$2; shift 2;;
-        --expected-aot-pairs) expected_aot_pairs=$2; shift 2;;
         --nice) nice_level=$2; shift 2;;
         -h|--help) sed -n '2,36p' "$0"; exit 0;;
         *) echo "unknown arg: $1" >&2; exit 2;;
     esac
 done
 
-[ -f "$aot_inventory" ] || {
-    echo "--aot-inventory must name the verified original-input inventory." >&2
-    exit 2
-}
 
 # Packaging a release should not make the machine unusable. Re-exec the whole
 # script under `nice` once (children inherit it) unless already niced or told
@@ -425,23 +417,12 @@ fi
 # There is no --allow-no-cache. Staging nothing is a hard failure, and the
 # framework tool prints the exact compile_overlays.py invocation to build a
 # cache for THIS tag.
-cache_src_root=${OVERLAY_CACHE_DIR:-"$root/build-linux-cache/cache"}
-psx_add_overlay_cache --game-id "$game_id" \
-                      --cache-src-root "$cache_src_root" \
-                      --stage "$payload" \
-                      --cg-tag "$cg_tag"
-
-audit_args=(--framework-root "$fw" --recompiler "$recompiler_bin"
-    --game-toml "$player_toml" --cache-root "$payload/cache"
-    --inventory "$aot_inventory" --flavor 0
-    --output "$payload/AOT_CACHE_AUDIT.json")
-if [ -n "$expected_aot_pairs" ]; then
-    audit_args+=(--expected-pairs "$expected_aot_pairs")
-fi
-"${PSX_RELEASE_STAGE_PYTHON:-python3}" "$root/tools/audit_aot_cache.py" "${audit_args[@]}"
-# The audit takes pair locks while inspecting libraries. This private staging
-# cache has no producers; those newly created lock files are not release data.
-find "$payload/cache" -type f -name '*.pair-lock' -delete
+"${PSX_RELEASE_STAGE_PYTHON:-python3}" "$fw/tools/aot_overlay_pipeline.py" release \
+    --profile "$root/aot/$variant.json" --game-toml "$root/$GAME_TOML" \
+    --runtime-config "$player_toml" --recompiler "$recompiler_bin" \
+    --runtime-build-dir "$build_dir" --runtime-target "$runtime_target" \
+    --work-dir "$build_dir/aot-release" --stage "$payload" \
+    --gcc "${AOT_GCC:-gcc}" --workers "${AOT_WORKERS:-3}"
 
 # The self-contained overlay toolchain: a pinned relocatable CPython plus
 # compile_overlays.py, the recompiler and the runtime headers. It is what lets a

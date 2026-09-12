@@ -7,12 +7,6 @@ param(
     [string]$Variant = "usa",
     [string]$BuildDir = "build-release",
     [string]$RecompilerBuildDir = "recompiler/build-t2",
-    # Private original-input inventory from tools/prepare_*_aot*.py.
-    [string]$AotInventory = "",
-    [int]$ExpectedAotPairs = 0,
-    # Where the accumulated overlay cache lives (compile_overlays.py --out-dir,
-    # per game.toml overlay_autocompile_cmd). Bundled as a head start; optional.
-    [string]$CacheBuildDir = "build-t2",
     # Ship the checked-in generated/ code as-is instead of regenerating.
     # Use when the runtime changed but codegen did not: regenerating with a
     # newer emitter would swap in code the release validation never ran
@@ -30,10 +24,6 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
-if (-not $AotInventory -or -not (Test-Path -LiteralPath $AotInventory -PathType Leaf)) {
-    throw 'AOT releases require -AotInventory pointing to verified original-input recipes. See docs/AOT_RELEASE.md.'
-}
-$AotInventory = (Resolve-Path -LiteralPath $AotInventory).Path
 
 # Shared framework staging helpers. Dot-sourced HERE, before any caller, so a
 # function is never referenced before it exists (Add-ModCatalog is used well
@@ -337,28 +327,14 @@ Copy-FileTo $GameConfigSource (Join-Path $Stage $GameConfigName)
 # The tag comes from compile_overlays.cache_tag(), never re-formatted here: the
 # old local format string went stale when the _f<flavor> suffix was added, so
 # the filter matched nothing and a correct cache staged ZERO shards.
-$CgTag = Get-OverlayCgTag -RecompTools $RecompTools -RecompInc $RecompInc `
-                          -GameExe $RecompBin `
-                          -GameToml (Join-Path $Stage $GameConfigName)
-Write-Host "Release codegen tag: $CgTag (only this cache namespace is shipped)"
-Add-OverlayCache -GameId $CacheGameId `
-                 -CacheSrcRoot (Join-Path $Root "$CacheBuildDir/cache") `
-                 -Stage $Stage -CgTag $CgTag | Out-Null
-$AotAuditArgs = @(
-    (Join-Path $Root 'tools/audit_aot_cache.py'),
-    '--framework-root', (Join-Path $Root 'psxrecomp-v4'),
-    '--recompiler', $RecompBin,
-    '--game-toml', (Join-Path $Stage $GameConfigName),
-    '--cache-root', (Join-Path $Stage 'cache'),
-    '--inventory', $AotInventory, '--flavor', '0',
-    '--output', (Join-Path $Stage 'AOT_CACHE_AUDIT.json')
-)
-if ($ExpectedAotPairs -gt 0) { $AotAuditArgs += @('--expected-pairs', $ExpectedAotPairs) }
-Invoke-Native { & $AotPython @AotAuditArgs } 'staged original-input AOT audit'
-# Inspection creates pair locks. This private staging cache has no producers;
-# discard its audit locks before archiving, preserving the source cache.
-Get-ChildItem -LiteralPath (Join-Path $Stage 'cache') -Recurse -File -Filter '*.pair-lock' |
-    ForEach-Object { Remove-Item -LiteralPath $_.FullName }
+Invoke-Native {
+    & $AotPython (Join-Path $RecompTools 'aot_overlay_pipeline.py') release `
+        --profile (Join-Path $Root "aot/$Variant.json") --game-toml $RegenConfig `
+        --runtime-config (Join-Path $Stage $GameConfigName) --recompiler $RecompBin `
+        --runtime-build-dir $BuildPath --runtime-target $RuntimeTarget `
+        --work-dir (Join-Path $BuildPath 'aot-release') --stage $Stage `
+        --gcc (Join-Path $MingwBin 'gcc.exe') --workers 3
+} 'original-disc AOT extraction, complete inventory build and audit'
 Add-OverlayToolchain -Stage $Stage -RecompDir $RecompDir -RecompTools $RecompTools `
                      -RecompInc $RecompInc -MingwBin $MingwBin `
                      -DlCache (Join-Path $Root "tools\_toolchain_cache") | Out-Null

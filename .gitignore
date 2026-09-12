@@ -20,7 +20,9 @@
 /saves/
 /saves_ita/
 /_extract/
-/aot/
+/aot/*
+!/aot/usa.json
+!/aot/ita.json
 
 # Disc / image / memcard formats
 *.bin

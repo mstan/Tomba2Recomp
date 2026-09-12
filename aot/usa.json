@@ -1,0 +1,149 @@
+{
+  "schema": "psxrecomp AOT methods v1",
+  "game_id": "SCUS-94454",
+  "disc_hashes": {
+    "sha256": "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
+  },
+  "expected_records": 54,
+  "bios_resident": true,
+  "images": [
+    {
+      "method": "psx_exe",
+      "files": [
+        "MAIN.EXE"
+      ]
+    },
+    {
+      "method": "fixed_address_files",
+      "files": [
+        "BIN/A00.BIN",
+        "BIN/A01.BIN",
+        "BIN/A02.BIN",
+        "BIN/A03.BIN",
+        "BIN/A04.BIN",
+        "BIN/A05.BIN",
+        "BIN/A06.BIN",
+        "BIN/A07.BIN",
+        "BIN/A08.BIN",
+        "BIN/A09.BIN",
+        "BIN/A0A.BIN",
+        "BIN/A0B.BIN",
+        "BIN/A0C.BIN",
+        "BIN/A0D.BIN",
+        "BIN/A0E.BIN",
+        "BIN/A0F.BIN",
+        "BIN/A0G.BIN",
+        "BIN/A0H.BIN",
+        "BIN/A0I.BIN",
+        "BIN/A0J.BIN",
+        "BIN/A0K.BIN",
+        "BIN/A0L.BIN",
+        "BIN/SOP.BIN"
+      ],
+      "load_addr": "0x80108f9c"
+    },
+    {
+      "method": "fixed_address_files",
+      "files": [
+        "BIN/DEMO.BIN"
+      ],
+      "load_addr": "0x80106228"
+    },
+    {
+      "method": "fixed_address_files",
+      "files": [
+        "BIN/OPN.BIN",
+        "BIN/CRD.BIN"
+      ],
+      "load_addr": "0x8018a000"
+    },
+    {
+      "method": "fixed_address_files",
+      "files": [
+        "BIN/START.BIN"
+      ],
+      "load_addr": "0x80106228",
+      "allow_missing": true,
+      "entry_word": {
+        "file": "MAIN.EXE",
+        "file_offset": 2048,
+        "base": "0x80010000",
+        "address": "0x800a3ecc"
+      }
+    },
+    {
+      "method": "fixed_address_files",
+      "files": [
+        "BIN/GAME.BIN"
+      ],
+      "load_addr": "0x80106228",
+      "allow_missing": true,
+      "entry_word": {
+        "file": "MAIN.EXE",
+        "file_offset": 2048,
+        "base": "0x80010000",
+        "address": "0x800a3ed4"
+      }
+    }
+  ],
+  "compositions": [
+    {
+      "left": "BIN/GAME.BIN",
+      "right": [
+        "BIN/A00.BIN",
+        "BIN/A01.BIN",
+        "BIN/A02.BIN",
+        "BIN/A03.BIN",
+        "BIN/A04.BIN",
+        "BIN/A05.BIN",
+        "BIN/A06.BIN",
+        "BIN/A07.BIN",
+        "BIN/A08.BIN",
+        "BIN/A09.BIN",
+        "BIN/A0A.BIN",
+        "BIN/A0B.BIN",
+        "BIN/A0C.BIN",
+        "BIN/A0D.BIN",
+        "BIN/A0E.BIN",
+        "BIN/A0F.BIN",
+        "BIN/A0G.BIN",
+        "BIN/A0H.BIN",
+        "BIN/A0I.BIN",
+        "BIN/A0J.BIN",
+        "BIN/A0K.BIN",
+        "BIN/A0L.BIN",
+        "BIN/SOP.BIN"
+      ],
+      "max_gap": 0
+    }
+  ],
+  "checks": [
+    {
+      "method": "words",
+      "file": "MAIN.EXE",
+      "base": "0x80010000",
+      "file_offset": 2048,
+      "values": {
+        "0x800450ec": "0x3c048010",
+        "0x800450f4": "0x2463e1e0",
+        "0x800450f8": "0x1010c0",
+        "0x80045100": "0x8c450000",
+        "0x80045104": "0x8c460004",
+        "0x80045108": "0xc0076e3",
+        "0x8004510c": "0x24846228",
+        "0x8004511c": "0x24633ecc"
+      }
+    },
+    {
+      "method": "pointer_strings",
+      "file": "BIN/START.BIN",
+      "base": "0x80106228",
+      "table": "0x8010686c",
+      "strings": [
+        "\\BIN\\START.BIN;1",
+        "\\BIN\\DEMO.BIN;1",
+        "\\BIN\\GAME.BIN;1"
+      ]
+    }
+  ]
+}
