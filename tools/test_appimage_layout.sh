@@ -58,7 +58,7 @@ check_dir()  { [ -d "$data_dir/$1" ] || { echo "MISSING dir:  $1" >&2; fail=1; }
 
 for d in saves cache mods assets bios; do check_dir "$d"; done
 for f in "$GAME_TOML" input.ini START_HERE.txt LICENSE README.md \
-         bios/openbios.bin bios/OpenBIOS.LICENSE .appimage-layout-version; do
+         bios/openbios.bin bios/OpenBIOS.LICENSE AOT_CACHE_AUDIT.json .appimage-layout-version; do
     check_file "$f"
 done
 

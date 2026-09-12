@@ -81,7 +81,7 @@ if [ -d "$payload/overlay_toolchain" ]; then
     fi
 fi
 
-for file in @GAME_TOML@ LICENSE README.md RELEASE.txt START_HERE.txt; do
+for file in @GAME_TOML@ LICENSE README.md RELEASE.txt RELEASE_NOTES.md START_HERE.txt AOT_CACHE_AUDIT.json; do
     if [ -f "$payload/$file" ]; then
         cp -f "$payload/$file" "$data_dir/$file"
         chmod u+rw "$data_dir/$file"

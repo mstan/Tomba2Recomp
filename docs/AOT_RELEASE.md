@@ -79,6 +79,31 @@ Use `-SkipRegen` only for already generated, validated code from the same emitte
 `psxrecomp-v4`. Counts above describe this checkpoint, not permanent minima.
 `AOT_CACHE_AUDIT.json` ships pair hashes and metadata, without game bytes.
 
+For Linux, build the pinned recompiler and runtime on Linux, and repeat the
+same inventory compilation with native `python3` and `gcc`. Regenerate the
+inventories with Linux paths. Windows DLLs cannot be used by a Linux runtime;
+the shared compiler selects the Linux cache namespace and `.so` format.
+Use separate US and Italian runtime build directories so their mod catalogs
+remain independent. Then package each verified cache:
+
+```sh
+OVERLAY_CACHE_DIR=/path/to/linux/cache bash tools/package_appimage.sh \
+  --variant usa --version v0.0.10 --build-dir /path/to/build-usa --skip-build \
+  --aot-inventory /path/to/aot/usa/runtime-input-inventory.json
+OVERLAY_CACHE_DIR=/path/to/linux/cache bash tools/package_appimage.sh \
+  --variant ita --version v0.0.10-ita.1 --build-dir /path/to/build-ita --skip-build \
+  --aot-inventory /path/to/aot/ita/runtime-input-inventory.json
+bash tools/test_appimage_layout.sh --variant usa --version v0.0.10 \
+  release-linux/Tomba2Recomp-v0.0.10-linux-x86_64.AppImage
+bash tools/test_appimage_layout.sh --variant ita --version v0.0.10-ita.1 \
+  release-linux/Tombi2Recomp-ita-v0.0.10-ita.1-linux-x86_64.AppImage
+```
+
+The AppImage packager repeats the original-input audit after staging and emits
+a SHA-256 sidecar. Its audit receipt is also copied into the writable data
+directory. Layout checks verify regional assets, native libraries, and retention
+of user files across repeated launches; boot smoke checks remain a separate step.
+
 Both builds use the validated flavor-0 baseline with geometry correction off.
 Other flavors need their own native artifacts and validation. Keep packaged
 code-generation settings aligned; renaming a cache directory does not make it
