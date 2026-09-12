@@ -15,7 +15,7 @@ the same toolchain that powers TombaRecomp, ApeEscapeRecomp and MegaManX6Recomp.
 
 ## Status
 
-Windows preview builds support the US disc (SCUS-94454) and Italian PAL disc
+Windows and Linux preview builds support the US disc (SCUS-94454) and Italian PAL disc
 (SCES-02686). Both include native code prepared from all 22 original area files,
 plus shared overlays, before gameplay. The owner accepted performance in water
 temple and Kujara Ranch. Full native coverage and a full playthrough remain

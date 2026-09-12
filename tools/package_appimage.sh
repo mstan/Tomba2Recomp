@@ -29,6 +29,7 @@
 #   bash tools/package_appimage.sh --version v0.0.7
 #   bash tools/package_appimage.sh --out /mnt/f/drop   # or --out 'F:\drop'
 #   bash tools/package_appimage.sh --skip-build        # reuse existing build dir
+#   Add --aot-inventory <verified-inventory.json> for every release.
 #
 # There is deliberately no --allow-no-cache. Shipping an AppImage with no
 # overlay cache means every player's first visit to every area runs on the
@@ -37,7 +38,7 @@
 # has to ship without one, the framework tool takes
 # --ship-without-overlay-cache-because '<reason>', which prints the reason.
 #
-# Prereqs: cmake, ninja or make, a C/C++ toolchain, libsdl2-dev,
+# Prereqs: cmake, ninja or make, a C/C++ toolchain, SDL3 build dependencies,
 # libgl1-mesa-dev, curl, ImageMagick (for the icon), python3, and a generated/
 # tree (produced by the recompiler; generated/ is NOT tracked in this repo, so
 # either run the recompiler first or copy a generated/ tree in).
@@ -76,6 +77,8 @@ version=""
 out_dir=""
 variant=usa
 skip_build=0
+aot_inventory=""
+expected_aot_pairs=""
 build_dir=${BUILD_DIR:-"$root/build-appimage"}
 # Leave two cores for the rest of the machine; packaging must not make the box
 # unusable. Override with --jobs / BUILD_JOBS.
@@ -90,11 +93,18 @@ while [ $# -gt 0 ]; do
         --build-dir) build_dir=$2; shift 2;;
         --jobs)    jobs=$2; shift 2;;
         --skip-build) skip_build=1; shift;;
+        --aot-inventory) aot_inventory=$2; shift 2;;
+        --expected-aot-pairs) expected_aot_pairs=$2; shift 2;;
         --nice) nice_level=$2; shift 2;;
         -h|--help) sed -n '2,36p' "$0"; exit 0;;
         *) echo "unknown arg: $1" >&2; exit 2;;
     esac
 done
+
+[ -f "$aot_inventory" ] || {
+    echo "--aot-inventory must name the verified original-input inventory." >&2
+    exit 2
+}
 
 # Packaging a release should not make the machine unusable. Re-exec the whole
 # script under `nice` once (children inherit it) unless already niced or told
@@ -269,8 +279,11 @@ if [ "$skip_build" = "0" ]; then
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER_LAUNCHER= \
         -DCMAKE_CXX_COMPILER_LAUNCHER= \
-        -DPSX_SDL_BACKEND=SDL2 \
+        -DPSX_SDL_BACKEND=SDL3 \
         -DPSX_DEBUG_TOOLS=OFF \
+        -DPSX_PGXP_VARIANT=OFF \
+        -DPSX_SETUP_WIZARD=OFF \
+        -DPSX_NETPLAY=OFF \
         -DCMAKE_EXE_LINKER_FLAGS="-Wl,--build-id=none"
     cmake --build "$build_dir" --target "$runtime_target" -j "$jobs"
 fi
@@ -418,6 +431,15 @@ psx_add_overlay_cache --game-id "$game_id" \
                       --stage "$payload" \
                       --cg-tag "$cg_tag"
 
+audit_args=(--framework-root "$fw" --recompiler "$recompiler_bin"
+    --game-toml "$player_toml" --cache-root "$payload/cache"
+    --inventory "$aot_inventory" --flavor 0
+    --output "$payload/AOT_CACHE_AUDIT.json")
+if [ -n "$expected_aot_pairs" ]; then
+    audit_args+=(--expected-pairs "$expected_aot_pairs")
+fi
+"${PSX_RELEASE_STAGE_PYTHON:-python3}" "$root/tools/audit_aot_cache.py" "${audit_args[@]}"
+
 # The self-contained overlay toolchain: a pinned relocatable CPython plus
 # compile_overlays.py, the recompiler and the runtime headers. It is what lets a
 # player whose machine has no compiler turn a newly captured overlay into native
@@ -439,8 +461,10 @@ psx_add_overlay_toolchain --stage "$payload" \
 
 cp "$player_toml" "$payload/$GAME_TOML"
 cp "$root/packaging/release/input.ini"      "$payload/input.ini"
-cp "$root/packaging/release/START_HERE.txt" "$payload/START_HERE.txt"
-cp "$root/LICENSE" "$root/README.md" "$payload/"
+start_here=$root/packaging/release/START_HERE.txt
+[ "$variant" != ita ] || start_here=$root/packaging/release/START_HERE_ITA.txt
+cp "$start_here" "$payload/START_HERE.txt"
+cp "$root/LICENSE" "$root/README.md" "$root/RELEASE_NOTES.md" "$payload/"
 
 # recomp-ui resolves fonts/textures through SDL_GetBasePath(), which points at
 # the real ELF inside the mount rather than psxrecomp's writable argv[0] anchor.
@@ -489,5 +513,6 @@ rm -f -- "$output"
 ARCH=x86_64 "$appimagetool" --appimage-extract-and-run "$appdir" "$output"
 chmod 0755 "$output"
 
-sha256sum "$output"
+(cd "$out_dir" && sha256sum "$(basename -- "$output")") > "$output.sha256"
+cat "$output.sha256"
 echo "AppImage: $output"

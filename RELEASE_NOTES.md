@@ -30,7 +30,7 @@ watchdog abort was not reproduced in longer retesting; its cause is unresolved
 and the watchdog remains enabled. Widescreen and other optional enhancements
 are outside the baseline AOT gameplay checks.
 
-These Windows x64 packages require the matching original disc image. OpenBIOS
+Windows x64 ZIPs and Linux x86_64 AppImages require the matching original disc image. OpenBIOS
 and its MIT notice are bundled; an optional supported retail BIOS may be
 selected. Disc images, retail BIOS dumps, player saves and capture JSON are not
 included. Keep a backup when moving memory cards to a new installation.
