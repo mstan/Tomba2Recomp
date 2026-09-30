@@ -150,7 +150,9 @@ psxrecomp_add_runtime_target(psx-runtime-ita
 set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
     "${_tomba2_ita_exe_name}")
 
-recomp_target_launcher_language(psx-runtime-ita it)
+if(PSX_RECOMP_UI)
+    recomp_target_launcher_language(psx-runtime-ita it)
+endif()
 
 # (No mod-catalog POST_BUILD here: PRELOADED_MODS_DIR above hands
 # mods/preloaded_ita to the framework, which wipes mods/bundled and stages
