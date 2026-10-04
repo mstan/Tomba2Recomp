@@ -85,6 +85,7 @@ int register_plugins() {
              "tomba2.framerate.165",
              "tomba2.framerate.240",
              "tomba2.fmv.skip",
+             "tomba2.seamless",
              "tomba2.debug.menu"}) {
         if (!PSXRecompV4::mod_register_activation_plugin(id, no_op_plugin)) {
             return fail(std::string("could not register test plugin ") + id);
@@ -210,9 +211,18 @@ int main(int argc, char** argv) {
     fs::copy(fs::path(argv[2]), ita_root, fs::copy_options::recursive);
 
     PSXRecompV4::ModPackageManager us_manager;
-    if (load_catalog(us_root, us_manager, 4, 4) != 0) return 1;
+    if (load_catalog(us_root, us_manager, 5, 5) != 0) return 1;
+    if (expect_single_plugin(us_manager.resolve(kGameId, "", kDiscSha256),
+                             "tomba2.seamless", "default US resident loading") != 0)
+        return 1;
+    const auto unsupported = us_manager.resolve(kItaGameId, "", kItaDiscSha256);
+    if (unsupported.ok && !unsupported.plugins.empty())
+        return fail("US resident loader must not activate on another region");
+    std::string seamless_error;
+    if (!us_manager.set_feature_enabled("tomba2.enhancement.seamless-loading",
+            "seamless-loading", false, &seamless_error)) return fail(seamless_error);
     if (expect_no_ops(us_manager.resolve(kGameId, "", kDiscSha256),
-                      "default-disabled US catalog") != 0)
+                      "US retail loading opt-out") != 0)
         return 1;
     if (check_widescreen(us_manager, kUsWidescreenPackage, kGameId,
                          kDiscSha256, "US") != 0)
@@ -256,7 +266,7 @@ int main(int argc, char** argv) {
 
     fs::remove_all(us_root, ec);
     fs::remove_all(ita_root, ec);
-    std::cout << "Tomba 2 preloaded mods: 4 US packages, "
+    std::cout << "Tomba 2 preloaded mods: 5 US packages, resident loading opt-out, "
                  "7 localized Italian packages, no Italian debug menu, "
                  "3 widescreen choices, 7 interpolated frame-rate choices, "
                  "motion-adaptive clarity blend, game-owned FMV skipping, "

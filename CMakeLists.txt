@@ -21,7 +21,8 @@ set(GAME_GENERATED_DISPATCH
     "${CMAKE_CURRENT_SOURCE_DIR}/generated/SCUS_944.54_dispatch.c")
 
 file(GLOB TOMBA2_MOD_PLUGIN_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.cpp")
 
 # Isolated-worktree process-identity overrides. A sibling investigation may
 # build this same game repo from a DIFFERENT worktree at the same time; without
@@ -95,6 +96,12 @@ psxrecomp_add_runtime_target(psx-runtime
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
 
 if(BUILD_TESTING)
+    add_executable(tomba2_seamless_prepare_test
+        tests/test_seamless_prepare.cpp
+        src/mods/tomba2_seamless_prepare.cpp
+        "${PSXRECOMP_ROOT}/runtime/src/psx_sha256.c")
+    target_include_directories(tomba2_seamless_prepare_test PRIVATE
+        "${PSXRECOMP_ROOT}/runtime/include")
     add_executable(tomba2_preloaded_mods_test
         tests/test_preloaded_mods.cpp
         "${PSXRECOMP_ROOT}/runtime/src/mod_packages.cpp"
