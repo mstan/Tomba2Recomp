@@ -111,10 +111,20 @@ not contain a Tomba-specific address, codec, timing policy or game-state rule.
   audited native cache, measured 16.683 ms/presentation (16.888 ms maximum in
   the sample), with zero audio skips, mutes, underruns or overflow drops during
   a ten-second check. The scene then continued into A00 normally.
+- After withholding the debug-menu package, the rebuilt runtime staged exactly
+  eight packages (four game and four framework); both catalog checks passed.
+  An A00 ten-second check measured 16.683 ms/presentation (16.955 ms maximum),
+  with zero audio skips, mutes, underruns or overflow drops.
 
-Representative natural routes, save loading, death/retry and later event
-variants still need route coverage before a release claim. This branch is a
-spike, not a claim that every transition in the game has been validated.
+Representative natural routes, death/retry and later event variants still
+need route coverage before a release claim. This branch is a spike, not a
+claim that every transition in the game has been validated.
+The owner requested ending automated playthrough checks here and taking over
+manual wings/doors testing with a late-game save. Existing local playtest cards
+contain 130/132 completed events; copies are isolated from the owner's normal
+cards for that handoff. Card 1's 008:45:31 save loaded through the original
+Load Game menu into gameplay in the rebuilt runtime. Further area checks are
+left to the owner; no automated playthrough is running.
 
 ### Performance test setup findings
 
@@ -122,9 +132,11 @@ The existing debug-menu mod changes instructions at `80050CB0`, `80050CC0`,
 `8007A904`, `8007A908` and `80108B60`. The original-disc native cache cannot run
 those modified bodies; correct live-code guards force interpreter execution.
 One test accumulated 580 million interpreted instructions at the modified
-render loop. Leave that menu disabled for normal performance acceptance;
-native coverage of its patched code is separate work. This is distinct from
-the resident loader's resource adapters.
+render loop. The owner approved removing it from the bundled catalog while
+native support is deferred; its package remains under `mods/development`.
+Mutual exclusion would still leave the menu slow when resident loading is off.
+Normal performance acceptance uses the original game code. This is distinct
+from the resident loader's resource adapters.
 
 An early debug savestate restore can bypass the game-entry notification and
 leave BIOS boot turbo enabled. The resulting run presents only one out of 30

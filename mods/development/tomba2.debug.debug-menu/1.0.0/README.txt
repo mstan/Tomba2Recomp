@@ -1,8 +1,10 @@
 Tomba 2 Debug Menu
 ==================
 
-This package is copied beside the runtime and appears on the launcher's Mods
-page. Enable "Debug Menu (Experimental)" under Debug on the Mods page.
+This development package is excluded from runtime and release bundles. Its
+patched render loop lacks matching native coverage and causes severe slowdown
+even with Resident Loading disabled. Native support is deferred; see
+mods/development/README.md and beads-eio.2.10 before reintroducing it.
 
 An in-game developer menu drawn with Tomba 2's own text routines. Press L3
 during gameplay to open it; X selects, O goes back, Up/Down move the cursor,

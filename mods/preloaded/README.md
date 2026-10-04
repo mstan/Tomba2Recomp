@@ -4,5 +4,8 @@ These packages are copied beside the runtime and appear on the launcher's Mods
 page. They contain metadata only; trusted native activation callbacks are
 compiled into Tomba2Recomp.
 
-All four packages are disabled by default. The target hash is the SHA-256 of the
-SCUS-94454 MODE2/2352 data-track BIN used by the mod loader for identity.
+Resident Loading is enabled by default. Widescreen, Frame Blending, and Skip
+FMVs are disabled by default. Debug Menu is withheld pending native coverage;
+its development package lives outside this catalog in `mods/development`.
+The target hash is the SHA-256 of the SCUS-94454 MODE2/2352 data-track BIN used
+by the mod loader for identity.

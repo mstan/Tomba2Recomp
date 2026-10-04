@@ -211,7 +211,11 @@ int main(int argc, char** argv) {
     fs::copy(fs::path(argv[2]), ita_root, fs::copy_options::recursive);
 
     PSXRecompV4::ModPackageManager us_manager;
-    if (load_catalog(us_root, us_manager, 5, 5) != 0) return 1;
+    if (load_catalog(us_root, us_manager, 4, 4) != 0) return 1;
+    if (us_manager.packages().find(kUsDebugMenuPackage) !=
+        us_manager.packages().end()) {
+        return fail("US catalog must not ship the uncompiled Debug Menu variant");
+    }
     if (expect_single_plugin(us_manager.resolve(kGameId, "", kDiscSha256),
                              "tomba2.seamless", "default US resident loading") != 0)
         return 1;
@@ -232,17 +236,6 @@ int main(int argc, char** argv) {
         return 1;
     if (check_skip_fmvs(us_manager, kUsSkipFmvsPackage, kGameId,
                         kDiscSha256, "US") != 0)
-        return 1;
-
-    std::string error;
-    if (!us_manager.set_feature_enabled(
-            kUsDebugMenuPackage, "debug-menu", true, &error)) {
-        return fail(error);
-    }
-    if (expect_single_plugin(
-            us_manager.resolve(kGameId, "", kDiscSha256),
-            "tomba2.debug.menu",
-            "Debug Menu did not resolve its trusted plugin alone") != 0)
         return 1;
 
     PSXRecompV4::ModPackageManager ita_manager;
@@ -266,8 +259,8 @@ int main(int argc, char** argv) {
 
     fs::remove_all(us_root, ec);
     fs::remove_all(ita_root, ec);
-    std::cout << "Tomba 2 preloaded mods: 5 US packages, resident loading opt-out, "
-                 "7 localized Italian packages, no Italian debug menu, "
+    std::cout << "Tomba 2 preloaded mods: 4 US packages, resident loading opt-out, "
+                 "7 localized Italian packages, no bundled debug menu, "
                  "3 widescreen choices, 7 interpolated frame-rate choices, "
                  "motion-adaptive clarity blend, game-owned FMV skipping, "
                  "stock guest code untouched\n";

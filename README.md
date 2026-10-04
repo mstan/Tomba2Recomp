@@ -33,10 +33,9 @@ BIOS is required: select your legally obtained Tomba! 2 disc image in the
 launcher and press Launch. The optional BIOS row accepts the exact supported
 retail dump; clear it to return to bundled OpenBIOS.
 
-Tomba 2's widescreen, temporal-frame-blending, Skip FMVs, and Debug Menu mods
-live on the launcher's **Mods** page. They are disabled by default, leaving the
-authentic 4:3/non-interpolated presentation with real-time movies and stock
-guest code as the baseline.
+Tomba 2's mods live on the launcher's **Mods** page. On this experimental
+branch, resident loading is enabled by default for the US disc. Widescreen,
+temporal frame blending, and Skip FMVs remain disabled by default.
 
 ## Layout
 
@@ -86,9 +85,17 @@ trails. This is temporal blending, not motion-vector frame generation.
 silent, RAM-preloaded Whoopee Camp logo. The game still runs its normal movie
 completion and teardown path.
 
-**Debug Menu (Experimental)** opens Tomba 2's in-game developer menu with L3
-during gameplay. It can warp areas, move Tomba out of bounds, grant items, and
-edit event flags, so use a separate memory card for testing.
+**Resident Loading (Experimental)** prepares immutable resources from the
+player's disc once, caches them on disk, and keeps them in host memory during
+play. Verified resource workers complete without the loading-screen loop;
+gameplay, cutscenes, and audio retain their normal pacing. Disable it to use
+the original loader. See [the spike assessment](docs/SEAMLESS_LOADING_SPIKE.md)
+for tested routes and remaining coverage.
+
+The experimental **Debug Menu** is withheld from the bundled catalog because
+its patched render loop lacks native coverage and causes severe slowdown,
+including with resident loading disabled. Its source is retained under
+`mods/sources` and its package under [mods/development](mods/development).
 
 ## License
 
