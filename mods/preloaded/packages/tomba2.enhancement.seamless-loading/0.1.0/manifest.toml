@@ -1,9 +1,9 @@
 format_version = 5
 id = "tomba2.enhancement.seamless-loading"
 version = "0.1.0"
-name = "Tomba 2 Resident Loading Spike"
+name = "Tomba 2 Seamless Loading"
 author = "mstan"
-description = "Experimental resident original-disc resources at normal gameplay and audio speed."
+description = "Remove loading screens with prepared disc resources at normal gameplay and audio speed."
 resolver = "declarative"
 save_compatibility = "shared"
 
@@ -13,8 +13,8 @@ disc_sha256 = "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
 
 [[feature]]
 id = "seamless-loading"
-name = "Resident Loading (Experimental)"
-description = "Prepare resources from your disc once, then keep them resident. Spike validation is in progress."
+name = "Seamless Loading"
+description = "Prepare resources from your disc once for near-instant area transitions. Disable to restore original loading."
 group = "Gameplay"
 default_enabled = true
 

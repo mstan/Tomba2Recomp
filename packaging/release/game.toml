@@ -24,13 +24,9 @@ memcard_dir = "saves"
 # boot, logos included.
 fast_boot = true
 
-# Loading speed is owned by the Mods page ("Fast Loading (host pacing)" and
-# "CD Speed"), both shipped disabled. The legacy generic Turbo loads switch is
-# therefore off and not offered: this also makes the runtime ignore a stale
-# `turbo_loads = true` carried over in an older build's settings.toml, which the
-# launcher no longer draws a row for and so could not be turned back off.
-turbo_loads = false
-offer_turbo_loads = false
+# Seamless Loading is enabled by default on the Mods page. The USA catalog
+# excludes generic CD Speed and host-paced Fast Loading; guest/audio pacing
+# stays normal. Disabling Seamless Loading restores the original loader.
 
 # Disc-derived native overlays are prepared before gameplay. Runtime
 # capture/compilation remains available for gaps; captures stay private.

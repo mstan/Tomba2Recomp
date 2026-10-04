@@ -1,7 +1,9 @@
 # Tomba 2 resident-loading spike
 
 Branch: `spike/tomba2-seamless-20261004`. Tracking: `beads-eio.2.8`.
-This is an experimental, default-on USA mod, with a retail-loading opt-out.
+The owner accepted the USA playtest on 2026-10-04. Seamless Loading is enabled
+by default with a retail-loading opt-out, replacing generic CD Speed and
+host-paced Fast Loading in the USA build and release catalog.
 It targets the original SCUS-94454 disc. The Italian catalog does not enable it.
 
 The objective is to remove the game's loading screen between gameplay areas
@@ -29,7 +31,7 @@ resources plus 8,684,178 decoded texture bytes. Music, speech and movies remain
 on their existing streaming paths. Resource packs contain licensed game data
 and must not be distributed or committed.
 
-Disable **Resident Loading (Experimental)** in Mods to use retail loading.
+Disable **Seamless Loading** in Mods to use retail loading.
 Developer-only environment variables:
 
 - `TOMBA2_SEAMLESS_CACHE`: cache directory override.
@@ -115,10 +117,14 @@ not contain a Tomba-specific address, codec, timing policy or game-state rule.
   eight packages (four game and four framework); both catalog checks passed.
   An A00 ten-second check measured 16.683 ms/presentation (16.955 ms maximum),
   with zero audio skips, mutes, underruns or overflow drops.
+- After owner acceptance, the USA catalog was reduced to six packages by
+  excluding generic CD Speed and host-paced Fast Loading. Both catalog tests
+  and release catalog staging passed; Italian still declares seven packages.
+  The rebuilt runtime restored the owner's current position with turbo off.
 
-Representative natural routes, death/retry and later event variants still
-need route coverage before a release claim. This branch is a spike, not a
-claim that every transition in the game has been validated.
+Automated coverage does not establish every natural route, death/retry or
+later event variant. The owner subsequently accepted manual playtesting as
+sufficient for default-on use; full-game exhaustive coverage is not claimed.
 The owner requested ending automated playthrough checks here and taking over
 manual wings/doors testing with a late-game save. Existing local playtest cards
 contain 130/132 completed events; copies are isolated from the owner's normal

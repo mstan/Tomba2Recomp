@@ -21,10 +21,9 @@ strict = true
 # Full HLE kernel tier (bios_hle) stays OFF here — LLE is the baseline; Tomba1
 # is the HLE validation title.
 fast_boot = true
-# Loading speed is mod-owned for this title ("Fast Loading (host pacing)" and
-# "CD Speed" on the Mods page, both default-off). The legacy generic
-# turbo_loads / offer_turbo_loads keys were retired framework-side -- the
-# runtime now ignores them and warns on sight -- so they are gone from here.
+# Seamless Loading is enabled by default on the Mods page. The USA catalog
+# excludes generic CD Speed and host-paced Fast Loading; guest/audio pacing
+# stays normal. Disabling Seamless Loading restores the original loader.
 # Tomba2's OWN debug port — 4500 collides with the SNES mmx_cosim processes.
 # Taken elsewhere: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
 debug_port = 4515

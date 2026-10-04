@@ -49,8 +49,6 @@ $GameConfigName = "game.toml"
 $GameConfigSource = Join-Path $PackagingRelease $GameConfigName
 $RegenConfig = Join-Path $Root "game.toml"
 $CacheGameId = "SCUS-94454"
-$ExpectedMods = 8
-$GameModSource = Join-Path $Root "mods\preloaded"
 $ReleaseTitle = "Tomba! 2 Recompiled"
 if ($Variant -eq "ita") {
     $RuntimeTarget = "psx-runtime-ita"
@@ -60,8 +58,6 @@ if ($Variant -eq "ita") {
     $GameConfigSource = Join-Path $PackagingRelease $GameConfigName
     $RegenConfig = Join-Path $Root "game_ita.toml"
     $CacheGameId = "SCES-02686"
-    $ExpectedMods = 7
-    $GameModSource = Join-Path $Root "mods\preloaded_ita"
     $ReleaseTitle = "Tombi! 2 (Italian) Recompiled"
 }
 $Stage = Join-Path $StageRoot $StageName
@@ -299,16 +295,11 @@ Write-Host "Bundled recomp-ui launcher assets: $fontCount font(s) + $imgCount im
 
 # Game-owned display enhancements are staged by CMake beside the development
 # executable. Preserve that exact catalog in the release package.
-# Derived catalog check (shared framework staging): everything the sources
-# define must survive into the package. Replaces a hard-coded count that had
-# already gone stale once -- it demanded 5 when the real catalog was 7, and the
-# catalog has since grown to 8. A count describing shared framework content is
-# a standing liability; this cannot go stale when a mod is added, and still
-# catches the failure that matters (a mod silently not shipping).
-# $GameModSource is set per-variant above (preloaded vs preloaded_ita).
+# Use the build's per-target catalog manifest, including its builtin allowlist.
+# USA excludes CD Speed and host-paced Fast Loading in favor of Seamless Loading;
+# Italian retains its separately localized catalog.
 Add-ModCatalog -BuildPath $BuildPath -Stage $Stage `
-               -GameModSource $GameModSource `
-               -FrameworkModSource (Join-Path $Root "psxrecomp-v4\mods\builtin") | Out-Null
+               -RuntimeTarget $RuntimeTarget | Out-Null
 
 # Player-facing game.toml: same effective runtime settings as the dev config,
 # minus dev-only sections (debug port, overlay autocompile command, [audit]).

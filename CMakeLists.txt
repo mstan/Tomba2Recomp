@@ -69,6 +69,12 @@ endif()
 set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
 set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
 
+# USA Seamless Loading replaces the generic CD-speed and host-turbo mods.
+# Restore the caller's selection afterward: Italian has no resident adapter.
+set(_tomba2_previous_builtin_allowlist "${PSX_BUILTIN_MOD_ALLOWLIST}")
+set(PSX_BUILTIN_MOD_ALLOWLIST
+    psx.enhancement.pgxp
+    psx.presentation.bezel)
 psxrecomp_add_runtime_target(psx-runtime
     GAME_GENERATED_FULL_C "${GAME_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
@@ -91,6 +97,8 @@ psxrecomp_add_runtime_target(psx-runtime
     DEFAULT_GAME_CONFIG_PATH "game.toml"
     LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
 )
+set(PSX_BUILTIN_MOD_ALLOWLIST "${_tomba2_previous_builtin_allowlist}")
+unset(_tomba2_previous_builtin_allowlist)
 
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")

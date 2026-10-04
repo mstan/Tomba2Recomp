@@ -377,7 +377,7 @@ done
 # mods/ is NOT part of the loop above any more. It needs three things the loop
 # cannot do: drop mods/installed and mods/state.toml (this machine's own
 # installed archives and its own enable/disable selection over a catalog that
-# ships default-off -- both used to ship), and verify the catalog against the
+# has its own defaults -- both used to ship), and verify the catalog against the
 # manifest the BUILD published instead of against a written-down number.
 #
 # The number is what makes this worth changing. This script asserted

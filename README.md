@@ -33,9 +33,10 @@ BIOS is required: select your legally obtained Tomba! 2 disc image in the
 launcher and press Launch. The optional BIOS row accepts the exact supported
 retail dump; clear it to return to bundled OpenBIOS.
 
-Tomba 2's mods live on the launcher's **Mods** page. On this experimental
-branch, resident loading is enabled by default for the US disc. Widescreen,
-temporal frame blending, and Skip FMVs remain disabled by default.
+Tomba 2's mods live on the launcher's **Mods** page. Seamless Loading is enabled
+by default for the US disc, replacing the generic CD Speed and Fast Loading
+options. Widescreen, temporal frame blending, and Skip FMVs remain disabled by
+default. Italian retains its existing loading options.
 
 ## Layout
 
@@ -85,7 +86,7 @@ trails. This is temporal blending, not motion-vector frame generation.
 silent, RAM-preloaded Whoopee Camp logo. The game still runs its normal movie
 completion and teardown path.
 
-**Resident Loading (Experimental)** prepares immutable resources from the
+**Seamless Loading** prepares immutable resources from the
 player's disc once, caches them on disk, and keeps them in host memory during
 play. Verified resource workers complete without the loading-screen loop;
 gameplay, cutscenes, and audio retain their normal pacing. Disable it to use
