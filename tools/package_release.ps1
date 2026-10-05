@@ -249,6 +249,8 @@ Invoke-Native {
     & $Cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release `
         -DPSX_DEBUG_TOOLS=OFF `
         -DPSX_PGXP_VARIANT=OFF `
+        -DPSX_SETUP_WIZARD=OFF `
+        -DPSX_NETPLAY=OFF `
         "-DCMAKE_EXE_LINKER_FLAGS=-Wl,--no-insert-timestamp"
 } "cmake configure"
 Invoke-Native { & $Cmake --build $BuildPath --target $RuntimeTarget -j $Jobs } "cmake build"
@@ -382,6 +384,11 @@ Copy-FileTo (Join-Path $PackagingRelease "input.ini") (Join-Path $Stage "input.i
 
 $TombaSha = (& git -C $Root rev-parse --short HEAD).Trim()
 $PsxRecompSha = (& git -C (Join-Path $Root "psxrecomp-v4") rev-parse --short HEAD).Trim()
+$LoadingReleaseNote = if ($Variant -eq 'usa') {
+    '- Seamless Loading defaults on; generic CD Speed/Fast Loading and the slow debug menu are excluded.'
+} else {
+    '- Italian retains its existing loading options; Seamless Loading is USA-only.'
+}
 
 @"
 $ReleaseTitle $Version
@@ -393,6 +400,7 @@ native execution coverage remain unproven.
 New in this release:
 - Sources: Tomba2Recomp $TombaSha and psxrecomp $PsxRecompSha.
 - Variant: $Variant.
+$LoadingReleaseNote
 - All 22 area files have disc-derived native candidates, plus shared code.
 - Native overlay bytes, load addresses and cache namespaces are region-specific.
 - Baseline geometry correction is disabled to match the validated AOT flavor.

@@ -1,4 +1,23 @@
-# Tomba! 2 / Tombi! 2 Italian - v0.0.10 AOT overlays
+# Tomba! 2 v0.1.0 - Seamless Loading
+
+Seamless Loading is enabled by default for the US disc (SCUS-94454).
+The first launch prepares verified resources from the player's disc and caches
+them locally. Area transitions use resident resources at normal gameplay and
+audio speed. Disable the mod to restore the original loader.
+
+- Replaces the generic CD Speed and turbo-style Fast Loading options.
+- Keeps cutscenes, music and speech on their normal playback paths.
+- Excludes the experimental debug menu, whose patched code caused slowdown.
+- Includes freshly audited native overlays for all original area images and
+  shared code, including the opening prologue.
+
+The owner accepted late-game area testing. This does not claim exhaustive
+coverage of every event or compatibility with arbitrary asset replacements.
+Windows x64 and Linux x86_64 packages include OpenBIOS; players provide their
+own US disc. No disc resources, retail BIOS dump or player save is bundled.
+The Italian version remains on its existing release and loading behavior.
+
+## Previous release: v0.0.10 AOT overlays
 
 Native overlay code is now prepared from the original discs before gameplay.
 Both regions include candidates from all 22 area files, plus shared code.

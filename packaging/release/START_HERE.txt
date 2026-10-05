@@ -13,9 +13,10 @@ FIRST RUN
   1. Launch the game. The launcher window opens.
   2. Set the Disc row to your Tomba! 2 image. The launcher verifies the
      ISO9660 header, region, and serial before accepting it.
-  3. Optionally visit Mods for the bundled enhancements (widescreen, Skip
-     FMVs, interpolated frame rate). They ship disabled; the default
-     presentation is the authentic 4:3 one.
+  3. Seamless Loading is enabled by default in Mods. Your first launch
+     prepares resources from your disc for near-instant area transitions.
+     Gameplay and audio retain normal speed. Turn it off for original loading.
+     Widescreen, Skip FMVs, and frame blending remain optional and disabled.
   4. Press Launch. Your choices are remembered for next time.
 
 WHERE THINGS LIVE
@@ -26,6 +27,8 @@ WHERE THINGS LIVE
 
   On Linux the AppImage seeds these into ~/.local/share/Tomba2Recomp
   (override with TOMBA2_RECOMP_DATA_DIR).
+  Prepared disc resources live in %LOCALAPPDATA%/Tomba2Recomp/seamless on
+  Windows, or ~/.cache/Tomba2Recomp/seamless on Linux (XDG_CACHE_HOME respected).
 
 PRIVACY NOTE
   overlay_captures.json and the cache folder contain code converted from
