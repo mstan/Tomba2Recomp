@@ -19,25 +19,40 @@ and atomically writes a private resource pack. No Python, compiler, extraction
 script, or runtime code generation is needed for this preparation. The native
 executable and its audited overlay libraries remain developer-built artifacts.
 
+The pack is the framework's resident disc pack (psxrecomp
+`runtime/include/mod_resident.h`), shared with TombaRecomp and MegaManX6Recomp.
 The default cache directory is `%LOCALAPPDATA%/Tomba2Recomp/seamless` on Windows
-and `$XDG_CACHE_HOME/Tomba2Recomp/seamless` (or `~/.cache/...`) elsewhere. The
-filename includes a hash of the active mod-plan fingerprint. A changed asset
-plan cannot silently reuse a stock cache. All source and decoded hashes are
-checked when loading a pack. Corrupt or truncated packs are rebuilt from the
-mounted disc; failure leaves the game using its original loader.
+and `$XDG_CACHE_HOME/Tomba2Recomp/seamless` (or `~/.cache/...`) elsewhere; files
+are named `scus94454-resources-v3-<key>.pack`, keyed by the active mod-plan
+fingerprint. A changed asset plan cannot silently reuse a stock cache. Every
+source and decoded blob is hashed when a pack loads, and the files' disc
+extents are rechecked. Corrupt or truncated packs are rebuilt from the mounted
+disc; failure leaves the game using its original loader.
 
-The resident set is 32,164,498 bytes: 23,480,320 bytes of sector-padded original
-resources plus 8,684,178 decoded texture bytes. Music, speech and movies remain
+Files are read from the effective (mod-patched) disc and served as found; a
+file that differs from its catalogued original is counted
+(`tomba2.seamless.modified_files`). Textures are prepared only from the
+original `TOMBA2.IMG`; with a modified container the game's own decoder runs.
+
+The resident set is 30,686,576 bytes: 23,480,320 bytes of sector-padded original
+resources plus decoded texture blocks, identical blocks stored once (280
+entries, 248 distinct blobs including the sources). Music, speech and movies remain
 on their existing streaming paths. Resource packs contain licensed game data
 and must not be distributed or committed.
 
 Disable **Seamless Loading** in Mods to use retail loading.
 Developer-only environment variables:
 
-- `TOMBA2_SEAMLESS_CACHE`: cache directory override.
+- `PSX_RESIDENT_CACHE`: cache root override (framework-wide).
 - `TOMBA2_SEAMLESS_TRACE=1`: resource/worker diagnostics; off by default.
 - `TOMBA2_SEAMLESS_RETAIL=1`: prepare the pack but bypass the adapters, for A/B
   investigation. Normal opt-out is the Mods checkbox.
+
+Always-on: TCP `{"cmd":"resident_status"}` (pack state, sizes, prepare time) and
+`{"cmd":"mod_counters"}` (`tomba2.seamless.reads`/`bytes`/`textures`/`workers`/
+`spu_banks`, `resident.*`). Served reads reach RAM with CD-DMA side effects
+(`psx_mod_dma_write_ram`); worker calls use `psx_mod_call_guest`, sample banks
+`psx_mod_spu_upload`.
 
 ## What was assessed
 
@@ -166,7 +181,8 @@ The debug-menu native variant remains separate work (`beads-eio.2.10`).
 Build `tomba2_seamless_prepare_test` with the game CMake project, then run:
 
 ```text
-tomba2_seamless_prepare_test ORIGINAL_DISC.bin NEW_EMPTY_CACHE_DIRECTORY
+cmake -B BUILD_DIRECTORY -DTOMBA2_TEST_DISC=ORIGINAL_DISC.bin ...
+ctest --test-dir BUILD_DIRECTORY -R ^tomba2_seamless_prepare_test$ --output-on-failure
 ctest --test-dir BUILD_DIRECTORY -R ^tomba2_preloaded_mods_test$ --output-on-failure
 python tools/verify_seamless_assets.py ORIGINAL_DISC.bin --check
 ```

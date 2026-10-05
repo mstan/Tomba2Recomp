@@ -3,8 +3,6 @@
 #include "mod_plugins.h"
 #include "bios_hle.h"
 #include "cpu_state.h"
-#include "dirty_ram_interp.h"
-#include "spu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,20 +18,18 @@ static int (*previous_hook)(CPUState *,uint32_t);
 static uint32_t r32(uint32_t a) { return psx_mod_read_word(a); }
 static uint16_t r16(uint32_t a) { return psx_mod_read_half(a); }
 static void w32(uint32_t a,uint32_t v) { psx_mod_write_word(a,v); }
-static void copy_ram(uint32_t a,const unsigned char *p,unsigned n) {
-    /* Asset writes invalidate executable pages and their overlay generations. */
-    if(a>=0x800BF000u) {
-        memcpy(memory_get_ram_ptr()+(a&0x1FFFFFFFu),p,n);
-        dirty_ram_mark_executable_range(a&0x1FFFFFFFu,n);
-        for(uint32_t q=a;q<a+n;q=(q&~255u)+256) psx_mod_write_byte(q,p[q-a]);
-    } else {
-        for(unsigned i=0;i<n;i++) psx_mod_write_byte(a+i,p[i]);
-    }
+/* Disc data arrives as the CD-ROM DMA would deliver it; an unaligned span
+ * (never seen from the game's readers) takes the CPU store path instead. */
+static void deliver(uint32_t a,const unsigned char *p,unsigned n,uint32_t lba) {
+    if(!((a|n)&3u) && psx_mod_dma_write_ram(a,p,n,(int)lba)) return;
+    (void)psx_mod_host_write_ram(a,p,n);
 }
 static int resident_read(uint32_t dest,uint32_t lba,unsigned n) {
     const unsigned char *p=n && n<=0x200000u ? tomba2_seamless_source(lba,n) : NULL;
     if(!p || dest<0x80010000u || dest>0x80200000u || n>0x80200000u-dest) return 0;
-    copy_ram(dest,p,n);
+    deliver(dest,p,n,lba);
+    psx_mod_counter_add("tomba2.seamless.reads",1);
+    psx_mod_counter_add("tomba2.seamless.bytes",n);
     w32(0x1F8001F0u,lba); w32(0x1F8001F4u,0); w32(0x1F8001F8u,dest+n);
     w32(0x1F800284u,n/4); w32(0x1F800288u,dest);
     w32(0x800BE0E0u,lba+(n+2047u)/2048u-1);
@@ -43,14 +39,9 @@ static int resident_read(uint32_t dest,uint32_t lba,unsigned n) {
     ++reads; last_read=frame;
     return 1;
 }
+/* The worker runs with the spawn call's own argument registers. */
 static uint32_t guest(CPUState *cpu,uint32_t target,uint32_t ra) {
-    uint32_t regs[32],saved_pc=cpu->pc,hi=cpu->hi,lo=cpu->lo;
-    memcpy(regs,cpu->gpr,sizeof regs);
-    cpu->gpr[31]=ra;
-    psx_dispatch_call(cpu,target,ra);
-    uint32_t result=cpu->gpr[2];
-    memcpy(cpu->gpr,regs,sizeof regs);cpu->pc=saved_pc;cpu->hi=hi;cpu->lo=lo;
-    return result;
+    return psx_mod_call_guest(cpu,target,ra,cpu->gpr[4],cpu->gpr[5],cpu->gpr[6],cpu->gpr[7]);
 }
 static int loader_layout(void) {
     /* Bind the synchronous worker adapter to the verified original extent
@@ -86,6 +77,7 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
         psx_mod_write_half(0x801FE070u,4);
         unsigned before=frame;
         guest(cpu,target,synchronous_return);
+        psx_mod_counter_add("tomba2.seamless.workers",1);
         synchronous_worker=0; cpu->gpr[29]=sp; w32(0x1F800138u,current);
         if(trace) { fprintf(stdout,"tomba2 seamless: worker fn=%08X frames=%u..%u\n",target,before,frame);fflush(stdout); }
         return 1;
@@ -104,7 +96,9 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
             const unsigned char *p=tomba2_seamless_texture(r16(cpu->gpr[4]+4),
                 memory_get_ram_ptr()+src,size,&n);
             if(p && n<=0x200000u-dest) {
-                copy_ram(dest|0x80000000u,p,n); cpu->gpr[2]=n;
+                /* The decoder's output is CPU stores. */
+                (void)psx_mod_host_write_ram(dest|0x80000000u,p,n); cpu->gpr[2]=n;
+                psx_mod_counter_add("tomba2.seamless.textures",1);
                 return 1;
             }
         }
@@ -117,12 +111,11 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
         uint32_t src=cpu->gpr[4]&0x1FFFFFFFu,size=cpu->gpr[5];
         uint32_t start=(uint32_t)r16(0x800AC61Cu)<<3,n=(size+63u)&~63u;
         if(size && size<=0x7EFF0u && src<0x200000u && n<=0x200000u-src &&
-           start>=0x1010u && start<0x80000u && n<=0x80000u-start) {
-            spu_write(0x1F801DA6u,start>>3);
-            spu_write(0x1F801DAAu,(spu_read(0x1F801DAAu)&~0x30u)|0x20u);
-            for(unsigned i=0;i<n;i+=4) spu_dma_write(r32(src+i));
+           start>=0x1010u && start<0x80000u && n<=0x80000u-start &&
+           psx_mod_spu_upload(start,cpu->gpr[4],n,0)) {
             w32(0x800AC654u,0); w32(0x800AC658u,cpu->gpr[4]); w32(0x800AC65Cu,n/64);
             w32(0x800AC638u,1);
+            psx_mod_counter_add("tomba2.seamless.spu_banks",1);
             cpu->gpr[2]=size;
             if(trace) { fprintf(stdout,"tomba2 seamless: SPU bank frame=%u addr=%X bytes=%u\n",frame,start,n); fflush(stdout); }
             return 1;

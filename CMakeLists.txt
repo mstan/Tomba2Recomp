@@ -80,6 +80,8 @@ psxrecomp_add_runtime_target(psx-runtime
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
     PRELOADED_MODS_DIR "${TOMBA2_PRELOADED_MODS}"
+    # Withheld development packages (debug menu) still declare their plugins.
+    AUDIT_MOD_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/mods/development"
     # (OUTPUT_NAME set below: the exe ships as Tomba2Recomp.exe so process
     # management — taskkill, port collisions, task manager — never confuses
     # this title with other psxrecomp games' psx-runtime.exe instances.
@@ -104,14 +106,24 @@ unset(_tomba2_previous_builtin_allowlist)
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
 
 if(BUILD_TESTING)
+    # Seamless Loading preparation against an owner-supplied disc image:
+    # -DTOMBA2_TEST_DISC=<path to the single-file SCUS-94454 .bin>.
     add_executable(tomba2_seamless_prepare_test
         tests/test_seamless_prepare.cpp
         src/mods/tomba2_seamless_prepare.cpp
+        "${PSXRECOMP_ROOT}/runtime/src/mod_resident.cpp"
         "${PSXRECOMP_ROOT}/runtime/src/psx_sha256.c")
     target_include_directories(tomba2_seamless_prepare_test PRIVATE
         "${PSXRECOMP_ROOT}/runtime/include")
+    set(TOMBA2_TEST_DISC "" CACHE FILEPATH "Original SCUS-94454 .bin for disc tests")
+    if(TOMBA2_TEST_DISC)
+        add_test(NAME tomba2_seamless_prepare_test
+            COMMAND "$<TARGET_FILE:tomba2_seamless_prepare_test>" "${TOMBA2_TEST_DISC}"
+                    "${CMAKE_CURRENT_BINARY_DIR}/seamless-test-cache")
+    endif()
     add_executable(tomba2_preloaded_mods_test
         tests/test_preloaded_mods.cpp
+        tests/mod_media_stub.cpp
         "${PSXRECOMP_ROOT}/runtime/src/mod_packages.cpp"
         "${PSXRECOMP_ROOT}/runtime/src/crc32.c"
         "${PSXRECOMP_ROOT}/runtime/src/psx_sha256.c"
@@ -156,6 +168,7 @@ psxrecomp_add_runtime_target(psx-runtime-ita
     GAME_GENERATED_DISPATCH_C "${GAME_ITA_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}
     PRELOADED_MODS_DIR "${TOMBA2_PRELOADED_MODS_ITA}"
+    AUDIT_MOD_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/mods/development"
     DEBUG_PORT ${_tomba2_ita_debug_port}
     WINDOW_TITLE "Tombi! 2 (Italian) Recompiled"
     DEFAULT_GAME_CONFIG_PATH "game_ita.toml"
