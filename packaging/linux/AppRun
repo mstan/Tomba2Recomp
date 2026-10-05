@@ -48,6 +48,10 @@ for tree in assets bios licenses; do
     fi
 done
 if [ -d "$payload/mods" ]; then
+    # Bundled packages belong to the release. Merging would retain removed
+    # speed/debug mods after an upgrade. Player packages and state live beside
+    # this directory and must survive the refresh.
+    rm -rf -- "$data_dir/mods/bundled"
     cp -a "$payload/mods/." "$data_dir/mods/"
     chmod -R u+rwX "$data_dir/mods"
 fi

@@ -48,6 +48,13 @@ esac
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
 
+# Exercise an upgrade while preserving everything the player owns.
+mkdir -p "$work/data/mods/bundled/obsolete-test-package" \
+    "$work/data/mods/installed/player-test-package" "$work/data/saves"
+printf 'player mod\n' > "$work/data/mods/installed/player-test-package/marker"
+printf 'format_version = 2\n' > "$work/data/mods/state.toml"
+printf 'player save\n' > "$work/data/saves/marker"
+
 data_dir=$(env "${ENV_PREFIX}_DATA_DIR=$work/data" "${ENV_PREFIX}_SEED_ONLY=1" \
     "$appimage" --appimage-extract-and-run)
 [ -n "$data_dir" ] || { echo "AppRun printed no data dir" >&2; exit 1; }
@@ -55,6 +62,22 @@ data_dir=$(env "${ENV_PREFIX}_DATA_DIR=$work/data" "${ENV_PREFIX}_SEED_ONLY=1" \
 fail=0
 check_file() { [ -f "$data_dir/$1" ] || { echo "MISSING file: $1" >&2; fail=1; }; }
 check_dir()  { [ -d "$data_dir/$1" ] || { echo "MISSING dir:  $1" >&2; fail=1; }; }
+
+if [ -e "$data_dir/mods/bundled/obsolete-test-package" ]; then
+    echo "upgrade retained an obsolete bundled package" >&2
+    fail=1
+fi
+for f in mods/installed/player-test-package/marker mods/state.toml saves/marker; do
+    check_file "$f"
+done
+if [ "$variant" = usa ]; then
+    for retired in psx.enhancement.cd-speed psx.enhancement.fast-loading tomba2.debug.debug-menu; do
+        if [ -e "$data_dir/mods/bundled/$retired" ]; then
+            echo "USA upgrade retained retired package: $retired" >&2
+            fail=1
+        fi
+    done
+fi
 
 for d in saves cache mods assets bios; do check_dir "$d"; done
 for f in "$GAME_TOML" input.ini START_HERE.txt LICENSE README.md \
