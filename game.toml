@@ -97,12 +97,12 @@ allow_hybrid = false
 lock_mode    = true
 
 # --- Renderer: optimized hardware path.
-# Supersampling: internal-resolution SSAA factor. 2 is the quality default now
-# that Tomba 2 holds full speed on the OpenGL path; lower to 1 for slower GPUs.
+# Internal resolution uses the shared 1080p preset; settings may override it.
 # Antialiasing: linear present filtering for the sampled frame. The launcher
 # exposes both controls on the Video page and persists overrides to settings.toml.
 [video]
 renderer          = "opengl"
+internal_resolution = "1080p"
 supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"

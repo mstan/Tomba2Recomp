@@ -36,8 +36,13 @@ Developer-only environment variables:
 
 - `TOMBA2_SEAMLESS_CACHE`: cache directory override.
 - `TOMBA2_SEAMLESS_TRACE=1`: resource/worker diagnostics; off by default.
-- `TOMBA2_SEAMLESS_RETAIL=1`: prepare the pack but bypass the adapters, for A/B
-  investigation. Normal opt-out is the Mods checkbox.
+
+Implementation comparison now uses separate builds configured with
+`PSX_EXECUTION_PROFILE=ENHANCED` (resident adapters) or `REFERENCE` (original
+generated loader, decoder and sample transfer). The retired
+`TOMBA2_SEAMLESS_RETAIL` environment selector has no effect. The Mods checkbox
+remains the resident-loading product preference in ENHANCED; REFERENCE does
+not prepare the pack or install adapters even if that checkbox is enabled.
 
 ## What was assessed
 

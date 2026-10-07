@@ -13,7 +13,7 @@ extern const unsigned char *tomba2_seamless_source(unsigned lba,unsigned bytes);
 extern const unsigned char *tomba2_seamless_texture(unsigned width,const unsigned char *encoded,
     unsigned size,unsigned *output_size);
 extern uint8_t *memory_get_ram_ptr(void);
-static int ready,trace,retail,synchronous_worker;
+static int ready,trace,synchronous_worker;
 static uint32_t synchronous_sp,synchronous_return;
 static unsigned frame,reads,last_read,trace_lines;
 static int (*previous_hook)(CPUState *,uint32_t);
@@ -72,7 +72,7 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
     if(trace && pc==0x51F14u && cpu->gpr[4]==1) {
         fprintf(stdout,"tomba2 seamless: spawn frame=%u fn=%08X ra=%08X\n",frame,cpu->gpr[5],cpu->gpr[31]);fflush(stdout);
     }
-    if(!retail && !synchronous_worker && pc==0x51F14u && cpu->gpr[4]==1 &&
+    if(!synchronous_worker && pc==0x51F14u && cpu->gpr[4]==1 &&
        (cpu->gpr[5]==0x80044F58u || cpu->gpr[5]==0x8004514Cu || cpu->gpr[5]==0x800452C0u) &&
        cpu->gpr[31]==0x80044C50u && r32(0x1F800138u)==0x801FE000u && loader_layout() &&
        psx_mod_read_byte(0x801FE0DEu)<22 &&
@@ -90,7 +90,7 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
         if(trace) { fprintf(stdout,"tomba2 seamless: worker fn=%08X frames=%u..%u\n",target,before,frame);fflush(stdout); }
         return 1;
     }
-    if(!retail && pc==0x51F14u && cpu->gpr[4]==1 && cpu->gpr[5]==0x8001DB38u &&
+    if(pc==0x51F14u && cpu->gpr[4]==1 && cpu->gpr[5]==0x8001DB38u &&
        r32(0x8001DB8Cu)==0x27BDFFD8u && r16(0x801FE070u)==0 &&
        r32(0x1F8001F4u)<=0x80000u &&
        resident_read(r32(0x1F8001F8u),r32(0x1F8001F0u),r32(0x1F8001F4u)*4)) {
@@ -98,7 +98,7 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
         psx_mod_write_byte(0x801FE0DCu,0); psx_mod_write_byte(0x801FE0DFu,0);
         return 1;
     }
-    if(!retail && pc==0x44D8Cu && r32(0x80044D8Cu)==0x27BDFFE0u) {
+    if(pc==0x44D8Cu && r32(0x80044D8Cu)==0x27BDFFE0u) {
         uint32_t src=cpu->gpr[6]&0x1FFFFFFFu,dest=cpu->gpr[5]&0x1FFFFFFFu,size=cpu->gpr[7],n=0;
         if(src<0x200000u && size<=0x200000u-src && dest<0x200000u) {
             const unsigned char *p=tomba2_seamless_texture(r16(cpu->gpr[4]+4),
@@ -111,7 +111,7 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
     }
     /* SsVabTransBody's ordinary DMA write only. Header allocation, voice
      * metadata and all music commands remain the game's original code. */
-    if(!retail && pc==0x99150u && cpu->gpr[31]==0x80096A00u &&
+    if(pc==0x99150u && cpu->gpr[31]==0x80096A00u &&
        r32(0x80099150u)==0x27BDFFE8u && !r32(0x800AC63Cu) &&
        !r32(0x800AC620u) && r32(0x800AC62Cu)==3) {
         uint32_t src=cpu->gpr[4]&0x1FFFFFFFu,size=cpu->gpr[5];
@@ -138,11 +138,11 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
             (pc!=0x1DB8Cu || r16(0x801FE070u)==0);
         if(trace) {
             fprintf(stdout,"tomba2 seamless: read frame=%u pc=%05X ra=%08X dest=%08X lba=%u size=%u worker=%u resident=%d\n",
-                frame,pc,cpu->gpr[31],dest,lba,size,r16(0x801FE070u),safe&&!retail);
+                frame,pc,cpu->gpr[31],dest,lba,size,r16(0x801FE070u),safe);
             fflush(stdout);
         }
         last_read=frame;
-        if(safe && !retail) {
+        if(safe) {
             resident_read(dest,lba,n); cpu->gpr[2]=size;
             return 1;
         }
@@ -162,7 +162,6 @@ static void tick(void) {
 }
 static void activate(void) {
     const char *s=getenv("TOMBA2_SEAMLESS_TRACE"); trace=s && !strcmp(s,"1");
-    s=getenv("TOMBA2_SEAMLESS_RETAIL"); retail=s && !strcmp(s,"1");
     ready=tomba2_seamless_prepare();
 }
 PSX_MOD_CONSTRUCTOR(tomba2_register_seamless) {

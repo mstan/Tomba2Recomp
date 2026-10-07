@@ -6,6 +6,8 @@ param(
     [ValidateSet("usa", "ita")]
     [string]$Variant = "usa",
     [string]$BuildDir = "build-release",
+    [ValidateSet("ENHANCED", "REFERENCE")]
+    [string]$ExecutionProfile = "ENHANCED",
     [string]$RecompilerBuildDir = "recompiler/build-t2",
     # Ship the checked-in generated/ code as-is instead of regenerating.
     # Use when the runtime changed but codegen did not: regenerating with a
@@ -247,6 +249,7 @@ if ($SkipRegen) {
 # sources, not of the clock.
 Invoke-Native {
     & $Cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release `
+        "-DPSX_EXECUTION_PROFILE=$ExecutionProfile" `
         -DPSX_DEBUG_TOOLS=OFF `
         -DPSX_PGXP_VARIANT=OFF `
         -DPSX_SETUP_WIZARD=OFF `
@@ -265,6 +268,17 @@ New-Dir (Join-Path $Stage "saves") | Out-Null
 $DevExe = Join-Path $BuildPath "$ExeStem.exe"
 if (-not (Test-Path -LiteralPath $DevExe)) { $DevExe = Join-Path $BuildPath "$RuntimeTarget.exe" }
 Copy-FileTo $DevExe (Join-Path $Stage "$ExeStem.exe")
+# Bind the actual staged executable. If signing is added, this call must follow
+# signing so the sidecar describes the final package bytes.
+$ExecutionManifest = [System.IO.Path]::ChangeExtension($DevExe, '.execution.json')
+$ExecutionContract = Get-Content -LiteralPath $ExecutionManifest -Raw | ConvertFrom-Json
+if ($ExecutionContract.profile -ne $ExecutionProfile) {
+    throw "Build execution profile differs from requested $ExecutionProfile"
+}
+Invoke-Native {
+    & $AotPython (Join-Path $RecompTools 'release_stage.py') stage-execution `
+        --binary (Join-Path $Stage "$ExeStem.exe") --manifest $ExecutionManifest
+} "execution identity staging"
 Copy-FileInto (Join-Path $Root "README.md") $Stage
 Copy-FileInto (Join-Path $Root "LICENSE") $Stage
 $StartHere = if ($Variant -eq 'ita') { 'START_HERE_ITA.txt' } else { 'START_HERE.txt' }
@@ -394,12 +408,13 @@ $LoadingReleaseNote = if ($Variant -eq 'usa') {
 $ReleaseTitle $Version
 
 Tomba! 2: The Evil Swine Return with native overlays prepared from the original
-disc before gameplay. Owner spot checks passed; a full playthrough and complete
-native execution coverage remain unproven.
+disc before gameplay. This parity candidate requires fresh runtime qualification
+and owner acceptance; earlier USA release acceptance does not qualify it.
 
 New in this release:
 - Sources: Tomba2Recomp $TombaSha and psxrecomp $PsxRecompSha.
 - Variant: $Variant.
+- Execution profile: $ExecutionProfile (see the executable's execution sidecar).
 $LoadingReleaseNote
 - All 22 area files have disc-derived native candidates, plus shared code.
 - Native overlay bytes, load addresses and cache namespaces are region-specific.
