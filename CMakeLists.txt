@@ -84,6 +84,7 @@ set(PSX_BUILTIN_MOD_ALLOWLIST
     psx.enhancement.pgxp
     psx.presentation.bezel)
 psxrecomp_add_runtime_target(psx-runtime
+    PGXP
     GAME_GENERATED_FULL_C "${GAME_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}

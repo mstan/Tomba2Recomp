@@ -1,4 +1,4 @@
-﻿[game]
+[game]
 name = "Tomba! 2 - The Evil Swine Return"
 id = "SCUS-94454"
 exe = "tomba2/SCUS_944.54"
@@ -13,6 +13,8 @@ seeds = "seeds/ghidra_funcs.txt"
 # bios_thunks = "seeds/tomba2_bios_thunks.txt"  # optional; add once inventoried
 out_dir = "generated"
 strict = true
+mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C"]
+mod_instruction_sites = ["0x8003FA14", "0x8003FA9C"]
 
 [runtime]
 # HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
@@ -106,7 +108,7 @@ internal_resolution = "1080p"
 supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"
-# Tomba 2 owns temporal frame blending through its built-in Frame Blending mod.
+# Native scene interpolation is owned by the game mod.
 # Hide the generic Display controls and ignore stale settings.toml values.
 frame_interpolation = false
 frame_interpolation_fps = 0

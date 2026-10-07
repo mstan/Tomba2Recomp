@@ -1,11 +1,8 @@
-Tomba 2 Temporal Frame Blending (Experimental)
+Tomba 2 Native Scene Interpolation
 
-This mod leaves Tomba 2's executable, guest VBlank, simulation, timers, input,
-and audio untouched. It blends the two most recent completed display images in
-PSXrecomp's OpenGL presentation path.
+Enable this mod and select Display refresh (or a fixed presentation rate).
+The original scene draw routines rebuild intermediate projected positions.
+Game logic, input, audio and loading keep their original cadence. HUD packets
+added after the world draw are preserved. Menus and movie playback stay discrete.
 
-"Display refresh" follows the measured monitor refresh rate. The
-motion-adaptive clarity blend avoids crossfading large pixel changes to reduce
-double-image trails. It uses the same zero-sentinel and blend-mode fixes as Ape
-Escape. This is temporal blending, not motion-vector frame generation, so it
-cannot reconstruct true in-between object positions.
+OpenGL and the 1080p internal resolution preset are recommended.
