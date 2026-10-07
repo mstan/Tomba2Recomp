@@ -139,3 +139,11 @@ movement, edge activation, scene backgrounds and HUD, plus FMV, menus, pauses,
 fades, door/wing travel, death/retry and late-game event variants. Keep metrics,
 package hashes and feedback private. Beads remains open through owner acceptance;
 public pushes, merges and releases are not authorized.
+
+## Resumed first-review build
+
+The Windows review build now targets framework e5e2dca8 (20b0 plus the shared
+Ninja fix for generated contract inputs), UI03d58aa0, and unchanged CODEGEN18
+/d1867bb4. Earlier source inventories above retain their historical pins.
+Per the owner, build ENHANCED and its native cache, then use the short manual
+playtest before broadening tests. This preparation is not gameplay acceptance.
