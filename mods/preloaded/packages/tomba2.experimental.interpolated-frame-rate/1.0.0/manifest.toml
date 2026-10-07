@@ -16,7 +16,7 @@ id = "interpolated-frame-rate"
 name = "Native Scene Interpolation"
 description = "Rebuild scene geometry at intermediate positions, preserving HUD and effects at their authored cadence."
 group = "Frame Rate"
-default_enabled = false
+default_enabled = true
 
 [[option]]
 feature = "interpolated-frame-rate"
