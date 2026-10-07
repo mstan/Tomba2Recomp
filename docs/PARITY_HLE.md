@@ -147,3 +147,27 @@ Ninja fix for generated contract inputs), UI03d58aa0, and unchanged CODEGEN18
 /d1867bb4. Earlier source inventories above retain their historical pins.
 Per the owner, build ENHANCED and its native cache, then use the short manual
 playtest before broadening tests. This preparation is not gameplay acceptance.
+
+## First Windows owner-review candidate
+
+The USA ENHANCED runtime built from title `ba501b4`, framework `e5e2dca8` and
+recomp-ui `03d58aa0`. The 231-task runtime build succeeded. The executable is
+`build-campaign-enhanced/Tomba2Recomp.exe`, SHA-256
+`2d04d30ff0aaca84f119b67175165bd556f56e680d5fd99ed446d64a41f82396`.
+Its imports are Windows system libraries. Execution identity is
+`70673a07c57c12b94e9954d5ccab189134e97353920cb5b72dac6ce999fcb095`, with
+the actual `tomba2-resident-loader` / `scus94454-resource-worker-v1` selected.
+
+Fresh original-disc AOT verified 29 images / 54 recipes and staged 81 native
+pairs (14,619 manifest rows), namespace `cg18_d1867bb4_gc309154ca_f0`.
+Pair and original-byte guard audits passed; complete native coverage is not
+claimed. Evidence: `build-aot-review/disc-aot-kwgg5byl` and `review-aot.log`.
+Local fallback compiler paths are explicit with two workers, preserving the
+canonical overlay config hash.
+
+Owner launcher: `F:/Projects/psxrecomp/parity-review-20261006/Play-Tomba2.ps1`,
+with executable receipt, private cards and debug port 4691. Check opening-area
+movement, background layers, dialogue, widescreen, pause, door/area transitions
+and revisits; try death/retry or wing travel when convenient. No new automated
+gameplay pass ran. Native scene interpolation, full 32:9 (current cap is 21:9),
+full loading coverage, Linux artifacts and final owner acceptance remain open.
