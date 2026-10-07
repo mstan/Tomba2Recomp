@@ -1,4 +1,5 @@
 #include "render_pass_ot.hpp"
+#include "gpu.h"
 
 /* USA MAIN.EXE's two scene draw aggregates consume the model/effect queues.
  * Replay stops at their return; the scheduler, simulation, audio and input
@@ -64,6 +65,12 @@ void finish(CPUState* cpu,uint32_t) {
     frame.period_vblanks=replay.ticks;frame.shown_after_vblanks=0;
     frame.x=rh(buffer+0x2000);frame.y=rh(buffer+0x2002);
     frame.w=rh(buffer+0x2004);frame.h=rh(buffer+0x2006);
+    // MAIN allocates 240-line buffers but programs a 224-line NTSC scanout.
+    // Capture the visible source rectangle, as the normal presenter does.
+    GpuDisplayInfo display{};gpu_get_display_info(&display);
+    if(display.depth24 || display.disabled || display.width!=frame.w ||
+       !display.height || display.height>frame.h)return;
+    frame.y+=display.screen_source_skip_y;frame.h=display.height;
     psx_mod_counter_add("tomba2.fr.passes",psx_mod_render_pass_frame(cpu,&frame,pass,nullptr));
 }
 void rate(unsigned fps){reset();ticks=0;PSXDrawReplay::rate(fps,PSX_MOD_RENDER_PASS_FLIP_PENDING);}
