@@ -19,7 +19,9 @@ This replaces the earlier blending-only candidate.
   Shared forced-span control prevents following the draw return into audio.
 - Existing native-wide projection/culling/backgrounds and resident loading /
   texture decoding / sample transfer remain available. The local review
-  selects widescreen, interpolation and Skip FMVs; source opt-ins are retained.
+  selects widescreen, interpolation and Skip FMVs. Native interpolation now
+  defaults on per the owner's latest decision; other optional features retain
+  their source defaults. Final performance review follows a system restart.
 - Fresh original-disc AOT: 54 recipes, 81 native pairs, 14,619 manifest rows,
   namespace `cg18_d1867bb4_gcb4db33e1_f2`. All pairs and original-byte guards
   passed. Evidence: `build-aot-review/disc-aot-42sg678l`.
@@ -69,4 +71,3 @@ Inputs outside these guards reach the original loader in ENHANCED. A failed
 preparation installs no adapter. This existing scoped behavior is preserved,
 not a live HLE/LLE selector. The reference callback reports no fabricated guest
 success; it simply leaves the original dispatch chain in place.
-
