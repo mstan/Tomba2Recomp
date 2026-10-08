@@ -1,34 +1,34 @@
-# Tomba 2 USA native interpolation review
+# Tomba 2 USA serial enhancement review
 
-Updated 2026-10-07. Tracking `beads-eio.2.13`; owner acceptance remains open.
+Updated 2026-10-08. Tracking `beads-eio.2.13`; owner acceptance remains open.
 
 The hash-bound `Play-Tomba2.ps1` in the campaign review directory launches
 `build-native-review/Tomba2Recomp.exe`, with private cards and debug port 4691.
-Source milestone `458d85b`, shared framework `0b225784`, recomp-ui `03d58aa0`.
-This replaces the earlier blending-only candidate.
+Shared packed-X culling support is on `fix/tomba2-packed-x-20261008`
+(`b0f7b2be`, BIOS fingerprint refresh `fc5c9512`); recomp-ui remains `03d58aa0`.
+The execution receipt records the exact compiled source and executable identity.
 
 ## Implemented and checked
 
 - OpenGL and 1080p internal target, PGXP compiled into the USA primary build.
-- Native Scene Interpolation / Display refresh rebuilds the two MAIN scene
-  aggregates (`8003F9A8..8003FA14`, `8003FA44..8003FA9C`) with interpolated
-  GTE projections. Shared draw snapshots, late-OT preservation and draw-bank
-  retargeting restore all guest state after intermediate draws.
-- Submission occurs at the main-loop PutDispEnv after the real VBlank wait.
-  Capture respects the 224-line NTSC scanout inside its 240-line buffers.
-  Shared forced-span control prevents following the draw return into audio.
-- Existing native-wide projection/culling/backgrounds and resident loading /
-  texture decoding / sample transfer remain available. The local review
-  selects widescreen, interpolation and Skip FMVs. Native interpolation now
-  defaults on per the owner's latest decision; other optional features retain
-  their source defaults. Final performance review follows a system restart.
-- Fresh original-disc AOT: 54 recipes, 81 native pairs, 14,619 manifest rows,
-  namespace `cg18_d1867bb4_gcb4db33e1_f2`. All pairs and original-byte guards
-  passed. Evidence: `build-aot-review/disc-aot-42sg678l`.
-- Five-second moving attract scene: 262 native passes, 627 intermediate
-  presents, 262 state verifications, zero mismatch/leak/abort/watchdog/blending.
-  Receipt: `receipts/Tomba2.native-attract-moving.json` in the review directory.
-  Enhanced screenshot shows complete geometry and the authored demo overlay.
+- Native interpolation is omitted from the build and catalog, following the
+  owner's decision to avoid it for the remaining serial reviews.
+- Adaptive native widescreen is enabled by default, up to the existing 21:9
+  support limit. Existing resident loading, texture decoding and sample
+  transfer remain enabled; generic CD-speed and host pacing controls are hidden.
+- The village old man and Evil Pig were losing triangles at the original
+  horizontal viewport bounds. Three full-opcode-guarded SLTU sites at
+  `801466A0`, `801466A8` and `801466B0` now test the adaptive horizontal range.
+  The shared emitter and interpreter use the same predicate, with exact 4:3
+  behavior and original-opcode fallback. Vertical, backface, depth and queue
+  limits remain in force. See the actor investigation document for attribution.
+- This repairs the observed partial actors. It does not increase the physical
+  far plane or bypass terrain subdivision; neither was the cause of that scene.
+- Native overlay inputs reuse the established original-disc extraction in
+  `build-aot-review/disc-aot-42sg678l`. Updated artifacts must be regenerated and
+  audited against those inputs; an old cache namespace cannot be relabeled.
+- The current candidate uses bundled OpenBIOS after fresh-boot validation.
+  Retail-BIOS savestates are used only in the isolated diagnostic reproduction.
 
 The ENHANCED build selects `tomba2-resident-loader`, contract
 `scus94454-resource-worker-v1`. REFERENCE selects the original generated
@@ -38,13 +38,14 @@ The Italian title does not enable these USA adapters or this USA replay plugin.
 
 ## Human review and remaining limits
 
-Use Native Scene Interpolation / Display refresh, OpenGL / 1080p and the
-widescreen option. Check running/jumping, camera turns, foreground/background
-layers, HUD and dialogue, pause, door/area transitions and a revisit. Check
-Skip FMVs independently, and listen for intact music during loading.
+Use OpenGL / 1080p, adaptive widescreen, texture correction and Seamless Loading.
+In the starting village, check the old man and Evil Pig near the ladder/shop
+while moving the camera, then make an area transition and return. Listen for
+intact music during fast loading and check HUD/dialogue placement. No
+interpolation option should appear. Use normal saves for OpenBIOS; the old
+retail-BIOS diagnostic savestate is not a cross-profile compatibility promise.
 
-Native replay has bounded attract-scene evidence, not all-area acceptance or a
-performance claim. The view still caps at 21:9; 32:9 participation/HUD expansion,
+The view still caps at 21:9; 32:9 participation/HUD expansion,
 stable world/UI filtering qualification, Linux packages, extended native
 performance and owner acceptance remain open. Separate correctness readbacks
 from performance measurements. Ordinary memory cards remain game data;

@@ -176,6 +176,21 @@ range_sites = [
 ]
 screen_x_sites = ["0x8003E228"]
 
+# The village mesh triangle funnel shifts SX into the high half and compares
+# it with 320<<16. Keep faces in both adaptive horizontal margins, retaining
+# the original vertical, backface, depth and bounded ordering-table checks.
+[[widescreen.cull.packed_x]]
+address = "0x801466A0"
+expected = "0x0079C02B"
+
+[[widescreen.cull.packed_x]]
+address = "0x801466A8"
+expected = "0x0199102B"
+
+[[widescreen.cull.packed_x]]
+address = "0x801466B0"
+expected = "0x01F9C02B"
+
 # Three captured overlay producers build terrain-cell selection quads consumed
 # by bounded, deduplicating rasterizers. These are positive 12-bit angular
 # half-extents, not pixels: widen their tangent by the live horizontal aspect

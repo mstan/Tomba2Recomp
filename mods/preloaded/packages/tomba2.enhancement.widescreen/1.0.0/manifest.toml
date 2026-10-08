@@ -20,7 +20,7 @@ id = "widescreen"
 name = "Widescreen (Experimental)"
 description = "Enable Tomba 2's native-wide gameplay rendering and choose a fixed or resize-driven aspect."
 group = "Display"
-default_enabled = false
+default_enabled = true
 
 [[option]]
 feature = "widescreen"
@@ -29,7 +29,7 @@ label = "Aspect ratio"
 description = "Adaptive follows the live window size from 4:3 through 21:9."
 group = "Display"
 type = "choice"
-default = "16:9"
+default = "adaptive"
 
 [[option.choice]]
 value = "16:9"
