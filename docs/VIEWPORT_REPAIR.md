@@ -238,3 +238,13 @@ directory. The owner launcher labels this build `RESIDENT SCENERY FIX`, with
 enhanced OpenGL, 1080p, PGXP and title-owned fast loading retained. Review the
 pig/pole, signs and tree while walking and jumping, then check a room transition
 and music. Human acceptance remains pending; no main merge or release is claimed.
+
+## Visual acceptance and performance follow-up
+
+The owner visually accepts title `6535864` / shared `bffd30fe` as perfect.
+That committed configuration is the appearance baseline for further work.
+Visibility task `beads-eio.2.14` is closed by that acceptance. The remaining
+task, `beads-eio.2.15`, targets sustained native 60 FPS with the same scene
+content. Measure scene draws, host work and guest-clock budget separately.
+Any HLE replacement follows `F:/Projects/recomp-template/HLE.md`: compatible
+caller results/effects and a separately buildable, functioning LLE reference.
