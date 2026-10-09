@@ -315,3 +315,8 @@ loader refactor; its earlier commits remain in Git history. The player config
 now preserves all approved recompiler, timing, viewport and visibility settings,
 removing only developer diagnostics and the machine-specific compile command.
 The release task is `beads-eio.2.16`.
+
+The USA catalog overrides only the shared PGXP manifest defaults so fresh
+installs match the accepted texture-correction state. It uses the existing
+shared `psx.pgxp` plugin; no precision implementation is copied into the title.
+CPU propagation and precise culling options retain their original defaults.
