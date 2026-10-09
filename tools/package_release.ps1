@@ -354,7 +354,7 @@ $systemDlls = @("kernel32.dll","user32.dll","gdi32.dll","shell32.dll","msvcrt.dl
                 "advapi32.dll","ws2_32.dll","comdlg32.dll","dbghelp.dll","ole32.dll",
                 "oleaut32.dll","winmm.dll","imm32.dll","version.dll","setupapi.dll",
                 "dinput8.dll","rpcrt4.dll","hid.dll","cfgmgr32.dll","opengl32.dll",
-                "d2d1.dll","dwrite.dll","ucrtbase.dll")
+                "d2d1.dll","dwrite.dll","ucrtbase.dll","bcrypt.dll")
 # The UCRT and these API-set forwarders are OS components on Windows 10+:
 # https://learn.microsoft.com/cpp/porting/upgrade-your-code-to-the-universal-crt
 # Keep rejecting toolchain/application DLLs such as libstdc++ and SDL3.dll.
