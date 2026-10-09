@@ -248,3 +248,18 @@ task, `beads-eio.2.15`, targets sustained native 60 FPS with the same scene
 content. Measure scene draws, host work and guest-clock budget separately.
 Any HLE replacement follows `F:/Projects/recomp-template/HLE.md`: compatible
 caller results/effects and a separately buildable, functioning LLE reference.
+
+The isolated `perf/tomba2-resident-60fps-20261008` candidate backports the
+existing shared CPU cycle-scale implementation (including overlay callback
+coverage, gates/fraction snapshotting, validation and optional batching),
+pinned at `f2a3b9be82ff85c47bff139d16809e274338bc09`. Its initial title constant
+is 2, matching Ape Escape. This candidate is not yet performance-qualified.
+Both BIOS outputs were freshly generated: OpenBIOS is byte-identical; the
+SCPH1001 output changes only the CPU charge declaration. New native overlays
+are generated under codegen hash `05391a69`; the approved cache is preserved.
+
+The original headless diagnostic measured roughly 14–16 terrain draws per
+second, but continuous image readback perturbs its wall time. Further
+measurements use windowed presentation, with continuous forensic readback
+disabled and screenshots captured separately. Count full terrain draws in
+addition to VBlank; 60 VBlanks alone does not certify 60 fresh scene frames.

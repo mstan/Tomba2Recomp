@@ -24,6 +24,13 @@ mod_instruction_sites = [
     "0x8007708C", "0x80077640", "0x80077E88",
 ]
 
+[timing]
+# Resident scenery adds CPU work without changing device cadence. Candidate
+# CPU-only scaling uses the same shared accounting as Ape Escape; timers,
+# VBlank, audio, CD and DMA keep their normal clocks. No player timing control.
+guest_cycle_scale = 2
+guest_cycle_scale_batch = true
+
 [runtime]
 # HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
 # HLE tier's one-shot shell intercept; kernel init + game EXE load still run
