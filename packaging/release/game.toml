@@ -8,65 +8,144 @@ entry_pc = "0x80018B6C"
 text_size = "0x00028800"
 stack_base = "0x801FFFF0"
 
-# Required block; used only by the developer recompiler tool, not at runtime.
 [recompiler]
 seeds = "seeds/ghidra_funcs.txt"
+# bios_thunks = "seeds/tomba2_bios_thunks.txt"  # optional; add once inventoried
 out_dir = "generated"
+strict = true
+mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C", "0x8003D0BC"]
+mod_instruction_sites = [
+    "0x8003FA14", "0x8003FA9C",
+    "0x8007724C", "0x800772E8", "0x80077394",
+    "0x80077428", "0x800774BC", "0x80077550",
+    "0x80050CB4",
+    "0x8002B314",
+    "0x8003BB90", "0x80079BB4",
+    "0x8007708C", "0x80077640", "0x80077E88",
+]
 
-# ---- Player-adjustable options ------------------------------------------
-# Edit, save, and restart Tomba2Recomp.exe to apply.
+[timing]
+# Resident scenery adds CPU work without changing device cadence. Candidate
+# CPU-only scaling uses the same shared accounting as Ape Escape; timers,
+# VBlank, audio, CD and DMA keep their normal clocks. No player timing control.
+guest_cycle_scale = 2
+guest_cycle_scale_batch = true
+
 [runtime]
-window_title = "Tomba! 2 Recompiled"
-memcard_dir = "saves"
-
-# Skip the PlayStation boot animation (the game's own kernel setup and disc
-# load still run for real, fast-forwarded). Set false for the fully faithful
-# boot, logos included.
+# HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
+# HLE tier's one-shot shell intercept; kernel init + game EXE load still run
+# on the real recompiled BIOS at host speed. Set false to watch BIOS logos.
+# Full HLE kernel tier (bios_hle) stays OFF here — LLE is the baseline; Tomba1
+# is the HLE validation title.
 fast_boot = true
-
 # Seamless Loading is enabled by default on the Mods page. The USA catalog
 # excludes generic CD Speed and host-paced Fast Loading; guest/audio pacing
 # stays normal. Disabling Seamless Loading restores the original loader.
+# Tomba2's OWN debug port — 4500 collides with the SNES mmx_cosim processes.
+# Taken elsewhere: 4370/4380 psxrecomp-v4, 4470 Tomba1, 4510 Tsumu, 4520 MMX5.
+window_title = "Tomba! 2 Recompiled"
+controller = "digital"
+memcard_dir = "saves"
 
-# Disc-derived native overlays are prepared before gameplay. Runtime
-# capture/compilation remains available for gaps; captures stay private.
+# Overlay cache (the real perf fix). Tomba 2's title/menu/level/FMV-driver code
+# is runtime-loaded overlay, not in the 474 compiled boot-EXE funcs, so by
+# default it ALL interprets (~4fps game logic). The cache JITs those overlays to
+# native via the *gcc* backend: autocapture writes overlay_captures.json, the
+# autocompile_cmd spawns the recompiler+gcc in the background to produce CPS
+# overlay DLLs in build-t2/cache, and the loader hot-swaps them in live.
+#
+# overlay_backend = "gcc" (NOT sljit): on 2026-06-23 the in-process sljit backend
+# declined ~31/39 Tomba 2 shards (no payoff) and hard-HUNG the boot on the
+# Whoopee-Camp logo. With gcc selected the loader runs gcc>interp and never
+# starts sljit live (overlay_loader_apply_live_policy forces sljit off when the
+# active backend is gcc), so the gap before DLLs land is the interpreter (slow
+# but correct), never the sljit hang path.
+#
+# No --cps in the command: CPS is the recompiler DEFAULT (PSX_CPS unset), which
+# matches Tomba 2's CPS boot + CPS runtime. flavor 0 (not widescreen).
 overlay_cache = true
-# Small timing-sensitive splash/FMV setup routines stay on the interpreter.
+# Preserve each coherent runtime discovery without replacing earlier launches.
+# Production keeps the append-only addendum beside the executable; dev configs
+# additionally opt into immutable project-local snapshots.
+overlay_capture_history = true
+# "auto" = gcc when a gcc toolchain is present, else the toolchain-free tcc tier
+# (post-2026-06-25 tcc refactor). On a dev machine with mingw this resolves to gcc,
+# so behaviour matches the old explicit "gcc"; on a clean install it falls back to
+# tcc instead of leaving overlays interpreted. The in-process sljit producer stays
+# OFF in every case (it hung Tomba 2's Whoopee-Camp logo â€” see below).
+overlay_backend = "auto"
+# Keep the timing-sensitive splash/FMV task setup routines on the interpreter.
+# Native execution of these small setup paths leaves the Whoopee-Camp logo stuck
+# before the intro FMV; the rest of the overlay cache still runs native.
 overlay_native_block = [
   "0x80096A90",
   "0x80052078",
   "0x800520C0",
 ]
+# All paths are RELATIVE to the project root (the runtime spawns this with cwd =
+# project root), so the shipped config is portable across machines. The
+# recompiler exe + runtime-include are resolved to absolute by compile_overlays.py
+# itself (a relative Windows exe path isn't resolved against the child cwd).
+# This hot computed-dispatch routine has no stable callable boundary in the
+# surrounding overlay, so keep it in the isolated fragment failure domain.
 
-# ---- Visual quality -----------------------------------------------------
+# Tomba 2 is a d-pad platformer. Real PS1 hardware powers a DualShock up in
+# DIGITAL mode (analog LED off, controller id 0x41) and Tomba 2's pad driver
+# only runs the DualShock config-mode handshake (0x43/0x4D...) when it sees the
+# analog id 0x73. The framework's default HYBRID mode boots analog-on (0x73),
+# which triggers that handshake every frame; our SIO config emulation doesn't
+# satisfy the driver, so it intermittently reads 0x00 button bytes (all buttons
+# "pressed") -> menu unresponsive + idle timer never reaches the attract demo.
+# Booting DIGITAL (id 0x41, never 0x73) matches the Beetle oracle exactly: the
+# game just polls with 0x42 and reads clean 0xFFFF idle.
+#
+# Analog / Hybrid are NOT offered for Tomba 2: the DualShock config-mode
+# handshake emulation is incomplete, so any non-digital mode re-triggers the
+# phantom-input bug above. lock_mode hides the launcher's whole pad-mode
+# selector (Hybrid | Analog | D-Pad) and forces every port to default_mode, so
+# the player can never pick a broken mode. allow_hybrid=false is redundant under
+# lock_mode but documents intent. Re-enable the selector (drop lock_mode) only
+# once the analog config handshake is emulated end-to-end.
+[controller]
+default_mode = "digital"
+allow_hybrid = false
+lock_mode    = true
+
+# --- Renderer: optimized hardware path.
+# Internal resolution uses the shared 1080p preset; settings may override it.
+# Antialiasing: linear present filtering for the sampled frame. The launcher
+# exposes both controls on the Video page and persists overrides to settings.toml.
 [video]
-# renderer: "opengl" (hardware renderer, default) or "software" (reference).
 renderer          = "opengl"
-# supersampling: render at this multiple of native resolution. 1 = native PSX.
+internal_resolution = "1080p"
 supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"
-geometry_correction = false
-# Widescreen and temporal frame blending are owned by Tomba 2's built-in
-# catalog on the Mods page. Keep the generic Display controls hidden and clamp
-# stale settings to the authentic baseline until a selected mod activates.
+# Native scene interpolation is owned by the game mod.
+# Hide the generic Display controls and ignore stale settings.toml values.
 frame_interpolation = false
 frame_interpolation_fps = 0
 offer_frame_interpolation = false
-aspect_ratio      = "4:3"
-# FMV auto-skip stays off for the faithful presentation; the Skip FMVs mod
-# enables it. These settings make the mod also cover the silent RAM-preloaded
-# Whoopee Camp logo (it streams no XA audio, so the default movie detector
-# alone would miss it). Hide the legacy Display toggle.
-auto_skip_fmv       = false
-offer_skip_fmv      = false
-fmv_skip_no_xa      = true
+# Authentic 4:3 is the baseline. The Widescreen mod activates Tomba 2's
+# game-specific native-wide hooks and selects the presentation aspect.
+aspect_ratio = "4:3"
+# FMV auto-skip (debug iteration speed). Tomba2's streamed movies end on a
+# frame-total cell (single u32 at 0x8010271C, checked by the sector pump
+# FUN_8008d110 against the streamed frame counter 0x801026E8; 0 = play to EOF)
+# rather than Tomba1's per-movie table — the START-hold fallback handles the
+# START-skippable ones. The Whoopee Camp logo is a SILENT RAM-preloaded movie
+# (no CD sectors, no XA during playback): fmv_skip_no_xa broadens detection to
+# MDEC activity alone so it fast-forwards too (presentation-side only).
+# The longer silent-MDEC hold also covers the logo's post-decode wait. Tomba 2
+# owns activation through its Skip FMVs mod; hide the legacy Display toggle and
+# keep the faithful baseline until that mod activates.
+auto_skip_fmv     = false
+offer_skip_fmv    = false
+fmv_skip_no_xa    = true
 fmv_skip_no_xa_hold = 600
 
-# ---- Widescreen (experimental) -------------------------------------------
-# 16:9 / 21:9 native-wide gameplay, launcher/settings opt-in; the 4:3 default
-# is byte-identical to the original presentation. Gameplay frames are
-# detected by GTE activity; menus/FMV stay authored 4:3.
+# Native-wide gameplay. The runtime keeps BIOS, FMV, and true 2D screens at
+# their authored 4:3 aspect; GTE-active gameplay uses the wider compositor.
 [widescreen]
 # Widescreen is game-owned on the Mods page, not a generic Display setting.
 offer = false
@@ -77,6 +156,7 @@ nw_hud_corners = false
 nw_backdrop    = false
 nw_flat_backdrop = true
 nw_phase_backdrop = true
+precise_nclip = true
 
 [widescreen.cull]
 # Tomba 2's overlay render funnels reject projected vertices against the
@@ -109,6 +189,55 @@ range_sites = [
     "0x80069BB0", "0x80069BD8", "0x80110A10",
 ]
 screen_x_sites = ["0x8003E228"]
+# Saturated integer SXY may reverse a wide face's apparent winding. Use the
+# exact tracked sign at the mesh consumers. The additional area-zero terrain
+# sites reject thin visible faces when rounded integer NCLIP becomes zero.
+# MAC0 stays original.
+nclip_exact_sites = ["0x801466D8", "0x8014682C", "0x8013FC40", "0x8013FF14"]
+
+# The village mesh and projected scene-quad producers test GTE FLAG bit 31.
+# Ignore only SX saturation in the wide view, allowing GL to clip those faces.
+# Preserve every other hardware error constituent (0x7F87E000 minus SX bit14),
+# including SY, divide/depth and accumulator overflow, with complete word guards.
+[[widescreen.cull.masked_reject]]
+address = "0x80146650"
+expected = "0x04400053"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x80146810"
+expected = "0x04400063"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x801468B0"
+expected = "0x0440003B"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x8003F814"
+expected = "0x0440001E"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x8003F864"
+expected = "0x04400009"
+reject_mask = "0x7F87A000"
+
+# The village mesh triangle funnel shifts SX into the high half and compares
+# it with 320<<16. Keep faces in both adaptive horizontal margins, retaining
+# the original vertical, backface, depth and bounded ordering-table checks.
+[[widescreen.cull.packed_x]]
+address = "0x801466A0"
+expected = "0x0079C02B"
+
+[[widescreen.cull.packed_x]]
+address = "0x801466A8"
+expected = "0x0199102B"
+
+[[widescreen.cull.packed_x]]
+address = "0x801466B0"
+expected = "0x01F9C02B"
 
 # Three captured overlay producers build terrain-cell selection quads consumed
 # by bounded, deduplicating rasterizers. These are positive 12-bit angular
@@ -143,18 +272,24 @@ expected = "0x240201C7"
 # FUN_8007712C clears model+1, applies a spherical camera cone, then inserts
 # accepted type 2/9, 4, and 5 models into fixed 24/40/28-entry scratch queues.
 # These full-word-guarded sites preserve every vanilla acceptance and widen
-# only camera-horizontal participation. Vertical reach and distance gates stay
-# vanilla. Hysteresis is outside the 16px activation guard.
+# only camera-horizontal participation. Vertical reach and near gates stay
+# vanilla. The title plugin bypasses this render queue's radial far gates so
+# they cannot discard an in-view distant actor before its view-cone test.
+# Hysteresis is outside the 16px activation guard.
 forward_addr = "0x1F8000E8"
+# The live camera matrix uses X/Y/Z storage, with world vertical in the middle.
+# Map both forward components and guest deltas to the helper's semantic X/Z/Y.
+forward_offsets = [0, 4, 2]
 object_type_offset = 12
 object_reg = 19 # s3
 x_reg = 16      # s0
-z_reg = 17      # s1
-y_reg = 18      # s2
+z_reg = 18      # s2
+y_reg = 17      # s1
 hysteresis_pixels = 24
 queue_reserve = 4
 queue_count_addrs = ["0x1F800144", "0x1F800150", "0x1F80015C"]
-queue_capacities = [24, 40, 28]
+# The type2/9 queue uses its own guarded 128-entry allocation in wide view.
+queue_capacities = [128, 40, 28]
 queue_type_masks = ["0x00000204", "0x00000010", "0x00000020"]
 
 # FUN_8002B278 is the lower-level per-model/per-child cone. It does not append
@@ -166,8 +301,8 @@ expected = "0x0082202A"
 cosine_threshold = 856
 object_reg = 20 # s4
 x_reg = 19      # s3
-z_reg = 18      # s2
-y_reg = 17      # s1
+z_reg = 17      # s1
+y_reg = 18      # s2
 queue_guard = false
 
 [[widescreen.cull.aspect_cone.sites]]
@@ -198,16 +333,6 @@ expected = "0x28620368"
 # Schema mirrors psxrecomp/bios/SCPH1001.toml. Paths are relative to the
 # project root.
 
-
-# Digital controller baseline.
-[controller]
-default_mode = "digital"
-allow_hybrid = false
-lock_mode    = true
-
-# Conservative load-time optimization for SCUS_944.54's VSync(-1) query path.
-# The hook preserves original instruction timing/checkpoints while bypassing
-# side-effect-free GPUSTAT/Timer1 reads used only to stabilize the query.
 [load_accel.vsync_query]
 func = "0x80017E4C"
 counter_addr = "0x800267B4"

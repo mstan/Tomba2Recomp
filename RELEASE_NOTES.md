@@ -1,3 +1,32 @@
+# Tomba! 2 v0.2.0 - Adaptive scenery and authentic performance
+
+Adaptive widescreen and 1080p internal rendering now default on for the US disc
+(SCUS-94454), alongside texture correction and Seamless Loading. Resize the
+window to reveal more of the scene; gameplay retains its authored timing.
+
+- Repairs missing and partly rendered actors, signs, trees, effects and terrain
+  in the supported viewport paths, including the opening village.
+- Keeps all 343 nonempty opening-area terrain cells resident and submitted,
+  rather than selecting a small camera-dependent subset.
+- Repairs the sea/cloud discontinuity at the original 4:3 composition boundary
+  and thin terrain faces lost through integer projection rounding.
+- Restores approximately 30 fresh scene frames per second in the measured
+  village movement and jump sections with complete scenery. The original
+  two-VBlank scene loop remains unchanged; these measurements are not a
+  whole-game minimum-FPS guarantee.
+- Uses the enhanced resident-loader and added-terrain execution implementations
+  selected at build time. Working reference implementations remain buildable.
+- Retains default-on fast loading. The first launch prepares resources from
+  your own disc; prepared game-resource data is not shipped.
+- Disables and hides interpolation and generic CD/host timing controls.
+
+The owner approved the visibility, loading and authentic-rate candidate.
+Windows x64 and Linux x86_64 packages include OpenBIOS and audited native
+overlay candidates prepared from the original US inputs. Players supply their
+own US disc. Complete native coverage and a full playthrough remain unproven;
+interpreter and runtime-compilation fallback remain available for gaps.
+The Italian release is unchanged.
+
 # Tomba! 2 v0.1.0 - Seamless Loading
 
 Seamless Loading is enabled by default for the US disc (SCUS-94454).

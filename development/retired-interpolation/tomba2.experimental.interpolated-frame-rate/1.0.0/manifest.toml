@@ -1,9 +1,9 @@
 format_version = 5
 id = "tomba2.experimental.interpolated-frame-rate"
 version = "1.0.0"
-name = "Tomba 2 Frame Blending"
+name = "Tomba 2 Native Scene Interpolation"
 author = "mstan"
-description = "Presentation-only temporal frame blending. Game logic, timers, input, and audio remain at their stock cadence."
+description = "Redraw intermediate 3D scenes while game logic, timers, input, and audio keep their original cadence."
 resolver = "declarative"
 save_compatibility = "shared"
 
@@ -13,8 +13,8 @@ disc_sha256 = "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
 
 [[feature]]
 id = "interpolated-frame-rate"
-name = "Temporal Frame Blending (Experimental)"
-description = "Blend completed display images at the selected presentation rate without accelerating gameplay, timers, input, or audio. This is not motion-vector frame generation."
+name = "Native Scene Interpolation"
+description = "Rebuild scene geometry at intermediate positions, preserving HUD and effects at their authored cadence."
 group = "Frame Rate"
 default_enabled = false
 
@@ -22,7 +22,7 @@ default_enabled = false
 feature = "interpolated-frame-rate"
 id = "rate"
 label = "Presentation rate"
-description = "Display refresh is recommended for even cadence. Motion-adaptive clarity reduces double-image trails. Requires OpenGL."
+description = "Display refresh is recommended for even cadence. Requires OpenGL."
 group = "Frame Rate"
 type = "choice"
 default = "display"
