@@ -29,7 +29,9 @@ file(GLOB TOMBA2_MOD_PLUGIN_SOURCES CONFIGURE_DEPENDS
 list(REMOVE_ITEM TOMBA2_MOD_PLUGIN_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/tomba2_seamless.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/tomba2_seamless_prepare.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/tomba2_seamless_reference.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/tomba2_seamless_reference.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/tomba2_terrain_execution_hle.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/tomba2_terrain_execution_lle.c")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/tomba2_execution.cmake")
 
 # Isolated-worktree process-identity overrides. A sibling investigation may
@@ -112,6 +114,7 @@ unset(_tomba2_previous_builtin_allowlist)
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
 tomba2_add_loading_implementation(psx-runtime)
+tomba2_add_terrain_implementation(psx-runtime)
 
 if(BUILD_TESTING)
     add_executable(tomba2_seamless_prepare_test
@@ -175,6 +178,7 @@ psxrecomp_add_runtime_target(psx-runtime-ita
 set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
     "${_tomba2_ita_exe_name}")
 tomba2_add_loading_implementation(psx-runtime-ita)
+tomba2_add_terrain_implementation(psx-runtime-ita)
 
 recomp_target_launcher_language(psx-runtime-ita it)
 

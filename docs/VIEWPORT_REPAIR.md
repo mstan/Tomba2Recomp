@@ -244,8 +244,9 @@ and music. Human acceptance remains pending; no main merge or release is claimed
 The owner visually accepts title `6535864` / shared `bffd30fe` as perfect.
 That committed configuration is the appearance baseline for further work.
 Visibility task `beads-eio.2.14` is closed by that acceptance. The remaining
-task, `beads-eio.2.15`, targets sustained native 60 FPS with the same scene
-content. Measure scene draws, host work and guest-clock budget separately.
+task, `beads-eio.2.15`, targets the authentic original scene rate with the same
+content, as clarified below. Measure scene draws, host work and guest-clock
+budget separately.
 Any HLE replacement follows `F:/Projects/recomp-template/HLE.md`: compatible
 caller results/effects and a separately buildable, functioning LLE reference.
 
@@ -263,3 +264,43 @@ second, but continuous image readback perturbs its wall time. Further
 measurements use windowed presentation, with continuous forensic readback
 disabled and screenshots captured separately. Count full terrain draws in
 addition to VBlank; 60 VBlanks alone does not certify 60 fresh scene frames.
+
+## Authentic scene-rate qualification
+
+The owner clarified the target as **authentic original game FPS**, not a new
+60-FPS simulation. MAIN initializes scratch byte `1F800235` to 2 at
+`80050A1C/80050A20`. Its frame loop clears `800E809C`, then waits at
+`80050CCC..80050CF4` until the VBlank callback `800506B4` increments that count
+to the scratch threshold. Live REFERENCE RAM confirms the threshold is 2.
+The task-delay decrement at `800506D0` runs once per scene loop, so simply
+changing the threshold to 1 would alter game timing. Keep the authored gate.
+
+Windowed 21:9 measurements, with continuous diagnostic readbacks disabled:
+
+| Build | Village scene draws/s | Moving | Jumping |
+| --- | ---: | ---: | ---: |
+| Approved visibility baseline, CPU scale 1 | 20.19 | 18.78 | 17.81 |
+| Shared CPU scale 2 | 29.79 | 29.66 | 30.28 |
+| Scale 2 + resident-terrain ENHANCED adapter | 29.93 | 30.26 | 29.09 |
+
+Every measured draw keeps all **343 cells**. Short-window counts near a
+boundary include sampling variation; these figures do not claim a universal
+minimum across the whole game. The ENHANCED adapter executes the added cells
+with the shared uncharged guest-call service and keeps the original selected
+prefix normally charged. Its exact original guest emitters, descriptor order,
+packet/OT/precision effects and guards remain. No HLE budget fallback occurred.
+REFERENCE was separately built and run to the same village with all 343 cells;
+its screenshot retains the same scene geometry. Its measured scene throughput
+was slower (about 19–23 FPS), so it is a functioning correctness floor rather
+than the release performance choice. Animation phases differ between captures.
+
+The shared accounting fixture passed both normal and scaled-batched paths;
+the existing uncharged-span fixture passed. Both profiles stage the newly
+audited 81 native DLL/range pairs from 54 disc-normalized recipes. OpenBIOS,
+1080p, PGXP, resident fast loading and the unchanged two-VBlank scene gate are
+retained. Interpolation remains off and hidden. Evidence is in
+`Tomba2.windowed-baseline.json`, `Tomba2.windowed-scale2.json`,
+`Tomba2.windowed-terrain-hle-scale2.json`,
+`Tomba2.windowed-terrain-reference-scale2.json` and their screenshots/logs in
+the campaign review directory. Owner performance playtesting remains pending
+under `beads-eio.2.15`; no main merge or release is claimed.

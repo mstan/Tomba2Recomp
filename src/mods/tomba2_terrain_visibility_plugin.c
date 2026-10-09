@@ -1,5 +1,6 @@
 #include "mod_plugins.h"
 #include "cpu_state.h"
+#include "tomba2_terrain_execution.h"
 
 #include <stdint.h>
 
@@ -15,8 +16,6 @@
 extern int tomba2_widescreen_packet_room(uint32_t bytes);
 
 #define TERRAIN_DISPATCH 0x8003D0BCu
-#define TERRAIN_RENDER 0x801401B8u
-#define TERRAIN_RETURN 0x8003D0FCu
 #define TERRAIN_OBJECT 0x800F2418u
 #define TERRAIN_MASK_STRIDE 52u
 #define TERRAIN_MAX_CELLS (TERRAIN_MASK_STRIDE * TERRAIN_MASK_STRIDE)
@@ -183,17 +182,21 @@ static int tomba2_draw_current_area(CPUState *cpu, uint32_t address) {
         psx_mod_write_word(terrain_descriptor + 4u * i,
                            psx_mod_read_word(cpu->gpr[4] + 4u * i));
     uint32_t result = 0;
-    for (unsigned first = 0; first < drawn; first += TERRAIN_BATCH_CELLS) {
-        unsigned batch = drawn - first;
+    for (unsigned first = 0; first < drawn;) {
+        /* Preserve the stock selector's prefix as a separately charged call.
+         * Added cells retain the same order and packet math in both builds;
+         * the selected execution family owns their timing. */
+        unsigned limit = first < original ? original : drawn;
+        unsigned batch = limit - first;
         if (batch > TERRAIN_BATCH_CELLS) batch = TERRAIN_BATCH_CELLS;
         for (unsigned i = 0; i < batch; ++i)
             psx_mod_write_half(terrain_descriptor + 16u + 2u * i,
                                cells[order[first + i]].record);
         psx_mod_write_byte(terrain_descriptor + 6u, (uint8_t)batch);
-        result = psx_mod_call_guest(cpu, TERRAIN_RENDER, TERRAIN_RETURN,
-                                    terrain_descriptor, cpu->gpr[5],
-                                    cpu->gpr[6], cpu->gpr[7]);
+        result = tomba2_terrain_emit_batch(cpu, terrain_descriptor,
+                                          first >= original);
         psx_mod_counter_add("tomba2.terrain.batches", 1);
+        first += batch;
     }
     cpu->gpr[2] = result;
     psx_mod_counter_add("tomba2.terrain.frames", 1);
