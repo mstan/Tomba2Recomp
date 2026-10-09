@@ -42,6 +42,7 @@ overlay_native_block = [
 [video]
 # renderer: "opengl" (hardware renderer, default) or "software" (reference).
 renderer          = "opengl"
+internal_resolution = "1080p"
 # supersampling: render at this multiple of native resolution. 1 = native PSX.
 supersampling     = 2
 antialiasing      = true

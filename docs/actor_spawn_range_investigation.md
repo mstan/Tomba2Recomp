@@ -1,5 +1,12 @@
 # Tomba! 2 aspect-aware world participation
 
+2026-10-08 update: this is historical evidence for the July participation
+repair. The new whole-model disappearance and backdrop seam have separate,
+fixed-camera attribution in [VIEWPORT_REPAIR.md](VIEWPORT_REPAIR.md). The
+current build additionally bypasses only the verified resident render-queue
+far predicates in wide view. Statements below that all far gates remain
+unchanged describe the July implementation, not the current review build.
+
 Status: latest-master correction validated on
 `codex/tomba2-popin-fix` (2026-07-28). The root is based on `fa6a75d` and
 the published framework commit is `a292a7c`, rebased onto framework master
@@ -315,6 +322,31 @@ reaching the Tomba visibility sites. After canonical OpenBIOS regeneration,
 the same empty-cache boot remained healthy and autocompiled successfully.
 
 ## Remaining scope
+
+### October 8 village partial triangles
+
+The owner's ladder/shop scene reproduces a separate failure after the earlier
+actor participation work: the old man loses body triangles and the Evil Pig
+loses faces in the widest supported view. Their projection flags are zero;
+relaxing actor cones, adding vertical signatures or raising the global margin
+does not repair it. Raising the margin instead overruns terrain visibility.
+
+The loaded triangle funnel at `801465EC` shifts projected X into the high half
+and compares it unsigned against `320 << 16`. The three comparisons are
+`801466A0 = 0079C02B`, `801466A8 = 0199102B` (a delay slot), and
+`801466B0 = 01F9C02B`. A private checkpoint A/B changing only these predicates
+restores both complete actors. Vertical comparisons, NCLIP/backface decisions,
+OT depth and capacity checks are left original.
+
+The title declares these sites through the shared `widescreen.cull.packed_x`
+configuration. Native code and dirty-RAM interpretation use the same signed
+horizontal range expansion, guarded by complete original opcode. At 4:3 the
+original unsigned comparison is retained exactly. The focused codegen/math
+check covers all 65,536 signed X values and overlay opcode mismatch fallback.
+Local before/after evidence is `Tomba2-partial-actor-baseline.png` and
+`Tomba2-partial-actor-packed-x-ab.png` in the campaign review directory. Those
+diagnostic captures are not shipped assets; rebuilt-candidate and owner review
+remain distinct validation steps.
 
 This solution covers candidates already resident in the loaded area. It does
 not deliberately create actors from unloaded rooms or run distant AI early.

@@ -1,4 +1,4 @@
-﻿[game]
+[game]
 name = "Tomba! 2 - The Evil Swine Return"
 id = "SCUS-94454"
 exe = "tomba2/SCUS_944.54"
@@ -13,6 +13,23 @@ seeds = "seeds/ghidra_funcs.txt"
 # bios_thunks = "seeds/tomba2_bios_thunks.txt"  # optional; add once inventoried
 out_dir = "generated"
 strict = true
+mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C", "0x8003D0BC"]
+mod_instruction_sites = [
+    "0x8003FA14", "0x8003FA9C",
+    "0x8007724C", "0x800772E8", "0x80077394",
+    "0x80077428", "0x800774BC", "0x80077550",
+    "0x80050CB4",
+    "0x8002B314",
+    "0x8003BB90", "0x80079BB4",
+    "0x8007708C", "0x80077640", "0x80077E88",
+]
+
+[timing]
+# Resident scenery adds CPU work without changing device cadence. Candidate
+# CPU-only scaling uses the same shared accounting as Ape Escape; timers,
+# VBlank, audio, CD and DMA keep their normal clocks. No player timing control.
+guest_cycle_scale = 2
+guest_cycle_scale_batch = true
 
 [runtime]
 # HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
@@ -97,16 +114,16 @@ allow_hybrid = false
 lock_mode    = true
 
 # --- Renderer: optimized hardware path.
-# Supersampling: internal-resolution SSAA factor. 2 is the quality default now
-# that Tomba 2 holds full speed on the OpenGL path; lower to 1 for slower GPUs.
+# Internal resolution uses the shared 1080p preset; settings may override it.
 # Antialiasing: linear present filtering for the sampled frame. The launcher
 # exposes both controls on the Video page and persists overrides to settings.toml.
 [video]
 renderer          = "opengl"
+internal_resolution = "1080p"
 supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"
-# Tomba 2 owns temporal frame blending through its built-in Frame Blending mod.
+# Native scene interpolation is owned by the game mod.
 # Hide the generic Display controls and ignore stale settings.toml values.
 frame_interpolation = false
 frame_interpolation_fps = 0
@@ -141,6 +158,7 @@ nw_hud_corners = false
 nw_backdrop    = false
 nw_flat_backdrop = true
 nw_phase_backdrop = true
+precise_nclip = true
 
 [widescreen.cull]
 # Tomba 2's overlay render funnels reject projected vertices against the
@@ -173,6 +191,55 @@ range_sites = [
     "0x80069BB0", "0x80069BD8", "0x80110A10",
 ]
 screen_x_sites = ["0x8003E228"]
+# Saturated integer SXY may reverse a wide face's apparent winding. Use the
+# exact tracked sign at the mesh consumers. The additional area-zero terrain
+# sites reject thin visible faces when rounded integer NCLIP becomes zero.
+# MAC0 stays original.
+nclip_exact_sites = ["0x801466D8", "0x8014682C", "0x8013FC40", "0x8013FF14"]
+
+# The village mesh and projected scene-quad producers test GTE FLAG bit 31.
+# Ignore only SX saturation in the wide view, allowing GL to clip those faces.
+# Preserve every other hardware error constituent (0x7F87E000 minus SX bit14),
+# including SY, divide/depth and accumulator overflow, with complete word guards.
+[[widescreen.cull.masked_reject]]
+address = "0x80146650"
+expected = "0x04400053"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x80146810"
+expected = "0x04400063"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x801468B0"
+expected = "0x0440003B"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x8003F814"
+expected = "0x0440001E"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x8003F864"
+expected = "0x04400009"
+reject_mask = "0x7F87A000"
+
+# The village mesh triangle funnel shifts SX into the high half and compares
+# it with 320<<16. Keep faces in both adaptive horizontal margins, retaining
+# the original vertical, backface, depth and bounded ordering-table checks.
+[[widescreen.cull.packed_x]]
+address = "0x801466A0"
+expected = "0x0079C02B"
+
+[[widescreen.cull.packed_x]]
+address = "0x801466A8"
+expected = "0x0199102B"
+
+[[widescreen.cull.packed_x]]
+address = "0x801466B0"
+expected = "0x01F9C02B"
 
 # Three captured overlay producers build terrain-cell selection quads consumed
 # by bounded, deduplicating rasterizers. These are positive 12-bit angular
@@ -207,18 +274,24 @@ expected = "0x240201C7"
 # FUN_8007712C clears model+1, applies a spherical camera cone, then inserts
 # accepted type 2/9, 4, and 5 models into fixed 24/40/28-entry scratch queues.
 # These full-word-guarded sites preserve every vanilla acceptance and widen
-# only camera-horizontal participation. Vertical reach and distance gates stay
-# vanilla. Hysteresis is outside the 16px activation guard.
+# only camera-horizontal participation. Vertical reach and near gates stay
+# vanilla. The title plugin bypasses this render queue's radial far gates so
+# they cannot discard an in-view distant actor before its view-cone test.
+# Hysteresis is outside the 16px activation guard.
 forward_addr = "0x1F8000E8"
+# The live camera matrix uses X/Y/Z storage, with world vertical in the middle.
+# Map both forward components and guest deltas to the helper's semantic X/Z/Y.
+forward_offsets = [0, 4, 2]
 object_type_offset = 12
 object_reg = 19 # s3
 x_reg = 16      # s0
-z_reg = 17      # s1
-y_reg = 18      # s2
+z_reg = 18      # s2
+y_reg = 17      # s1
 hysteresis_pixels = 24
 queue_reserve = 4
 queue_count_addrs = ["0x1F800144", "0x1F800150", "0x1F80015C"]
-queue_capacities = [24, 40, 28]
+# The type2/9 queue uses its own guarded 128-entry allocation in wide view.
+queue_capacities = [128, 40, 28]
 queue_type_masks = ["0x00000204", "0x00000010", "0x00000020"]
 
 # FUN_8002B278 is the lower-level per-model/per-child cone. It does not append
@@ -230,8 +303,8 @@ expected = "0x0082202A"
 cosine_threshold = 856
 object_reg = 20 # s4
 x_reg = 19      # s3
-z_reg = 18      # s2
-y_reg = 17      # s1
+z_reg = 17      # s1
+y_reg = 18      # s2
 queue_guard = false
 
 [[widescreen.cull.aspect_cone.sites]]

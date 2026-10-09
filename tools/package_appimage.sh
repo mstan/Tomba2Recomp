@@ -76,6 +76,7 @@ orig_args=("$@")
 version=""
 out_dir=""
 variant=usa
+execution_profile=ENHANCED
 skip_build=0
 build_dir=${BUILD_DIR:-"$root/build-appimage"}
 # Leave two cores for the rest of the machine; packaging must not make the box
@@ -87,6 +88,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --version) version=$2; shift 2;;
         --variant) variant=$2; shift 2;;
+        --execution-profile) execution_profile=$2; shift 2;;
         --out)     out_dir=$2; shift 2;;
         --build-dir) build_dir=$2; shift 2;;
         --jobs)    jobs=$2; shift 2;;
@@ -96,6 +98,11 @@ while [ $# -gt 0 ]; do
         *) echo "unknown arg: $1" >&2; exit 2;;
     esac
 done
+
+case "$execution_profile" in
+    ENHANCED|REFERENCE) ;;
+    *) echo "invalid execution profile: $execution_profile" >&2; exit 2;;
+esac
 
 
 # Packaging a release should not make the machine unusable. Re-exec the whole
@@ -269,6 +276,7 @@ if [ "$skip_build" = "0" ]; then
     # otherwise identical builds differ.
     cmake -S "$root" -B "$build_dir" -G "$generator" \
         -DCMAKE_BUILD_TYPE=Release \
+        -DPSX_EXECUTION_PROFILE="$execution_profile" \
         -DCMAKE_C_COMPILER_LAUNCHER= \
         -DCMAKE_CXX_COMPILER_LAUNCHER= \
         -DPSX_SDL_BACKEND=SDL3 \
@@ -284,6 +292,14 @@ elf=$build_dir/$EXE_NAME
 [ -f "$elf" ] || elf=$build_dir/psx-runtime
 [ -f "$elf" ] || { echo "no runtime ELF under $build_dir" >&2; exit 1; }
 file -b "$elf" | grep -q ELF || { echo "$elf is not an ELF binary" >&2; exit 1; }
+execution_manifest=$elf.execution.json
+python3 - "$execution_manifest" "$execution_profile" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    profile = json.load(stream)["profile"]
+if profile != sys.argv[2]:
+    raise SystemExit("build execution profile differs from requested " + sys.argv[2])
+PY
 
 # --- player game.toml ------------------------------------------------------
 # Two conventions exist across the titles and both are honoured:
@@ -491,6 +507,11 @@ export NO_STRIP=1
     --executable "$appdir/usr/bin/$EXE_NAME" \
     --desktop-file "$appdir/$DESKTOP_ID.desktop" \
     --icon-file "$appdir/$DESKTOP_ID.png"
+
+# linuxdeploy may rewrite the ELF. Bind its final bytes, after deployment and
+# before appimagetool packages them; never bind the original build ELF here.
+python3 "$fw/tools/release_stage.py" stage-execution \
+    --binary "$appdir/usr/bin/$EXE_NAME" --manifest "$execution_manifest"
 
 # Normalise mtimes so the squashfs image is byte-stable across runs.
 find "$appdir" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} + 2>/dev/null || true
