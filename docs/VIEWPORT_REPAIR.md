@@ -148,3 +148,21 @@ their RAM/image pairs, `Tomba2-objects-village3.png`,
 These checks cover the reported village scene; they do not establish whole-map
 or unseen-room coverage. Final owner checks: old man and pig while moving the
 camera, continuous sea/clouds, then a room transition with intact music.
+
+## Owner checkpoint and remaining visibility
+
+The owner confirms the old man stays visible and requests committing the
+current progress. Broader scene visibility is still incomplete: the far-right
+pig and pole appear only after approaching, the sign left of the old man
+fades in and out, and the tree behind the burning building disappears or loses
+parts at different camera angles. Screenshot reference:
+`Tomba2Recomp_dIuVWS7yKt.png`. These reports are tracked under
+`beads-eio.2.14`; they are not covered by the old-man radius proof above.
+
+The next investigation should identify each object's rejection or absence
+from actual state. The owner proposes loading the whole current area without
+subdivision selection and considering removal of camera-driven render culling
+because the game uses unusual camera angles. Neither approach has been
+implemented at this checkpoint. Rendering participation and asset residency
+must be distinguished from gameplay spawning and actor lifetime when tracing
+the remaining objects. Existing loader, renderer and old-man repairs are kept.

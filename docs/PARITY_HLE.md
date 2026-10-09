@@ -3,6 +3,12 @@
 Updated 2026-10-08. Tracking `beads-eio.2.13` and visibility repair
 `beads-eio.2.14`; owner acceptance remains open.
 
+The owner accepts saving the current progress and confirms the old man now
+stays visible. The far-right pig/pole, sign left of the old man and tree behind
+the burning building still appear late or disappear with camera angle.
+Whole-area residency and removal of camera render culling are proposed next
+investigations, not implemented or validated features at this checkpoint.
+
 The hash-bound `Play-Tomba2.ps1` in the campaign review directory launches
 `build-viewport-review/Tomba2Recomp.exe`, with private cards and debug port 4691.
 Shared packed-X culling support is on `fix/tomba2-packed-x-20261008`
