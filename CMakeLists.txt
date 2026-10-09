@@ -5,6 +5,12 @@ include(CTest)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 
+# Both direct runtime targets use the same release version as the packagers.
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/packaging/release/VERSION"
+    _tomba2_release_version LIMIT_COUNT 1)
+set(PSX_GAME_VERSION "${_tomba2_release_version}" CACHE STRING
+    "Tomba 2 build version")
+
 set(PSXRECOMP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/psxrecomp-v4" CACHE PATH
     "Path to psxrecomp")
 
