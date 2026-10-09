@@ -16,7 +16,8 @@ FIRST RUN
   3. Seamless Loading is enabled by default in Mods. Your first launch
      prepares resources from your disc for near-instant area transitions.
      Gameplay and audio retain normal speed. Turn it off for original loading.
-     Widescreen, Skip FMVs, and frame blending remain optional and disabled.
+     Adaptive widescreen, 1080p rendering and texture correction default on.
+     Interpolation is disabled and hidden. Skip FMVs remains optional.
   4. Press Launch. Your choices are remembered for next time.
 
 WHERE THINGS LIVE
@@ -35,6 +36,6 @@ PRIVACY NOTE
   YOUR disc. Do not redistribute them.
 
 TROUBLESHOOTING
-  Slow performance: lower Supersampling to 1 in the launcher.
+  Slow performance: lower Internal Resolution in the launcher.
   Controller not detected: check input.ini, or use the launcher's controller
   row to pick the device.

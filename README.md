@@ -35,8 +35,8 @@ retail dump; clear it to return to bundled OpenBIOS.
 
 Tomba 2's mods live on the launcher's **Mods** page. Seamless Loading is enabled
 by default for the US disc, replacing the generic CD Speed and Fast Loading
-options. Widescreen, temporal frame blending, and Skip FMVs remain disabled by
-default. Italian retains its existing loading options.
+options. Adaptive widescreen and 1080p internal rendering are also enabled by default.
+Interpolation is disabled and hidden; Skip FMVs remains optional. Italian retains its existing loading options.
 
 ## Layout
 
@@ -76,11 +76,8 @@ Adaptive. Adaptive follows the live window or fullscreen aspect from 4:3 up to
 image; BIOS, FMVs, menus, and other true-2D screens remain pillarboxed at their
 authored 4:3 aspect.
 
-**Tomba 2 Frame Blending** combines completed display images at a fixed target
-or the measured display refresh while guest simulation, input, timers, and
-audio keep their original cadence. It uses Ape Escape's motion-adaptive clarity
-blend to suppress crossfades on large pixel changes, reducing double-image
-trails. This is temporal blending, not motion-vector frame generation.
+Interpolation is withheld from the bundled catalog after performance and
+visual review. The original scene loop retains its authored cadence.
 
 **Skip FMVs** mutes and rapidly advances streamed XA/MDEC movies plus the
 silent, RAM-preloaded Whoopee Camp logo. The game still runs its normal movie

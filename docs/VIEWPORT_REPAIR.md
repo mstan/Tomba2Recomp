@@ -304,3 +304,14 @@ retained. Interpolation remains off and hidden. Evidence is in
 `Tomba2.windowed-terrain-reference-scale2.json` and their screenshots/logs in
 the campaign review directory. Owner performance playtesting remains pending
 under `beads-eio.2.15`; no main merge or release is claimed.
+
+## Owner approval and v0.2.0 integration
+
+The owner approved the authentic-rate candidate on 2026-10-09 and authorized
+commit, merge and the next release. Approved title `338054f` and shared
+`f2a3b9be` remain the behavior baseline. The merge retains this tested loader
+implementation and framework/UI pins when resolving the parallel default-branch
+loader refactor; its earlier commits remain in Git history. The player config
+now preserves all approved recompiler, timing, viewport and visibility settings,
+removing only developer diagnostics and the machine-specific compile command.
+The release task is `beads-eio.2.16`.

@@ -340,7 +340,7 @@ Invoke-Native {
         --runtime-config (Join-Path $Stage $GameConfigName) --recompiler $RecompBin `
         --runtime-build-dir $BuildPath --runtime-target $RuntimeTarget `
         --work-dir (Join-Path $BuildPath 'aot-release') --stage $Stage `
-        --gcc (Join-Path $MingwBin 'gcc.exe') --workers 3
+        --gcc (Join-Path $MingwBin 'gcc.exe') --workers ([Math]::Min(2, $Jobs))
 } 'original-disc AOT extraction, complete inventory build and audit'
 Add-OverlayToolchain -Stage $Stage -RecompDir $RecompDir -RecompTools $RecompTools `
                      -RecompInc $RecompInc -MingwBin $MingwBin `
@@ -408,8 +408,8 @@ $LoadingReleaseNote = if ($Variant -eq 'usa') {
 $ReleaseTitle $Version
 
 Tomba! 2: The Evil Swine Return with native overlays prepared from the original
-disc before gameplay. This parity candidate requires fresh runtime qualification
-and owner acceptance; earlier USA release acceptance does not qualify it.
+disc before gameplay. The owner approved complete scenery, fast loading and
+authentic original scene cadence for this enhancement release.
 
 New in this release:
 - Sources: Tomba2Recomp $TombaSha and psxrecomp $PsxRecompSha.
@@ -420,7 +420,9 @@ $LoadingReleaseNote
 - Native overlay bytes, load addresses and cache namespaces are region-specific.
 - Baseline geometry correction is disabled to match the validated AOT flavor.
 - Interpreter/runtime-compilation fallback remains available for gaps.
-- Existing display mods, memory cards and disc selection remain available.
+- Adaptive widescreen and 1080p default on; supported scene visibility and sea/cloud seams are repaired.
+- Original two-VBlank scene cadence is retained; interpolation is off and hidden.
+- Existing memory cards and disc selection remain available.
 
 This package includes the MIT-licensed OpenBIOS from PCSX-Redux and its notice
 in bios/OpenBIOS.LICENSE. It does not include the Tomba! 2 disc, a retail
