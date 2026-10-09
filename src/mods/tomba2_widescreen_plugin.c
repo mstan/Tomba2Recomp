@@ -1,5 +1,6 @@
 #include "mod_plugins.h"
 #include "cpu_state.h"
+#include "gte_nclip_stats.h"
 
 /*
  * Projection, backdrop, overlay-cull, and resident-object participation hooks
@@ -117,6 +118,12 @@ static void tomba2_register_far_model_sites(const char *plugin) {
 }
 
 static void tomba2_native_projection_activate(void) {
+    /* Only the two audited terrain consumers may recover a positive face
+     * whose integer area rounded to zero. Model winding stays architectural;
+     * the shared runtime also verifies the complete word and GTE provenance. */
+    static const uint32_t zero_sites[] = {0x8013FC40u, 0x8013FF14u};
+    static const uint32_t zero_words[] = {0x1840007Bu, 0x1840009Eu};
+    psx_mod_set_native_wide_nclip_zero_sites(zero_sites, zero_words, 2);
     /* Activation may replay when the mod plan changes. The shared allocator
      * is monotonic; retain this allocation and its observed high-water mark. */
     if (!tomba2_packet_arena)

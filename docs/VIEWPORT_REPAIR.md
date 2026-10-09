@@ -115,7 +115,7 @@ existing phase/flat backdrop opt-ins now require the full composite, as
 explicit background tags already did. The actual playable-village capture
 with fast-wide enabled shows continuous sea/clouds.
 
-## Build and review
+## Earlier build and review
 
 The primary USA target compiles PGXP, uses OpenGL native-wide presentation,
 1080p internal resolution and the ENHANCED resident loading implementation.
@@ -149,7 +149,7 @@ These checks cover the reported village scene; they do not establish whole-map
 or unseen-room coverage. Final owner checks: old man and pig while moving the
 camera, continuous sea/clouds, then a room transition with intact music.
 
-## Owner checkpoint and remaining visibility
+## Earlier owner checkpoint and remaining visibility
 
 The owner confirms the old man stays visible and requests committing the
 current progress. Broader scene visibility is still incomplete: the far-right
@@ -166,3 +166,75 @@ because the game uses unusual camera angles. Neither approach has been
 implemented at this checkpoint. Rendering participation and asset residency
 must be distinguished from gameplay spawning and actor lifetime when tracing
 the remaining objects. Existing loader, renderer and old-man repairs are kept.
+
+## Resident scenery continuation
+
+The follow-up uses two Astra audits plus serialized private native replays,
+with isolated cards and no changes to owner saves. It identified several
+independent causes instead of assuming that every disappearance was distance
+or asset loading:
+
+- The aspect-cone helper received XYZ as XZY. The live camera matrix proves
+  the middle stored component is vertical. Shared `forward_offsets=[0,4,2]`
+  now supplies the actual horizontal X/Z axes. A fixed-camera qualification
+  changed the type-four queue from 12 to 27 and back when restored.
+- The opening area's entire terrain blob was already resident, but selection
+  and player-position partition masks omitted some cells from rendering.
+  `tomba2_terrain_visibility_plugin.c` submits all 343 nonempty resident cells,
+  retaining the original selected prefix and original emitters in two private
+  batches of 254 and 89. It does not change update descriptors, collision,
+  room loading or gameplay spawning. Complete source layout, exact code and
+  per-flip packet headroom are checked before any substituted draw.
+- Corrected participation exposed actual saturation of the original
+  24-entry model queue. `tomba2_actor_queue_plugin.c` allocates 128 entries in
+  separate guest CPU memory. Guarded reset and capacity hooks preserve the
+  completed consumer list and actual count; only the owned queue can exceed
+  24. All 55 instruction guards matched the captured source.
+- Three verified building fire/smoke families were rejected by the separate
+  child-effect function's 7168-unit radial limit. The effect plugin bypasses
+  that predicate for those families only, retaining their original linked
+  draw list, caller checks, near test and camera cone.
+- The primitive audit found 82 thin terrain faces whose integer NCLIP became
+  zero despite positive precise area. Configured exact sites were routed to
+  the existing horizontal-saturation helper, which could not recover these
+  unsaturated faces. A separate shared runtime opt-in now rescues only zero
+  MAC0 at the complete-word BLEZ terrain pairs `8013FC40/1840007B` and
+  `8013FF14/1840009E`. It requires matching, current projection provenance,
+  safe depth, no screen clamps and positive precise winding. Nonzero and actor
+  winding, speculative execution and replay retain the native predicate.
+
+The shared zero rescue changes neither the overlay callback ABI nor native
+codegen identity. Its captured-geometry regression case passed, including
+stale, near-plane, reversed, nonzero and disabled fallbacks. The original
+81 native DLL/ranges pairs remain audited under
+`cg18_53aae7b5_gc0ae54129_f2`; no cache relabeling or diagnostic code patch is
+used. The shared pin is `bffd30fe8109a52ea47b27d62ee0f10698eb70b9` on
+`fix/tomba2-packed-x-20261008`. Strict BIOS freshness checks remain enabled.
+
+The final executable was replayed from a fresh OpenBIOS boot. Sixteen genuine
+playable captures cover village movement, jumps and scripted camera changes,
+including one 32:9 view. Every receipt binds the executable and staged config
+by SHA-256. Terrain participation reaches all 343 cells; queue zero reaches
+30 entries; all seven inspected cone sites report no capacity rejects. Packet
+usage peaks at 142,664 bytes, within the expanded per-flip arena. No code,
+packet, queue guard, full-capacity or allocation failure is recorded; the
+single early layout rejection precedes terrain initialization. Both zero-area
+terrain consumers record actual rescues in normal native gameplay. The process
+exited cleanly.
+
+Visual inspection shows continuous sea/cloud composition and the reported
+far-right pig and pole in the wider viewport. The old man and nearby signs
+remain submitted in the checked views; hills can still physically occlude
+them. Four earlier supplemental captures were Save menus and are excluded.
+This is sampled opening-village coverage, not exhaustive campaign or every
+object-bound intersection qualification. Existing near/depth/primitive and
+gameplay lifetime checks remain. Remaining campaign or unusual-angle findings
+stay under `beads-eio.2.14` until owner validation.
+
+Current evidence: `receipts/Tomba2.final-resident-survey.json`,
+`Tomba2.production-visibility.json`, `Tomba2.final-resident-audit.json`, and the
+`Tomba2.survey-precision-final-*` image/RAM/trace receipts in the campaign review
+directory. The owner launcher labels this build `RESIDENT SCENERY FIX`, with
+enhanced OpenGL, 1080p, PGXP and title-owned fast loading retained. Review the
+pig/pole, signs and tree while walking and jumping, then check a room transition
+and music. Human acceptance remains pending; no main merge or release is claimed.
