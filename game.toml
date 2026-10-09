@@ -13,12 +13,15 @@ seeds = "seeds/ghidra_funcs.txt"
 # bios_thunks = "seeds/tomba2_bios_thunks.txt"  # optional; add once inventoried
 out_dir = "generated"
 strict = true
-mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C"]
+mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C", "0x8003D0BC"]
 mod_instruction_sites = [
     "0x8003FA14", "0x8003FA9C",
     "0x8007724C", "0x800772E8", "0x80077394",
     "0x80077428", "0x800774BC", "0x80077550",
     "0x80050CB4",
+    "0x8002B314",
+    "0x8003BB90", "0x80079BB4",
+    "0x8007708C", "0x80077640", "0x80077E88",
 ]
 
 [runtime]
@@ -182,8 +185,10 @@ range_sites = [
 ]
 screen_x_sites = ["0x8003E228"]
 # Saturated integer SXY may reverse a wide face's apparent winding. Use the
-# exact tracked sign at these two proven mesh consumers; MAC0 stays original.
-nclip_exact_sites = ["0x801466D8", "0x8014682C"]
+# exact tracked sign at the mesh consumers. The additional area-zero terrain
+# sites reject thin visible faces when rounded integer NCLIP becomes zero.
+# MAC0 stays original.
+nclip_exact_sites = ["0x801466D8", "0x8014682C", "0x8013FC40", "0x8013FF14"]
 
 # The village mesh and projected scene-quad producers test GTE FLAG bit 31.
 # Ignore only SX saturation in the wide view, allowing GL to clip those faces.
@@ -267,15 +272,19 @@ expected = "0x240201C7"
 # they cannot discard an in-view distant actor before its view-cone test.
 # Hysteresis is outside the 16px activation guard.
 forward_addr = "0x1F8000E8"
+# The live camera matrix uses X/Y/Z storage, with world vertical in the middle.
+# Map both forward components and guest deltas to the helper's semantic X/Z/Y.
+forward_offsets = [0, 4, 2]
 object_type_offset = 12
 object_reg = 19 # s3
 x_reg = 16      # s0
-z_reg = 17      # s1
-y_reg = 18      # s2
+z_reg = 18      # s2
+y_reg = 17      # s1
 hysteresis_pixels = 24
 queue_reserve = 4
 queue_count_addrs = ["0x1F800144", "0x1F800150", "0x1F80015C"]
-queue_capacities = [24, 40, 28]
+# The type2/9 queue uses its own guarded 128-entry allocation in wide view.
+queue_capacities = [128, 40, 28]
 queue_type_masks = ["0x00000204", "0x00000010", "0x00000020"]
 
 # FUN_8002B278 is the lower-level per-model/per-child cone. It does not append
@@ -287,8 +296,8 @@ expected = "0x0082202A"
 cosine_threshold = 856
 object_reg = 20 # s4
 x_reg = 19      # s3
-z_reg = 18      # s2
-y_reg = 17      # s1
+z_reg = 17      # s1
+y_reg = 18      # s2
 queue_guard = false
 
 [[widescreen.cull.aspect_cone.sites]]

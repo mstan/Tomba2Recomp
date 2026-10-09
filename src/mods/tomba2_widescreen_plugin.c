@@ -10,6 +10,20 @@
 #define TOMBA2_PACKET_BYTES (1024u * 1024u)
 static uint32_t tomba2_packet_arena;
 static uint32_t tomba2_packet_peak;
+extern void tomba2_terrain_visibility_activate(void);
+extern void tomba2_actor_queue_activate(void);
+
+int tomba2_widescreen_packet_room(uint32_t bytes) {
+    if (!tomba2_packet_arena || psx_mod_widescreen_view_x_margin() <= 0)
+        return 0;
+    const uint32_t flip = psx_mod_read_byte(0x1F800135u);
+    if (flip > 1u) return 0;
+    const uint32_t cursor = psx_mod_read_word(0x800BF544u) & 0x00FFFFFFu;
+    const uint32_t base = (tomba2_packet_arena & 0x00FFFFFFu) +
+                          flip * TOMBA2_PACKET_BYTES;
+    return cursor >= base && cursor <= base + TOMBA2_PACKET_BYTES &&
+           bytes <= base + TOMBA2_PACKET_BYTES - cursor;
+}
 
 static int tomba2_packet_cursor_extended(void) {
     uint32_t cursor = psx_mod_read_word(0x800BF544u) & 0x00FFFFFFu;
@@ -109,6 +123,8 @@ static void tomba2_native_projection_activate(void) {
         tomba2_packet_arena = psx_mod_alloc_gpu_dma_memory(2u * TOMBA2_PACKET_BYTES, 32u);
     if (!tomba2_packet_arena)
         psx_mod_counter_add("tomba2.widescreen.packet_allocation_failed", 1);
+    tomba2_terrain_visibility_activate();
+    tomba2_actor_queue_activate();
     psx_mod_set_native_wide_projection_correction(1);
     psx_mod_set_native_wide_near_clip(1);
 }
