@@ -1,5 +1,12 @@
 # Tomba! 2 aspect-aware world participation
 
+2026-10-08 update: this is historical evidence for the July participation
+repair. The new whole-model disappearance and backdrop seam have separate,
+fixed-camera attribution in [VIEWPORT_REPAIR.md](VIEWPORT_REPAIR.md). The
+current build additionally bypasses only the verified resident render-queue
+far predicates in wide view. Statements below that all far gates remain
+unchanged describe the July implementation, not the current review build.
+
 Status: latest-master correction validated on
 `codex/tomba2-popin-fix` (2026-07-28). The root is based on `fa6a75d` and
 the published framework commit is `a292a7c`, rebased onto framework master

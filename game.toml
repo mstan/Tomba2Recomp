@@ -14,7 +14,11 @@ seeds = "seeds/ghidra_funcs.txt"
 out_dir = "generated"
 strict = true
 mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C"]
-mod_instruction_sites = ["0x8003FA14", "0x8003FA9C"]
+mod_instruction_sites = [
+    "0x8003FA14", "0x8003FA9C",
+    "0x8007724C", "0x800772E8", "0x80077394",
+    "0x80077428", "0x800774BC", "0x80077550",
+]
 
 [runtime]
 # HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
@@ -143,6 +147,7 @@ nw_hud_corners = false
 nw_backdrop    = false
 nw_flat_backdrop = true
 nw_phase_backdrop = true
+precise_nclip = true
 
 [widescreen.cull]
 # Tomba 2's overlay render funnels reject projected vertices against the
@@ -175,6 +180,38 @@ range_sites = [
     "0x80069BB0", "0x80069BD8", "0x80110A10",
 ]
 screen_x_sites = ["0x8003E228"]
+# Saturated integer SXY may reverse a wide face's apparent winding. Use the
+# exact tracked sign at these two proven mesh consumers; MAC0 stays original.
+nclip_exact_sites = ["0x801466D8", "0x8014682C"]
+
+# The village mesh and projected scene-quad producers test GTE FLAG bit 31.
+# Ignore only SX saturation in the wide view, allowing GL to clip those faces.
+# Preserve every other hardware error constituent (0x7F87E000 minus SX bit14),
+# including SY, divide/depth and accumulator overflow, with complete word guards.
+[[widescreen.cull.masked_reject]]
+address = "0x80146650"
+expected = "0x04400053"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x80146810"
+expected = "0x04400063"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x801468B0"
+expected = "0x0440003B"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x8003F814"
+expected = "0x0440001E"
+reject_mask = "0x7F87A000"
+
+[[widescreen.cull.masked_reject]]
+address = "0x8003F864"
+expected = "0x04400009"
+reject_mask = "0x7F87A000"
 
 # The village mesh triangle funnel shifts SX into the high half and compares
 # it with 320<<16. Keep faces in both adaptive horizontal margins, retaining
@@ -224,8 +261,10 @@ expected = "0x240201C7"
 # FUN_8007712C clears model+1, applies a spherical camera cone, then inserts
 # accepted type 2/9, 4, and 5 models into fixed 24/40/28-entry scratch queues.
 # These full-word-guarded sites preserve every vanilla acceptance and widen
-# only camera-horizontal participation. Vertical reach and distance gates stay
-# vanilla. Hysteresis is outside the 16px activation guard.
+# only camera-horizontal participation. Vertical reach and near gates stay
+# vanilla. The title plugin bypasses this render queue's radial far gates so
+# they cannot discard an in-view distant actor before its view-cone test.
+# Hysteresis is outside the 16px activation guard.
 forward_addr = "0x1F8000E8"
 object_type_offset = 12
 object_reg = 19 # s3

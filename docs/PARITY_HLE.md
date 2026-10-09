@@ -1,11 +1,12 @@
 # Tomba 2 USA serial enhancement review
 
-Updated 2026-10-08. Tracking `beads-eio.2.13`; owner acceptance remains open.
+Updated 2026-10-08. Tracking `beads-eio.2.13` and visibility repair
+`beads-eio.2.14`; owner acceptance remains open.
 
 The hash-bound `Play-Tomba2.ps1` in the campaign review directory launches
-`build-native-review/Tomba2Recomp.exe`, with private cards and debug port 4691.
+`build-viewport-review/Tomba2Recomp.exe`, with private cards and debug port 4691.
 Shared packed-X culling support is on `fix/tomba2-packed-x-20261008`
-(`b0f7b2be`, BIOS fingerprint refresh `fc5c9512`); recomp-ui remains `03d58aa0`.
+(`7e7c94c24bb1b32fb539b6074cd008c3a04897d7`); recomp-ui remains `03d58aa0`.
 The execution receipt records the exact compiled source and executable identity.
 
 ## Implemented and checked
@@ -16,14 +17,30 @@ The execution receipt records the exact compiled source and executable identity.
 - Adaptive native widescreen is enabled by default, up to the existing 21:9
   support limit. Existing resident loading, texture decoding and sample
   transfer remain enabled; generic CD-speed and host pacing controls are hidden.
-- The village old man and Evil Pig were losing triangles at the original
+- The earlier village old man and Evil Pig reproduction lost triangles at the original
   horizontal viewport bounds. Three full-opcode-guarded SLTU sites at
   `801466A0`, `801466A8` and `801466B0` now test the adaptive horizontal range.
   The shared emitter and interpreter use the same predicate, with exact 4:3
   behavior and original-opcode fallback. Vertical, backface, depth and queue
   limits remain in force. See the actor investigation document for attribution.
-- This repairs the observed partial actors. It does not increase the physical
-  far plane or bypass terrain subdivision; neither was the cause of that scene.
+- The new reproduction also identified whole-model rejection: old man
+  `800FC8D8`, type 9, was 5716 units from the camera and inside its cone, but
+  `FUN_8007712C` rejected him at its 5120-unit radial cutoff. Fixed-camera,
+  single-cutoff A/B restores his head/arm above the hill; restoring the cutoff
+  removes them. Six guarded instruction hooks cover the seven far comparisons
+  in this resident-model render-queue function, without a replacement far
+  radius. Near tests, the actual distance used by cone math, queue capacities,
+  actor lifetime and primitive/depth checks stay intact. These hooks are inert
+  at 4:3 and are not the retired global distance/cone experiment.
+- Exact projection, near clipping and exact NCLIP are enabled for native wide
+  rendering. Five full-word-guarded GTE rejection sites ignore horizontal
+  saturation in wide view while retaining vertical, divide, depth and MAC
+  errors; the original signed predicate runs at 4:3.
+- The water/cloud seam was a shared compositor defect: the canonical 4:3
+  center was copied over an already stretched phase/flat backdrop. Those
+  existing backdrop opt-ins now require the full composite. The playable
+  village capture shows continuous water/clouds with the default fast path.
+  See [the viewport attribution and checks](VIEWPORT_REPAIR.md).
 - Native overlay inputs reuse the established original-disc extraction in
   `build-aot-review/disc-aot-42sg678l`. Updated artifacts must be regenerated and
   audited against those inputs; an old cache namespace cannot be relabeled.
@@ -44,6 +61,8 @@ while moving the camera, then make an area transition and return. Listen for
 intact music during fast loading and check HUD/dialogue placement. No
 interpolation option should appear. Use normal saves for OpenBIOS; the old
 retail-BIOS diagnostic savestate is not a cross-profile compatibility promise.
+The old man's lower body is genuinely behind the foreground hill at the
+diagnostic doorway camera; the regression was the missing visible head/arm.
 
 The view still caps at 21:9; 32:9 participation/HUD expansion,
 stable world/UI filtering qualification, Linux packages, extended native
