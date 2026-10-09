@@ -74,8 +74,8 @@ checks all 21 registrations, both buffers, peak accounting, repeated activation,
 
 Attribution: `receipts/Tomba2.primitive-arena-cause.json`, backed by the full
 `Tomba2.diagnose-far-player.json` write trace and the far-disabled same-route
-receipt. A temporary single-module native replay validates the new storage;
-the final production cache must be regenerated normally under its new config.
+receipt. A temporary single-module native replay validated the new storage.
+The final production cache was then regenerated normally under its new config.
 
 The final private replay reached normal gameplay and the distant doorway:
 `receipts/Tomba2.arena-confirmed-playable.json` records old-man visibility 1
@@ -129,6 +129,17 @@ were refreshed; the strict stale-BIOS check remains enabled. The owner build
 uses bundled OpenBIOS. Native input pairs are regenerated from the original
 normalized disc inventory under the final configuration, rather than relabeling
 old cache artifacts.
+
+The final normal build and native cache passed the same intro-to-gameplay
+route with no diagnostic code patches. The cache audit validates all 81
+DLL/ranges pairs under `cg18_53aae7b5_gc90c4eebf_f2` against the original
+normalized disc inputs. `receipts/Tomba2.production-visibility.json` records
+old-man visibility 1 at distance 6104.22, active PGXP/native wide, 4153 expanded
+packet frames, peak 85,852 bytes and 98 frames above the original packet budget.
+The game reached frame 10318 and exited cleanly. Final village and doorway
+captures show continuous sea/clouds and the visible doorway head/arm. The
+receipt binds the executable and staged config by SHA-256; owner acceptance
+is still pending.
 
 The campaign review directory holds the exact evidence:
 `receipts/Tomba2.objects-door-far-ab.json`, `...-door-far-revert.json`,

@@ -38,7 +38,9 @@ The execution receipt records the exact compiled source and executable identity.
   hook at the original frame reset now selects paired 1 MiB GPU-DMA buffers;
   far admission requires the expanded cursor. A native diagnostic replay
   exceeded the stock budget in 107 frames (peak 86,728 bytes) without the
-  corruption or fatal halt. The final config/cache rebuild remains required.
+  corruption or fatal halt. The final normal config/cache rebuild also passed:
+  all 81 native pairs audited, old man visible at distance 6104.22, and clean
+  intro-to-gameplay completion without diagnostic code patches.
 - Exact projection, near clipping and exact NCLIP are enabled for native wide
   rendering. Five full-word-guarded GTE rejection sites ignore horizontal
   saturation in wide view while retaining vertical, divide, depth and MAC
