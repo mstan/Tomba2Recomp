@@ -40,9 +40,64 @@ callback is inert. Existing near, cone, queue, depth, actor lifetime and room
 loading checks remain; this does not load other rooms or remove occlusion.
 
 The private all-far A/B measured queue highwater `19/19/7` against capacities
-`24/40/28`, with zero aspect-queue rejects. The standalone actual-plugin
-contract check passed all 18 registrations, 4:3 identity, wide rejection
-rescue, complete CPU register/PC preservation and failed-guard fallback.
+`24/40/28`, with zero aspect-queue rejects. That camera-only check did not
+exercise the earlier Zippo intro with the far hooks active from boot.
+
+## Drawing storage exposed by the far-model repair
+
+The first production replay halted during Zippo's intro. A write trace proves
+the original primitive arena overflowed: at frame 6662 the quad producer's
+stores at `80146838/3C/58/74` wrote GPU packet words across Tomba's actor header
+`800E7E80..8C`. Its bone-count word changed from `0F001111` to `00505050`.
+The next frame's animation matrix walker trusted those counts, wrote through
+an invalid destination at `00000071`, and damaged the BIOS exception vector.
+The subsequent fatal syscall was a consequence of this corruption. Disabling
+only the far-hook comparison qualification let the same route complete.
+
+Stock packet buffers start at `800BFE68` and `800D3E68`, each `14000` bytes
+(80 KiB). The second ends at `800E7E68`, immediately before Tomba's header.
+The new exact-word hook at `80050CB4` (`AE83F544`) redirects the per-frame
+cursor reset to two 1 MiB buffers from `psx_mod_alloc_gpu_dma_memory`. It
+preserves the original flip index, ordering tables, packet commands, delay
+slot and DMA submission. The shared service transports the enlarged packet
+addresses through CPU access, PGXP and 24-bit DMA tags, and snapshots the
+allocated bytes. Activation reuses the allocation when the mod plan replays.
+
+The hook also guards the original base calculation, flip bit, destination
+register and nearby instruction words. Far acceptance requires the live
+cursor to be within the expanded arena; allocation or reset qualification
+failure keeps the original predicate. At 4:3 the original reset is unchanged.
+Counters record packet frames, peak bytes, frames exceeding the stock budget,
+allocation failure and reset-guard rejection. The small actual-plugin contract
+checks all 21 registrations, both buffers, peak accounting, repeated activation,
+4:3 identity, register preservation and failed-arena/failed-code fallback.
+
+Attribution: `receipts/Tomba2.primitive-arena-cause.json`, backed by the full
+`Tomba2.diagnose-far-player.json` write trace and the far-disabled same-route
+receipt. A temporary single-module native replay validates the new storage;
+the final production cache must be regenerated normally under its new config.
+
+The final private replay reached normal gameplay and the distant doorway:
+`receipts/Tomba2.arena-confirmed-playable.json` records old-man visibility 1
+at distance 5878.42, camera `(5143, -1372, 2352)`, with every checked guest
+instruction still original. The doorway image shows his visible head/arm
+above the foreground hill. `Tomba2-objects-arena-final-after17.png` shows
+the playable village's continuous sea/cloud view. The run reached 64,466,697
+native dispatches with PGXP active, 7778 expanded packet frames, peak 85,852
+bytes and 104 frames above the stock budget. No allocation/reset guard failed;
+aspect queue highwater was `24/31/9` with zero rejects. Tomba's bone counts
+stayed intact, and the game exited cleanly. The earlier native replay peaked
+at 86,728 bytes across 107 over-stock frames. The original native DLL/ranges
+were restored after these diagnostic runs; their temporary hook insertion is
+not a production cache artifact.
+
+The opening sequence needs both Zippo dialogue blocks, including the Journal
+tutorial after the scripted house/pig camera tour. Twenty-three Circle presses
+stop within that tour. Finish the second block until Zippo and the letterbox
+bars disappear, then hold Right for four seconds and settle for one second
+to reach the reviewed far doorway. The review helper
+`advance_tomba2_intro_to_playable.py` provides a bounded Circle loop and checks
+the known intro bars, rather than treating a scripted-camera capture as play.
 
 ## Primitive correction and backdrop seam
 

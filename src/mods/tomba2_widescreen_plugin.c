@@ -7,10 +7,58 @@
  * renderer startup and removes the verified render queue's radial far gates.
  * Every hook is inert at the authentic 4:3 baseline.
  */
+#define TOMBA2_PACKET_BYTES (1024u * 1024u)
+static uint32_t tomba2_packet_arena;
+static uint32_t tomba2_packet_peak;
+
+static int tomba2_packet_cursor_extended(void) {
+    uint32_t cursor = psx_mod_read_word(0x800BF544u) & 0x00FFFFFFu;
+    uint32_t base = tomba2_packet_arena & 0x00FFFFFFu;
+    return tomba2_packet_arena && cursor >= base &&
+           cursor < base + 2u * TOMBA2_PACKET_BYTES;
+}
+
+static void tomba2_reset_packet_arena(CPUState *cpu, uint32_t address) {
+    if (!cpu || !tomba2_packet_arena ||
+        psx_mod_widescreen_view_x_margin() <= 0) return;
+
+    /* The stock loop resets the primitive cursor to BFE68 + flip*14000.
+     * Its second 80 KiB buffer ends at E7E68: enlarged distant geometry
+     * overflowed it into Tomba's header at E7E80 during Zippo's intro.
+     * Redirect this original SW's value, preserving its delay slot, both
+     * display buffers, the original OT and the original DMA submission.
+     * The shared allocation service supplies CPU/PGXP/24-bit-DMA transport
+     * and save-state storage; ordinary expansion memory cannot carry tags. */
+    uint32_t flip = psx_mod_read_byte(0x1F800135u);
+    if ((address & 0x1FFFFFFFu) != 0x00050CB4u || flip > 1u ||
+        cpu->gpr[3] != 0x000BFE68u + flip * 0x14000u ||
+        cpu->gpr[20] != 0x800C0000u ||
+        psx_mod_read_word(0x80050CA4u) != 0x2442FE68u ||
+        psx_mod_read_word(0x80050CA8u) != 0x00621821u ||
+        psx_mod_read_word(0x80050CACu) != 0x00651824u ||
+        psx_mod_read_word(0x80050CB0u) != 0x0C01E22Bu) {
+        psx_mod_counter_add("tomba2.widescreen.packet_guard_reject", 1);
+        return;
+    }
+    if (tomba2_packet_cursor_extended()) {
+        uint32_t used = ((psx_mod_read_word(0x800BF544u) & 0x00FFFFFFu) -
+                         (tomba2_packet_arena & 0x00FFFFFFu)) % TOMBA2_PACKET_BYTES;
+        if (used > tomba2_packet_peak) {
+            psx_mod_counter_add("tomba2.widescreen.packet_peak_bytes", used - tomba2_packet_peak);
+            tomba2_packet_peak = used;
+        }
+        if (used > 0x14000u)
+            psx_mod_counter_add("tomba2.widescreen.packet_over_stock_frames", 1);
+    }
+    cpu->gpr[3] = (tomba2_packet_arena + flip * TOMBA2_PACKET_BYTES) & 0x00FFFFFFu;
+    psx_mod_counter_add("tomba2.widescreen.packet_frames", 1);
+}
+
 static void tomba2_visible_far_models(CPUState *cpu, uint32_t address) {
     uint32_t expected_compare;
     if (!cpu || cpu->gpr[2] != 0 ||
-        psx_mod_widescreen_view_x_margin() <= 0) return;
+        psx_mod_widescreen_view_x_margin() <= 0 ||
+        !tomba2_packet_cursor_extended()) return;
 
     /* FUN_8007712C receives an already resident object and camera delta,
      * rejects by radial distance, then applies its view cone and appends to
@@ -50,9 +98,17 @@ static void tomba2_register_far_model_sites(const char *plugin) {
     for (unsigned i = 0; i < sizeof(sites) / sizeof(sites[0]); ++i)
         (void)psx_mod_register_instruction_plugin(plugin,
             sites[i].address, sites[i].expected, tomba2_visible_far_models);
+    (void)psx_mod_register_instruction_plugin(plugin,
+        0x80050CB4u, 0xAE83F544u, tomba2_reset_packet_arena);
 }
 
 static void tomba2_native_projection_activate(void) {
+    /* Activation may replay when the mod plan changes. The shared allocator
+     * is monotonic; retain this allocation and its observed high-water mark. */
+    if (!tomba2_packet_arena)
+        tomba2_packet_arena = psx_mod_alloc_gpu_dma_memory(2u * TOMBA2_PACKET_BYTES, 32u);
+    if (!tomba2_packet_arena)
+        psx_mod_counter_add("tomba2.widescreen.packet_allocation_failed", 1);
     psx_mod_set_native_wide_projection_correction(1);
     psx_mod_set_native_wide_near_clip(1);
 }

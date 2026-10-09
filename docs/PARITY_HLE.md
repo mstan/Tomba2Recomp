@@ -32,6 +32,13 @@ The execution receipt records the exact compiled source and executable identity.
   radius. Near tests, the actual distance used by cone math, queue capacities,
   actor lifetime and primitive/depth checks stay intact. These hooks are inert
   at 4:3 and are not the retired global distance/cone experiment.
+- Admitting distant models exposed an original 80 KiB drawing-buffer overflow
+  during Zippo's intro. Traced quad writes damaged Tomba's bone counts before
+  an invalid matrix write damaged the BIOS exception vector. An exact guarded
+  hook at the original frame reset now selects paired 1 MiB GPU-DMA buffers;
+  far admission requires the expanded cursor. A native diagnostic replay
+  exceeded the stock budget in 107 frames (peak 86,728 bytes) without the
+  corruption or fatal halt. The final config/cache rebuild remains required.
 - Exact projection, near clipping and exact NCLIP are enabled for native wide
   rendering. Five full-word-guarded GTE rejection sites ignore horizontal
   saturation in wide view while retaining vertical, divide, depth and MAC
