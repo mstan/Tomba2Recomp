@@ -72,8 +72,12 @@ static int dispatch(CPUState *cpu,uint32_t pc) {
     if(trace && pc==0x51F14u && cpu->gpr[4]==1) {
         fprintf(stdout,"tomba2 seamless: spawn frame=%u fn=%08X ra=%08X\n",frame,cpu->gpr[5],cpu->gpr[31]);fflush(stdout);
     }
+    /* Only the resident texture worker has no cooperative device waits.
+     * Common/area workers can yield during sound or streaming work, escaping
+     * this host call before its synchronous context is restored. Keep their
+     * original scheduling; the resident reader/decoder services still apply. */
     if(!synchronous_worker && pc==0x51F14u && cpu->gpr[4]==1 &&
-       (cpu->gpr[5]==0x80044F58u || cpu->gpr[5]==0x8004514Cu || cpu->gpr[5]==0x800452C0u) &&
+       cpu->gpr[5]==0x80044F58u &&
        cpu->gpr[31]==0x80044C50u && r32(0x1F800138u)==0x801FE000u && loader_layout() &&
        psx_mod_read_byte(0x801FE0DEu)<22 &&
        r16(0x801FE070u)==0 && r16(0x801FE0E0u)==0 &&
