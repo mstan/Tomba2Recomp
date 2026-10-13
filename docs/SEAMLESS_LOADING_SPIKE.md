@@ -85,12 +85,23 @@ texture rectangle size; the cache preserves the actual original output length.
 
 The adapter copies only cataloged resource ranges to bounded guest RAM. Bulk
 asset writes invalidate executable pages and overlay generations. It chains the
-existing dispatch hook. It inlines only the three verified resource workers
-from their known parent, with idle worker slots, original extent/stack layout,
-and ordinary sound-transfer mode. Other worker functions, including the
-prologue worker, retain their original scheduling. Unknown resource/texture
+existing dispatch hook. It inlines only the resident texture worker `80044F58`
+from its known parent, with idle worker slots, original extent/stack layout,
+and ordinary sound-transfer mode. Common/area workers `8004514C/800452C0`
+retain their original scheduling: sound/streaming waits can yield and abandon
+an in-flight synchronous host call. Other worker functions, including the
+prologue worker, also retain their original scheduling. Unknown resource/texture
 requests use the original routines. Modified code or loader layouts are outside
 the synchronous adapter's verified scope; this is not broad asset-mod support.
+
+The 2026-10-13 warm-cache startup check found the common-resource synchronous
+call never returned after sound-bank loading, leaving the Whoopee Camp logo
+stuck. This occurred with both current-master and PR-review framework builds.
+Restricting synchronous spawn to the texture worker let the same frozen native
+cache reach the opening movie and gameplay attract scene. Native loader
+`80044BD4` remained enabled; no new interpreter block or product option was
+added. The resident reader, decoder and sample-transfer adapters remain active.
+This is a bounded startup/visual check, with owner revalidation still pending.
 
 The shared change is a backport of `psx_mod_read_disc_file`: it reads the mounted
 disc with active sector patches while leaving guest CD state untouched. It does
