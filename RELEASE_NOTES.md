@@ -1,3 +1,14 @@
+# Tomba! 2 v0.2.1 - Startup loading fix
+
+Fixes a startup hang immediately after the Whoopee Camp logo movie that could
+occur with an already prepared native cache. Sound-bank and area workers retain
+their original cooperative scheduling; the resident texture worker keeps fast
+loading. The fix is enabled by default.
+
+This patch preserves v0.2.0's adaptive scenery, texture correction, authentic
+game timing and launcher. Windows x64 and Linux x86_64 packages include OpenBIOS;
+players supply their own US disc. The Italian release is unchanged.
+
 # Tomba! 2 v0.2.0 - Adaptive scenery and authentic performance
 
 Adaptive widescreen and 1080p internal rendering now default on for the US disc
