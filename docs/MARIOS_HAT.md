@@ -176,6 +176,33 @@ in private RAM; these checks do not establish acquisition or event gates.
 Reports and screenshots are in `suit-r11-squirrel/`, `suit-r11-bird/`, and
 `suit-r11-robe/` under `build-mario-assets`.
 
+`tools/mario_interaction_smoke.py --output <private evidence directory>` walks
+from the Mario slot-8 fixture to the first post pig. It compares the same
+approach with and without an attack, checks a distant miss, observes an actual
+native capture link, and saves/loads that capture. Actor observations come
+from the recorded frame ring. It writes disposable slots 10/11 by default and
+restores the input fixture and previous snapshot-region configuration. No
+actor position, health, capture or success flag is changed. `--weapon 3` and
+`--weapon 6` grant Boomerang and Hammer ownership/order in private RAM and use
+the native inventory to equip them; acquisition is bypassed and the original
+ownership is restored. These are ordinary-pig interaction checks, not proof
+of damage amounts or weapon-specific target gates.
+
+The r12 test exposed a real Hammer defect: its fist was retired after four
+total handler ticks, while the native swing was still winding up in phase 2.
+The r13 implementation counts four active ticks after the Hammer reaches its
+damaging phase, bounds interrupted lifetimes, and clears its native terrain
+impact latch on forced retirement. The Hammer now passes the real hit/miss,
+balanced retirement, capture and capture-state restore checks (27 assertions,
+`interactions-r13-hammer/`).
+Blackjack and Boomerang passed the same rebuilt-runtime comparison (23 and
+27 assertions respectively), including out-of-range misses and restored
+ownership. Evidence is in `interactions-r13-blackjack/` and
+`interactions-r13-boomerang/`. The broader r13 smoke rerun exposed a pending
+save that completed after its short jump voice ended; that snapshot-timing
+investigation is tracked separately as `beads-qrwo`. Do not claim a fresh
+mid-voice save/load pass for r13 from the earlier r11 evidence.
+
 `tools/mario_voice_smoke.py` (NumPy required) stimulates guest voice 437 and
 correlates the real post-SPU WAV with independently resampled owner PCM. The
 r10 capture in `voice-r10/` passed at normalized correlation 0.814 and the
@@ -193,12 +220,13 @@ noisy: the earlier pair measured 47.16/37.05 guest VBlanks/s (Tomba/Mario), the
 reverse-order atlas pair 33.36/32.23. Do not claim that the final frame-time
 budget or cross-build performance gate has passed from these variable runs.
 
-Still unverified: actual enemy damage and weapon target requirements,
-overhead grab/aim/throw, death/continue, native memory-card
+Still unverified: damage amounts and weapon-specific target requirements,
+capture/hold presentation and general aim/throw, death/continue, native memory-card
 save/reload, rewind/audio replay, matched runtime performance, adaptive
 widescreen, picker/import UI, release defaults and packaging. A post approach
 caused native Tomba and Mario to enter the same blocked/hurt states; it is not
-proof of a working hit or capture. Relocated actor `0x800fc8d8` was visually
+proof of a working hit or capture. The later controlled interaction fixture
+above provides separate hit/stun and capture evidence. Relocated actor `0x800fc8d8` was visually
 identified as an NPC, so its counters/memory changes are not combat evidence.
 
 The expensive original-disc AOT pipeline completed 29 images / 54 recipes and

@@ -306,21 +306,32 @@ int punch_weapon(CPUState* cpu,uint32_t address) {
     if(weapon_nested || !ready())return 0;
     uint32_t actor=cpu->gpr[4],entry=weapon_record(actor);
     if(!entry)return 0;
-    unsigned phase=rb(actor+4),age=rw(entry+4);
-    if(phase<2 && (age>=4 || !state(Equipped))) {
+    // Hammer has a native windup before +6 reaches its damaging phase. Count
+    // the four active ticks, rather than retiring during that windup. Keep a
+    // separate bounded lifetime for interrupted/invalid native transactions.
+    const bool hammer=address==0x8006c478u;
+    uint32_t clock=rw(entry+4);
+    unsigned phase=rb(actor+4),age=clock&0xffffu,lifetime=clock>>16;
+    if(phase<2 && (age>=4 || lifetime>=120 || !state(Equipped))) {
         // Let the original family handler release its model/pool and balance
         // its own active-projectile counters through its normal retire states.
         wb(actor+4,2);
         if(unsigned(rb(player+0x176))+1==rw(entry+8))wb(player+0x79,0);
+        // The native hammer clears its terrain-impact latch on normal exit;
+        // its generic phase-2 retirement only advances to model destruction.
+        if(hammer)wb(0x800e807e,0);
     }
+    if(phase==1 && age<4)fist_position(actor);
     weapon_nested=true;original(cpu,address);weapon_nested=false;
     if(phase==3) {ww(entry,0);psx_mod_counter_add("tomba2.mario.punch_retired",1);}
     else {
         if(age<4 && state(Equipped) && rb(actor+4)<2) {
-            fist_position(actor);wb(actor,1);
+            fist_position(actor);
+            bool active=!hammer || (rb(actor+5)==1 && rb(actor+6)>=3);
+            if(active) {wb(actor,1);++age;}
             wh(actor+0x76,std::min<uint16_t>(rh(actor+0x76),40));
         }
-        wb(actor+1,0);ww(entry+4,age+1);
+        wb(actor+1,0);ww(entry+4,((lifetime+1)<<16)|age);
     }
     return 1;
 }
