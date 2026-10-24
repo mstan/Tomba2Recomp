@@ -188,12 +188,21 @@ void costume_reload(CPUState* cpu,uint32_t) {
 void costume_attributes(CPUState* cpu,uint32_t) {
     if(ready() && cpu->gpr[4]==player && rb(player+0x6f)!=0)state(Requested,0);
 }
-int costume_toast(CPUState* cpu,uint32_t address) {
-    (void)address;
-    // Only the stock costume-equipped wrapper for our pending transaction.
-    // Native costume zero would otherwise enqueue item zero (Blackjack).
-    if(!ready() || !state(HatToast) || cpu->gpr[4]!=0 || cpu->gpr[5]!=0 ||
-       (cpu->gpr[31]&0x1fffffff)!=0x4d6e4)return 0;
+void costume_toast(CPUState* cpu,uint32_t) {
+    if(!ready() || !state(HatToast) || cpu->gpr[6]!=0x40)return;
+    uint32_t caller=cpu->gpr[31]&0x1fffffff,source=cpu->gpr[4],sp=cpu->gpr[29];
+    // The queue receives either an ordinary costume-zero equipped message or
+    // a two-item remove/equip message when replacing a native suit. Confirm
+    // the costume caller as well as the token list: weapon/shoe confirmations
+    // can also mention item zero during the same inventory transaction.
+    bool ordinary=caller==0x4ed84 && cpu->gpr[5]==1 &&
+        (rw(sp+0x18)&0x1fffffff)==0x4d6e4 && (rw(sp+0x30)&0x1fffffff)==0x343e4 &&
+        rh(source)==0 && rh(source+2)==0x8000 && rh(source+4)==0xfffe;
+    bool replacing=caller==0x4ee1c && cpu->gpr[5]==2 &&
+        (rw(sp+0x20)&0x1fffffff)==0x343fc &&
+        rh(source+2)==0x8003 && rh(source+4)==0xffff && rh(source+6)==0 &&
+        rh(source+8)==0x8000 && rh(source+10)==0xfffe;
+    if(!ordinary && !replacing)return;
     uint32_t cursor=memory+Toast;
     wb(cursor++,0xf4); // native equipment-name colour
     for(char c:std::string("Mario's Hat"))wb(cursor++,c==' '?0xfb:uint8_t(c-32));
@@ -202,11 +211,10 @@ int costume_toast(CPUState* cpu,uint32_t address) {
     for(const char* c=suffix;*c;++c)wb(cursor++,*c==' '?0xfb:uint8_t(*c-32));
     wb(cursor,0xff);
     state(HatToast,0);
-    // Queue an already encoded message through the native producer. The queue
-    // and buffer both live in guest memory and follow current-build states.
-    cpu->gpr[2]=psx_mod_call_guest(cpu,0x8004fa38,return_pc,memory+Toast,0xffffffffu,0x40,0);
+    // Let the native queue consume already encoded text. Both the queued
+    // pointer and buffer live in guest memory and follow current-build states.
+    cpu->gpr[4]=memory+Toast;cpu->gpr[5]=0xffffffffu;
     psx_mod_counter_add("tomba2.mario.costume_label",1);
-    return 1;
 }
 int player_sound(CPUState* cpu,uint32_t) {
     if(!ready() || !state(Equipped))return 0;
@@ -489,7 +497,7 @@ PSX_MOD_CONSTRUCTOR(tomba2_register_mario_plugin) {
     psx_mod_register_function_filter_plugin(plugin,0x800376ec,draw_item_name);
     psx_mod_register_function_filter_plugin(plugin,0x8007e938,draw_item_icon);
     psx_mod_register_function_filter_plugin(plugin,0x80074590,player_sound);
-    psx_mod_register_function_filter_plugin(plugin,0x8004ed0c,costume_toast);
+    psx_mod_register_function_entry_plugin(plugin,0x8004fa38,costume_toast);
     psx_mod_register_function_entry_plugin(plugin,0x80057fd4,costume_reload);
     psx_mod_register_function_entry_plugin(plugin,0x80067ef4,costume_attributes);
     psx_mod_register_function_entry_plugin(plugin,0x8005950c,player_tick);

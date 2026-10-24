@@ -135,6 +135,8 @@ def run(probe, output, tomba_slot, mario_slot, scratch_slot):
         try:
             probe.call("clear_input")
             report["counters"] = probe.counters()
+        except Exception as error:
+            report["cleanup_error"] = str(error)
         finally:
             (output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report

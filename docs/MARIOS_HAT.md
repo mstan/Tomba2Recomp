@@ -148,7 +148,7 @@ menu opened and that the virtual item is selected before confirming it.
 
 ## Validation and remaining gates
 
-The r10 atlas build passed 21 live assertions: native inventory transaction,
+The r11 message-queue build passed 21 live assertions: native inventory transaction,
 equip/unequip, first jump, one extra airborne jump, rejected third press,
 landing rearm and a new extra jump on the next cycle, current-build load with
 an imported voice active, cursor completion, and unchanged native ownership
@@ -163,8 +163,18 @@ texel and edge borders. Five framework tests passed again:
 Visual evidence `build-mario-assets/ui-r6-equip-inventory.png` and
 `ui-r6-equip-toast.png` verifies the cap is inside its native icon slot, the
 ordinary Blackjack row retains its name, and the confirmation names Mario's
-Hat. `smoke-r10-final/` retains current screenshots and the assertion report.
+Hat. `smoke-r11b/` retains current screenshots and the assertion report.
 `atlas-r10-front.png` verifies face/cap texture mapping after atlas packing.
+
+`tools/mario_suit_smoke.py --item 15 --output <private evidence directory>`
+checks exclusivity through real native menu transactions in both directions.
+Squirrel Clothes (15), Bird Clothes (14), and the first Evil Pig robe (18)
+passed eight assertions each in r11, including confirmation consumption and
+restoration of the original ownership bytes. Acquisition is deliberately
+bypassed by granting only the chosen native item and its inventory sort byte
+in private RAM; these checks do not establish acquisition or event gates.
+Reports and screenshots are in `suit-r11-squirrel/`, `suit-r11-bird/`, and
+`suit-r11-robe/` under `build-mario-assets`.
 
 `tools/mario_voice_smoke.py` (NumPy required) stimulates guest voice 437 and
 correlates the real post-SPU WAV with independently resampled owner PCM. The
@@ -184,7 +194,7 @@ reverse-order atlas pair 33.36/32.23. Do not claim that the final frame-time
 budget or cross-build performance gate has passed from these variable runs.
 
 Still unverified: actual enemy damage and weapon target requirements,
-overhead grab/aim/throw, other suits, death/continue, native memory-card
+overhead grab/aim/throw, death/continue, native memory-card
 save/reload, rewind/audio replay, matched runtime performance, adaptive
 widescreen, picker/import UI, release defaults and packaging. A post approach
 caused native Tomba and Mario to enter the same blocked/hurt states; it is not
@@ -194,8 +204,8 @@ identified as an NPC, so its counters/memory changes are not combat evidence.
 The expensive original-disc AOT pipeline completed 29 images / 54 recipes and
 staged 81 audited native pairs in `build-mario-aot/staged-audited`, with
 `AOT_CACHE_AUDIT.json`. Preserve this evidence and the successful extraction
-`build-mario-aot/disc-aot-5gv1i6ou`. The toast fix changed the configured
-function hook from `0x80078ca8` to `0x8004ed0c`; the resulting native cache
+`build-mario-aot/disc-aot-5gv1i6ou`. The toast fixes changed the configured
+function hook from `0x80078ca8` through `0x8004ed0c` to `0x8004fa38`; the resulting native cache
 namespace differs from that earlier audit. Final staging must use an audit
 matching the final hook/codegen configuration. Do not blindly copy or rename
 the old cache namespace, or restart every recipe before checking which inputs
@@ -227,7 +237,8 @@ Overlay address identity must be requalified for another stage/revision.
 | `0x800376ec` | Item-name renderer; menu/item/column/y in a0..a3 |
 | `0x8007e938` | Sprite wrapper: a0 is a sprite bank, a1/a2 anchor x/y, a3 UI layer |
 | `rw(0x800ed8c8) + layer*4` | Actual UI ordering-table link |
-| `0x8004ed0c`, caller `0x8004d6e4` | Native equipped-message producer and costume-equipped wrapper return |
+| `0x8004ed0c`, caller `0x8004d6e4` | Ordinary equipped-message producer and costume wrapper return |
+| `0x8004eddc`, caller `0x800343fc` | Two-item remove/equip message when replacing a native suit |
 | `0x8004fa38` | Native message queue; a1 = -1 accepts already encoded text |
 | `0x8004ead0` | Encodes an item name: equipment colour `0xf4`, character minus 32, space/newline `0xfb`, ordinary colour `0xf0`, terminator `0xff` |
 | `0x800fb168`, `0x800f2624`, `0x800f2738` | Three active-list heads. Node `+0x20` is previous, `+0x24` next, `+0x1c` handler. The third list can be empty during gameplay |
@@ -235,5 +246,7 @@ Overlay address identity must be requalified for another stage/revision.
 The inventory cap is an imported 8x4 sprite drawn at 2x, centred around the
 native icon anchor. The old broad text-render replacement could rename an
 ordinary Blackjack row while a timeout was active. The replacement handles
-only a pending hat transaction's costume-zero equipped message at its producer;
-it also emits a removal confirmation when the hat is toggled off.
+only a pending hat transaction at the message queue, checking the encoded
+item/status tokens and saved costume caller addresses on the native stack.
+Both ordinary equip/remove and replacement of a native suit use the hat name;
+weapon and shoe confirmations and ordinary inventory labels remain native.
