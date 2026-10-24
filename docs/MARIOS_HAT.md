@@ -285,9 +285,34 @@ final performance qualification. Mario emitted 320 body triangles without
 culling; the original Smash fighter display state uses `G_CULL_BACK`. Check
 source geometry modes and built behavior before changing this policy.
 
+The r17 decoder now retains F3DEX2 geometry-mode culling per triangle. The
+normal fighter draw in the referenced Smash source explicitly enables backface
+culling; the imported model's geometry-mode commands can retain two-sided,
+front-cull or both-cull behavior. The native renderer applies that policy after
+near clipping and projection. In the quiet scene this reduces emitted body
+triangles from 320 to about 157 without losing the visible face/cap/gloves.
+The front/back/two-sided mode checks and owner asset/PCM checks pass.
+
+Both matched r17 orders now show quiet-scene parity: forward Tomba/Mario
+57.88/58.18 VBlanks/s and reverse Mario/Tomba 59.42/59.57. Mean measured host
+frames were 16.680–16.683 ms in all four cases, with 20.235–22.375 ms maximums.
+Reports are `perf-r17{,-reverse}.json`; source hashes, executable identity and
+the source patch are retained alongside them. This qualifies this quiet 5x GL
+costume comparison, not all gameplay or a separate mod-disabled engine baseline.
+
+The r18 draw adjustment mirrors the native capture attachment's full
+`80 + target height` offset above the imported hands. This clears the pig from
+Mario's cap while turning. Both directions were visually inspected in
+`interactions-r18-blackjack/`. All 30 interaction assertions and all 21 broader
+smoke assertions pass in r18, including current-build captured-state restore,
+actual native hold/aim/throw and the active voice restore. No dispatch misses
+were recorded, and both private card files still match the post-save hashes.
+`render-r18-identity.json` records the tested binary/source hashes. The hidden,
+muted runtime was stopped after testing; its build, fixtures and evidence remain.
+
 Still unverified: damage amounts and weapon-specific target requirements,
 broader capture/aim/throw target coverage, death/continue,
-rewind/audio replay, matched runtime performance, adaptive
+rewind/audio replay, broader runtime performance, adaptive
 widescreen, picker/import UI, release defaults and packaging. A post approach
 caused native Tomba and Mario to enter the same blocked/hurt states; it is not
 proof of a working hit or capture. The later controlled interaction fixture
@@ -315,6 +340,9 @@ two failed extraction directories containing only their failure logs and the
 obsolete local-app-data r1 cache were audited and removed. Builds, current
 states, useful screenshots/WAVs and performance reports remain private task
 evidence and need cleanup after the implementation/release handoff.
+The temporary r15–r18 offline pose-probe source, executable, raw exported mesh/
+pose JSON and contact images were audited and removed after the presentation
+checks; no new bulk scratch remains outside the retained build/evidence trees.
 
 ## US reverse-engineering notes
 

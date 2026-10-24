@@ -37,6 +37,7 @@ struct Vertex {
 };
 struct Triangle {
     uint16_t joint = 0, texture = 0;
+    uint8_t cull = 2; // F3DEX2 front/back geometry-mode bits, normalized to 1/2
     std::array<Vertex, 3> vertices;
 };
 struct Texture {

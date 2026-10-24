@@ -29,6 +29,12 @@ inline Vec3 transform(const Matrix& m,const Vec3& v) {
             m.m[2][0]*v.x+m.m[2][1]*v.y+m.m[2][2]*v.z+m.m[2][3]};
 }
 using PoseBones=std::array<Matrix,25>;
+inline bool visible_face(uint8_t cull,const float (&x)[3],const float (&y)[3]) {
+    float area=(x[1]-x[0])*(y[2]-y[0])-(y[1]-y[0])*(x[2]-x[0]);
+    // The source-to-world Y reflection makes source front faces positive in
+    // PS1 screen coordinates. Preserve explicit two-sided/front-cull modes.
+    return area!=0 && !(cull&1 && area>0) && !(cull&2 && area<0);
+}
 inline PoseBones pose_bones(const Model& model,const std::array<Transform,25>& pose) {
     PoseBones bones;
     for(size_t i=0;i<bones.size();++i) {

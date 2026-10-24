@@ -3,7 +3,8 @@
 Last updated: 2026-10-24. Work solo. Main tracking: `beads-hal6`.
 
 Worktree: `F:/Projects/psxrecomp/_wt-tomba2-marios-hat`, branch
-`mod/marios-hat`; native-save checkpoint commit `edaef10`. Nested framework branch
+`mod/marios-hat`; native-save commit `edaef10`, overhead/facing commit `54054f6`.
+See the latest title commit for the final culling/clearance fix. Nested framework branch
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
@@ -11,8 +12,9 @@ Recovered session: `01a16fa4-c12b-7a33-b63d-2acf27dfa8b1`. Its later tool
 history completed a native save, but never completed the native reload check.
 The final `continue` failed during remote context compaction.
 
-Active private runtime: PID 61056, `build-mario/Tomba2Mario.exe`, hidden,
-muted, TCP port 4597. Use `tools/mario_probe.py`; preserve desktop focus.
+The final r18 private runtime (PID 49820) was stopped after validation.
+Build: `build-mario/Tomba2Mario.exe`; TCP port 4597. Use the documented hidden,
+muted launch in `MARIOS_HAT.md` for further unattended QA and preserve focus.
 Private card/state directory is `build-mario/.research/test-saves`. Never
 substitute owner cards. Slots 7/8 are quiet Tomba/Mario outside Fisherman's
 house, 9 is voice, 10/11 are disposable interaction fixtures.
@@ -48,16 +50,24 @@ See `interactions-r16b-blackjack/`, `smoke-r16/`, and facing screenshots.
 A history-read socket reset exposed EOF framing in the probe; complete-object
 framing and two socket tests now pass.
 
-Current performance evidence is `perf-r16.json` and `perf-r16-reverse.json`.
-Mario is below 60 Hz in these runs; the host had heavy concurrent compiler
-load. Do not claim the performance gate passes. Investigate source backface
-culling: Smash `src/ft/ftdisplaymain.c` sets `G_CULL_BACK`, while the mod currently
-emits all 320 body triangles. Temporary offline pose probe files under
-`build-mario-assets/pose*` are disposable once this investigation is recorded;
-no imported pose/mesh data belongs in commits.
+The final r18 build retains F3DEX2 per-triangle cull modes and mirrors the
+native capture attachment's full height above Mario's hands. Cap clearance was
+visually checked in both directions. Both complete live suites pass in r18:
+`smoke-r18/` (21) and `interactions-r18-blackjack/` (30). Asset/PCM tests and
+the two probe socket tests pass. Final binary/source hashes and a source patch
+are in `render-r18-identity.json` and `culling-clearance-r18.patch`.
+
+Current quiet performance evidence is `perf-r17.json` and its reverse-order
+pair: Tomba/Mario 57.88/58.18 VBlanks/s; reversed Mario/Tomba 59.42/59.57.
+Mean host frames are 16.680–16.683 ms for all four cases. This is quiet 5x GL
+costume parity; broader gameplay and a separate mod-disabled engine baseline
+remain unqualified. Culling reduces emitted body triangles from 320 to ~157.
+The r18-only change adjusts captured-model height and does not affect quiet
+rendering. Earlier r16 slow/noisy results remain recorded in `MARIOS_HAT.md`.
+Temporary offline pose probes/exports/contact images were audited and removed.
 
 Remaining gates include broader hold/aim/throw target coverage,
-death/continue, rewind/audio, matched built performance, adaptive
+death/continue, rewind/audio, broader built performance, adaptive
 widescreen, picker/import UI and final packaging. Existing passing r14 and
 weapon-family checks need not be repeated without a relevant change.
 

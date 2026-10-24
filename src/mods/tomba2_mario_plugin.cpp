@@ -386,7 +386,9 @@ int draw_captured(CPUState* cpu,uint32_t address) {
         for(unsigned k=0;k<3;++k)saved[i][k]=rw(bone+0x2c+k*4);
     }
     Vec3 hands=capture_hands(presentation_bones(),player_world());
-    hands.y-=float(int16_t(rh(actor+0x84)));
+    // Mirror the native capture attachment's 80 + target-height offset
+    // (8005B20C) above the hands, leaving the cap clear of the held body.
+    hands.y-=80+float(int16_t(rh(actor+0x84)));
     int32_t delta[3]={int32_t(std::round(hands.x))-int32_t(rw(actor+0x2c))/65536,
         int32_t(std::round(hands.y))-int32_t(rw(actor+0x30))/65536,
         int32_t(std::round(hands.z))-int32_t(rw(actor+0x34))/65536};
@@ -443,7 +445,7 @@ int draw_body(CPUState* cpu,uint32_t address) {
                 depth+=v[i].camera.z;
                 valid=valid && std::abs(sx[i])<2048 && std::abs(sy[i])<2048;
             }
-            if(!valid)continue;
+            if(!valid || !visible_face(triangle.cull,sx,sy))continue;
             // Match the native AVSZ3 result and Tomba's nonlinear OT bins.
             uint32_t z=uint32_t(std::max(0.0f,depth/12));
             uint32_t shift=z>>10;

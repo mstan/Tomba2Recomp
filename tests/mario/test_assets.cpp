@@ -18,6 +18,15 @@ int main(int argc,char**argv) {
         rejects([]{decompress_vpk({},100);});
         rejects([]{read_cache({});});
         rejects([]{extract_reloc(Bytes(rom_size),296);});
+        const float front_x[3]={0,1,0},front_y[3]={0,0,1};
+        const float back_x[3]={0,0,1},back_y[3]={0,1,0};
+        check(visible_face(2,front_x,front_y) && !visible_face(2,back_x,back_y),
+              "Backface mode does not preserve source front faces");
+        check(!visible_face(1,front_x,front_y) && visible_face(1,back_x,back_y),
+              "Front-cull mode does not preserve source back faces");
+        check(visible_face(0,front_x,front_y) && visible_face(0,back_x,back_y) &&
+              !visible_face(3,front_x,front_y) && !visible_face(3,back_x,back_y),
+              "Explicit two-sided/both-cull modes were lost");
         // Source +Z must follow the native direction of movement at all four
         // quarter turns. The prior +X assumption rendered Mario sideways.
         for(unsigned h=0;h<4096;h+=1024) {
@@ -34,6 +43,9 @@ int main(int argc,char**argv) {
         auto files=read_cache(cache);auto model=decode_model(files);
         check(model.joints.size()==25,"Unexpected Mario joint count");
         check(model.triangles.size()==320,"Mario geometry lost/duplicated");
+        unsigned back_culled=0;
+        for(const auto& t:model.triangles) {check(t.cull<=3,"Invalid source cull mode");back_culled+=t.cull==2;}
+        check(back_culled>0,"Source fighter backface mode was not retained");
         auto capture=decode_animation(562,files.at(562),model);
         for(const auto& pose:capture.frames) {
             auto before=pose_bones(model,pose),raised=before;

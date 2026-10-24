@@ -204,6 +204,9 @@ class ModelDecoder {
     size_t image=0,loaded_palette=0;
     unsigned format=0,size=0,width=1,height=1,material=0;
     uint32_t shade=0xffffffff;
+    // Smash's normal fighter display state starts with G_CULL_BACK enabled
+    // (ftdisplaymain.c). A model DL can change it with F3DEX2 GeometryMode.
+    uint32_t geometry=0x400;
     float scale_s=1,scale_t=1,tile_s=0,tile_t=0;
     unsigned tile_width=1,tile_height=1;
     uint8_t mode_s=2,mode_t=2;
@@ -252,6 +255,7 @@ class ModelDecoder {
     }
     void triangle(unsigned joint,uint32_t word) {
         Triangle t; t.joint=uint16_t(joint); t.texture=texture();
+        t.cull=uint8_t((geometry>>9)&3);
         for(unsigned i=0;i<3;++i) {
             unsigned index=((word>>(16-i*8))&255)/2;
             if(index>=32 || !loaded[index]) invalid("Mario triangle references unloaded vertex");
@@ -320,9 +324,10 @@ class ModelDecoder {
             case 0xf5:
                 if(((c>>24)&7)==0) {mode_s=uint8_t((c>>8)&3);mode_t=uint8_t((c>>18)&3);}
                 break;
-            // RSP/RDP state changes affect stock lighting/tile filtering;
+            case 0xd9:geometry=(geometry&(a&0xffffffu))|c;break;
+            // Remaining RSP/RDP state changes affect stock lighting/tile filtering;
             // geometry, material identity and UVs are preserved above.
-            case 0xd9:case 0xdb:case 0xe2:case 0xe3:case 0xe6:
+            case 0xdb:case 0xe2:case 0xe3:case 0xe6:
             case 0xe7:case 0xe8:case 0xf3:
             case 0xf9:case 0xfc:break;
             default:throw std::runtime_error("Unsupported Mario display-list opcode " +
