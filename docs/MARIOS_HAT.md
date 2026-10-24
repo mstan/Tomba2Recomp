@@ -238,9 +238,31 @@ noisy: the earlier pair measured 47.16/37.05 guest VBlanks/s (Tomba/Mario), the
 reverse-order atlas pair 33.36/32.23. Do not claim that the final frame-time
 budget or cross-build performance gate has passed from these variable runs.
 
+The r15 native-card check loaded the file saved while Mario was equipped,
+first in the same process and then from a fresh process with no savestate
+transactions. The fresh load restored ordinary Tomba at the saved sign with
+the expected native ownership bytes and responsive movement. Mario selection
+is session state and is not embedded in the native save. The unchanged card 2
+and all card-1 progress sectors were verified. The only first-load card change
+was system write-test frame 63: native SIO writes 38 and 91 reconstruct the
+before/after hashes exactly. Initial whole-card equality was too strict;
+`native-reload-r15-fresh/report-audited.json` retains that correction and its
+proof, while preserving the initial failed report. The revised
+`tools/mario_native_reload_smoke.py` passed 15 assertions in
+`native-reload-r15-final/`. It uses only native menus, with no RAM writes or
+snapshot loads. `mario_probe.py` now accepts complete multiline JSON responses;
+the card transaction diagnostic pretty-prints its arrays across lines.
+
+An r15 recorded capture route held the post pig, turned from native heading
+0 to 2048 with Left, and used Cross to execute phases 3/4/6 and release the
+pig through its native handler. This is still the special first-post pig;
+its visible placement remains below Mario, so overhead presentation is not
+implemented correctly yet. Evidence: `capture-route-r15.json` and
+`capture-{hold,aim-left,throw}-r15.png` under `build-mario-assets`.
+
 Still unverified: damage amounts and weapon-specific target requirements,
-capture/hold presentation and general aim/throw, death/continue, native memory-card
-save/reload, rewind/audio replay, matched runtime performance, adaptive
+overhead capture presentation and broader aim/throw, death/continue,
+rewind/audio replay, matched runtime performance, adaptive
 widescreen, picker/import UI, release defaults and packaging. A post approach
 caused native Tomba and Mario to enter the same blocked/hurt states; it is not
 proof of a working hit or capture. The later controlled interaction fixture

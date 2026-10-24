@@ -11,7 +11,13 @@ def request(port, command, **params):
         stream = connection.makefile("rwb")
         stream.write((json.dumps({"id": 1, "cmd": command, **params})+"\n").encode())
         stream.flush()
-        response = json.loads(stream.readline())
+        # The server closes after one command. Some structured diagnostics
+        # pretty-print nested arrays across lines; a newline is not a complete
+        # response boundary. Bound the full reply (a 2 MiB RAM dump is 4 MiB).
+        payload = stream.read(8 * 1024 * 1024 + 1)
+        if len(payload) > 8 * 1024 * 1024:
+            raise RuntimeError("Debug response exceeded the 8 MiB probe limit")
+        response = json.loads(payload)
         if not response.get("ok"):
             raise RuntimeError(response)
         return response
