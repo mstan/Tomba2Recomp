@@ -8,6 +8,8 @@ progression, memory-card saves, rewind or release readiness.
 import argparse
 import hashlib
 import json
+import struct
+import time
 from pathlib import Path
 
 from mario_probe import Probe
@@ -56,6 +58,7 @@ def run(probe, output, tomba_slot, mario_slot, scratch_slot):
               selection[0x1d] == 0 and selection[0x1f] == 1)
         probe.tap(0x4000)
 
+    snapshot = None
     try:
         probe.wait_game_ready()
         probe.savestate("load", tomba_slot)
@@ -96,22 +99,46 @@ def run(probe, output, tomba_slot, mario_slot, scratch_slot):
         check("next airborne cycle permits another extra jump", count("tomba2.mario.double_jump") == jumps + 2)
         probe.wait_frames(100)
         wait_grounded()
-        # Save a real native jump with an imported voice in progress. Reads
-        # bracket async completion and are deliberately not called atomic.
-        probe.tap(0x4000, frames=4, release=6)
-        # The short first-jump voice can finish during the save receipt and
-        # live reads. The real extra-jump voice lasts long enough to observe.
-        probe.tap(0x4000, frames=4, release=2)
-        probe.savestate("save", scratch_slot)
-        saved = observe("mid-voice save receipt")
-        check("mid-voice fixture contains an active imported voice", saved["state"]["voice"] != 0)
-        probe.wait_frames(90)
+        # Submit the save as soon as the actual extra-jump voice starts. Its
+        # 311 ms duration can end while a completed route/save receipt and
+        # several live observations are travelling through the debug server.
+        memory = probe.state()["address"]
+        snapshot = probe.call("get_snapshots")["snapshots"][0]
+        probe.call("set_snapshot", slot=0, addr=hex(memory))
+        generation = probe.call("savestate_status")["generation"]
+        probe.start_route([(4, 0x4000), (4, 0), (4, 0x4000), (80, 0)])
+        deadline = time.monotonic() + probe.timeout
+        while True:
+            words = struct.unpack("<16I", probe.ram(memory, 64))
+            if words[9] == 436:
+                report["voice_save_request"] = {"voice": words[9], "cursor": words[10],
+                                                "fraction": words[11]}
+                probe.call("savestate", op="save", slot=scratch_slot)
+                break
+            if time.monotonic() >= deadline or not probe.call("input_route_status")["active"]:
+                raise AssertionError("Native extra-jump voice did not start during the input route")
+        report["voice_save_receipt"] = probe.wait_savestate("save", scratch_slot, generation)
+        probe.wait_route()
+        observe("mid-voice save receipt (live, may already have completed)")
+        start = probe.call("history")["newest"] + 1
         probe.savestate("load", scratch_slot)
-        restored = observe("mid-voice load receipt")
-        check("current-build load restores Mario and active voice", restored["state"]["equipped"] == 1 and
-              restored["state"]["voice"] == saved["state"]["voice"] and
-              restored["state"]["voice_cursor"] <= saved["state"]["voice_cursor"] + 1600 and
-              restored["state"]["voice_fraction"] < 44100)
+        # The completion receipt can arrive at a BB before the first restored
+        # VBlank has entered the history ring. Retain a few actual frames.
+        probe.wait_frames(4)
+        end = probe.call("history")["newest"]
+        recorded = []
+        for frame in range(start, end + 1):
+            raw = probe.call("read_frame_ram", frame=frame, addr=hex(memory), len=64)
+            words = struct.unpack("<16I", bytes.fromhex(raw["hex"]))
+            if words[9] == 436:
+                recorded.append({"frame": frame, "equipped": words[2], "voice": words[9],
+                                 "cursor": words[10], "fraction": words[11]})
+        report["recorded_voice_restore"] = recorded
+        check("mid-voice fixture contains an active imported voice", bool(recorded))
+        check("current-build load restores Mario and active voice", recorded[0]["equipped"] == 1 and
+              recorded[0]["cursor"] <= report["voice_save_request"]["cursor"] + 2000 and
+              recorded[0]["fraction"] < 44100)
+        observe("mid-voice load receipt (live, may already have completed)")
         probe.wait_frames(100)
         wait_grounded()
         check("restored voice completes", probe.state()["voice"] == 0)
@@ -134,6 +161,9 @@ def run(probe, output, tomba_slot, mario_slot, scratch_slot):
     finally:
         try:
             probe.call("clear_input")
+            if snapshot is not None:
+                probe.call("set_snapshot", slot=0,
+                           addr=snapshot["addr"] if snapshot["active"] else "0x0")
             report["counters"] = probe.counters()
         except Exception as error:
             report["cleanup_error"] = str(error)

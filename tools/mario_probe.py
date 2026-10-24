@@ -101,7 +101,7 @@ class Probe:
                 address = word(address+0x24)
         return result
 
-    def route(self, steps):
+    def start_route(self, steps):
         """Steps are (VBlank count, pressed-button mask); zero means release."""
         self.call("clear_input")
         self.call("input_route_clear")
@@ -109,7 +109,9 @@ class Probe:
             if not 0 < frames <= 36000 or not 0 <= pressed <= 0xffff:
                 raise ValueError("Invalid input route step")
             self.call("input_route_append", frames=frames, buttons=0xffff ^ pressed)
-        receipt = self.call("input_route_start")
+        return self.call("input_route_start")
+
+    def wait_route(self):
         deadline = time.monotonic() + self.timeout
         try:
             while self.call("input_route_status")["active"]:
@@ -118,7 +120,10 @@ class Probe:
                 time.sleep(0.025)
         finally:
             self.call("clear_input")
-        return {**receipt, "end_frame": self.counters()["frame"]}
+        return {"end_frame": self.counters()["frame"]}
+
+    def route(self, steps):
+        return {**self.start_route(steps), **self.wait_route()}
 
     def wait_frames(self, frames):
         return self.route([(frames, 0)])
@@ -129,13 +134,19 @@ class Probe:
     def savestate(self, operation, slot):
         generation = self.call("savestate_status")["generation"]
         self.call("savestate", op=operation, slot=slot)
+        return self.wait_savestate(operation, slot, generation)
+
+    def wait_savestate(self, operation, slot, generation):
         deadline = time.monotonic() + self.timeout
+        waits = set()
         while True:
             status = self.call("savestate_status")
+            if status.get("wait"):
+                waits.add(status["wait"])
             if status["generation"] > generation and not status["pending"]:
                 if not status["last_ok"] or status["last_op"] != operation or status["last_slot"] != slot:
                     raise RuntimeError(status)
-                return status
+                return {**status, "observed_waits": sorted(waits)}
             if time.monotonic() >= deadline:
                 raise TimeoutError("Save-state transaction did not complete")
             time.sleep(0.025)

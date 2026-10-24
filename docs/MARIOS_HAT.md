@@ -203,6 +203,24 @@ save that completed after its short jump voice ended; that snapshot-timing
 investigation is tracked separately as `beads-qrwo`. Do not claim a fresh
 mid-voice save/load pass for r13 from the earlier r11 evidence.
 
+The r14 framework fix (`9e4cf574`, `beads-qrwo`) polls staged user snapshots
+before the amortized interrupt fast returns, retaining the exception, native
+resume-PC, host-adapter and mod-callback safety gates. Save-status receipts
+now report poll counts and deferral reasons. The revised smoke tool submits
+the save when the real extra-jump voice starts, then waits for actual restored
+frames before inspecting history. All 21 checks passed in `smoke-r14-final/`:
+the save completed on its first poll and recorded frames restored voice 436
+with its cursor and fractional phase. Six focused framework tests passed,
+including the extended host-snapshot boundary test.
+
+A matched quiet-scene check sustained approximately 60 VBlanks/s before and
+after this framework fix (16.681/16.689 ms mean host frames). Long-frame
+outliers also occurred with the unchanged framework in the exact same saved
+scene (187.727 ms baseline maximum versus 172.216 ms candidate); they are not
+established as an introduced regression. These capped measurements qualify
+this narrow comparison, not the full mod performance gate. Binary hashes,
+source diff and measurements remain under `build-mario-assets/snapshot-poll-*`.
+
 `tools/mario_voice_smoke.py` (NumPy required) stimulates guest voice 437 and
 correlates the real post-SPU WAV with independently resampled owner PCM. The
 r10 capture in `voice-r10/` passed at normalized correlation 0.814 and the
