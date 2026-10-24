@@ -1,0 +1,239 @@
+# Mario's Hat development
+
+Status: substantial implementation in progress, **not release ready**.
+Tracking: `beads-hal6` (title) and `beads-qbbc` (framework PCM callback).
+The current target is US SCUS-94454, Windows, OpenGL. Other renderers and
+regions are not qualified. No Nintendo ROM, extracted asset, sampled animation
+or PCM data belongs in source control or a distributable.
+
+## Design and controls
+
+The optional mod adds a permanent virtual inventory item, Mario's Hat. Equip
+or remove it through the ordinary inventory using Tomba's native costume
+transaction and transformation animation. The item remains available without
+setting an ownership byte in the native save structure. Other costumes are
+exclusive with Mario and must restore Tomba.
+
+The approved v1 uses Smash Bros. 64 Mario: movement, one extra airborne jump,
+fist-range attacks retaining the equipped weapon's damage/target rules,
+overhead capture, and native hold/aim/throw. Native paths, collision,
+attachments, shadow and progression rules remain authoritative. Explicit
+suit/event gates remain. Fireball, Super Jump Punch and tornado are deferred.
+Controls remain Triangle for inventory, Cross for jump/confirmation, Circle
+for attack/talk and native controls for carrying/aiming/throwing. These design
+statements are not a claim that every interaction below has passed QA.
+
+## Local import
+
+The development manifest is
+`mods/development/tomba2.character.mario-hat/0.1.0/manifest.toml`.
+It is default off and is not yet in the bundled catalog. The existing format-9
+native resource picker/import pipeline uses `prepare = "tomba2.mario.import"`.
+The ROM resource is input-only, shared as `n64.smash64.us`; the prepared asset
+resource is hidden. The development runtime currently has a manually installed
+copy of the manifest and a private enabled Mods profile.
+
+The importer accepts canonical US 1.0 data in `.z64`, `.v64` or `.n64` byte
+orders, normalizes it and verifies size and SHA-256 before extraction:
+
+| Identity | Value |
+| --- | --- |
+| Canonical ROM bytes | 16,777,216 |
+| Canonical ROM SHA-256 | `15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d` |
+| Cache magic / revision | `MARIOR02` / `r2` |
+| Cache bytes | 678,804 |
+| Cache SHA-256 | `1cbe9ce74e63464da8582d14dea5f8ba94e30a8c0258f03fee80f9abb3ace588` |
+
+The cache contains 25 joints, 320 triangles, 18 textures, 34 sampled motions
+(1,424 frames) and 13 locally decoded Mario voices. It is published under
+`%LOCALAPPDATA%/psxrecomp/imports/tomba2-mario/r2/`. It is private owner-derived
+data, not a redistributable build input. Decoder metadata is derived from
+`ssb-decomp-re` commit `572a747d8171137718fad472c5d7473dc7309ffd`;
+the ignored research clone is not a vendored asset dependency.
+
+For standalone importer/decoder checks, configure with the native MinGW
+compiler and Ninja, then build the small test project:
+
+```powershell
+& 'C:/msys64/mingw64/bin/cmake.exe' -S tests/mario -B build-mario-assets -G Ninja `
+  -DCMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe `
+  -DCMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe `
+  -DCMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/ninja.exe `
+  -DMARIO_TEST_CACHE="<private r2 cache path>"
+& 'C:/msys64/mingw64/bin/cmake.exe' --build build-mario-assets --parallel 2
+& 'C:/msys64/mingw64/bin/ctest.exe' --test-dir build-mario-assets --output-on-failure
+& './build-mario-assets/mario-import.exe' '<owner ROM path>' '<new private cache path>'
+```
+
+Without an owner cache, the asset test runs malformed-input checks then reports
+skipped (77); the separate deterministic PCM test requires no ROM. The native
+picker/import UI still needs direct end-to-end validation; importer success
+alone does not establish that UI workflow.
+
+## Runtime implementation
+
+`src/mods/tomba2_mario_plugin.cpp` redirects guarded item metadata/icon table
+accesses into guest allocations and appends item ID 256. Inventory lookup
+returns a full-width virtual ID; it never indexes the 256 native ownership
+bytes with that ID. The native costume byte remains ordinary costume zero.
+The mod's requested/equipped state lives in guest memory.
+
+The imported body uses sampled source poses, mod texture banks and GT3 packets.
+Its 18 materials share a 256x64 immutable atlas with replicated borders;
+material origins change packet UVs without changing imported texels or OT order.
+Original actor logic, attachments and shadow continue to run. Weapon-family
+actors provide short-lived fist collision windows; their original family
+handlers perform retirement/pool accounting. Real damage and weapon-specific
+target rules still require meaningful controlled interaction fixtures.
+
+Framework `psx_mod_register_pcm_plugin` callbacks mix after SPU/shadow synthesis
+and before audio capture or host muting. The integer voice resampler has an
+explicit source cursor and fractional phase in guest memory. Loading a state
+rebinds textures without clearing valid restored metadata or voice state.
+Current-build save/load, rewind and rollback must remain correct. States from
+other builds are disposable; native memory-card progress is a separate contract.
+
+## Build and live smoke tooling
+
+Use the isolated title worktree and its nested framework. Preserve the asset
+junction `tomba2`; do not recursively remove or replace it. Check drive space
+and I/O before substantial generation/builds. Use native executables directly
+from PowerShell with profile/login behavior disabled.
+
+Regenerate after hook-list changes; never edit generated C:
+
+```powershell
+& './psxrecomp-v4/recompiler/build/psxrecomp-game.exe' --config game.toml
+& 'C:/msys64/mingw64/bin/cmake.exe' --build build-mario --target psx-runtime --parallel 2
+```
+
+Build only `psx-runtime` in this worktree: the default all target also requests
+Italian generated code that is absent. Development overrides name the binary
+`Tomba2Mario.exe`, with debug tools on and port 4597. Private launch arguments:
+
+```text
+--hidden-window --no-launcher --game .research/game-test.toml
+--bios build-mario/bios/openbios.bin --debug-port 4597
+--memcard-dir .research/test-saves
+```
+
+The private cards/states resolve under `build-mario/.research/test-saves`.
+Use process-local `SDL_AUDIO_DRIVER=dummy` for unattended work and prepend the
+native MinGW bin directory to process-local PATH. TCP screenshots, RAM reads
+and input routes preserve desktop focus. Owner QA is a separate explicit
+handoff in a normal window with normal audio.
+
+`tools/mario_probe.py` exposes bounded live RAM observations, input routes,
+state completion receipts and screenshots. `Probe.actors()` walks the native
+active lists, not a list of proven enemies. RAM reads are live observations,
+not atomic snapshots. Byte writes can race native physics; a position write
+that is immediately corrected by the native path resolver is not a valid
+interaction fixture. The attempted debug placement hook was discarded because
+the native player path context still corrected the requested location.
+
+```powershell
+python tools/mario_smoke.py --output build-mario-assets/smoke-current
+```
+
+Run only against an isolated private-card runtime. Slot 7 must be quiet,
+grounded Tomba gameplay near the Fisherman's house, owning exactly two native
+equipment entries. The script fails if this layout differs. It writes a Mario
+fixture to slot 8 and a mid-voice fixture to slot 9; slots are configurable.
+Button durations use guest VBlanks through `input_route_*`, never pause/step.
+The report distinguishes passed assertions from unverified contracts.
+The helper waits for actual game entry and the US MAIN.EXE function identity
+before the first restore. Restoring too early during boot left host title/boot
+context active in a test attempt. Inventory checks also verify that the native
+menu opened and that the virtual item is selected before confirming it.
+
+## Validation and remaining gates
+
+The r10 atlas build passed 21 live assertions: native inventory transaction,
+equip/unequip, first jump, one extra airborne jump, rejected third press,
+landing rearm and a new extra jump on the next cycle, current-build load with
+an imported voice active, cursor completion, and unchanged native ownership
+bytes. The longer native extra-jump voice provides the mid-voice save fixture;
+the short first-jump voice can finish before asynchronous observations return.
+The separate asset and PCM tests passed, including preservation of every atlas
+texel and edge borders. Five framework tests passed again:
+`mod_runtime_test`, `mod_packages_test`,
+`mod_texture_banks_test`, `mod_memory_snapshot_test`,
+`spu_end_without_repeat_test`.
+
+Visual evidence `build-mario-assets/ui-r6-equip-inventory.png` and
+`ui-r6-equip-toast.png` verifies the cap is inside its native icon slot, the
+ordinary Blackjack row retains its name, and the confirmation names Mario's
+Hat. `smoke-r10-final/` retains current screenshots and the assertion report.
+`atlas-r10-front.png` verifies face/cap texture mapping after atlas packing.
+
+`tools/mario_voice_smoke.py` (NumPy required) stimulates guest voice 437 and
+correlates the real post-SPU WAV with independently resampled owner PCM. The
+r10 capture in `voice-r10/` passed at normalized correlation 0.814 and the
+voice cursor completed. This is an audio integration check, not proof of the
+gameplay event that normally triggers the voice. Use only private output and
+cache paths; the WAV contains owner-derived sound and must not ship.
+
+`tools/mario_perf.py` compares quiet Tomba and Mario fixtures in the same
+binary/configuration/scene. The mod is loaded in both cases, so this does not
+qualify a separate pre-framework or mod-disabled baseline. In the 5x hidden GL
+measurements, the original material banks produced about 101 batches/present
+and 2.13 ms flush time as Mario. The atlas reduced these to 12.3 batches and
+0.375 ms, close to the paired Tomba's 10.5 batches / 0.373 ms. Throughput was
+noisy: the earlier pair measured 47.16/37.05 guest VBlanks/s (Tomba/Mario), the
+reverse-order atlas pair 33.36/32.23. Do not claim that the final frame-time
+budget or cross-build performance gate has passed from these variable runs.
+
+Still unverified: actual enemy damage and weapon target requirements,
+overhead grab/aim/throw, other suits, death/continue, native memory-card
+save/reload, rewind/audio replay, matched runtime performance, adaptive
+widescreen, picker/import UI, release defaults and packaging. A post approach
+caused native Tomba and Mario to enter the same blocked/hurt states; it is not
+proof of a working hit or capture. Relocated actor `0x800fc8d8` was visually
+identified as an NPC, so its counters/memory changes are not combat evidence.
+
+The expensive original-disc AOT pipeline completed 29 images / 54 recipes and
+staged 81 audited native pairs in `build-mario-aot/staged-audited`, with
+`AOT_CACHE_AUDIT.json`. Preserve this evidence and the successful extraction
+`build-mario-aot/disc-aot-5gv1i6ou`. The toast fix changed the configured
+function hook from `0x80078ca8` to `0x8004ed0c`; the resulting native cache
+namespace differs from that earlier audit. Final staging must use an audit
+matching the final hook/codegen configuration. Do not blindly copy or rename
+the old cache namespace, or restart every recipe before checking which inputs
+and artifacts can be reused by the supported pipeline.
+
+No release archive, owner QA handoff or feature completion is established by
+these tests. A future archive must exclude ROMs/imported caches and both
+`psx.enhancement.cd-speed` and `psx.enhancement.fast-loading` packages. Keep the
+optional character feature default off. Keep both Beads issues in progress
+until their requested outcomes are validated.
+
+Cleanup retained the successful AOT extraction/audit and private r2 cache;
+two failed extraction directories containing only their failure logs and the
+obsolete local-app-data r1 cache were audited and removed. Builds, current
+states, useful screenshots/WAVs and performance reports remain private task
+evidence and need cleanup after the implementation/release handoff.
+
+## US reverse-engineering notes
+
+Addresses below were checked against live US SCUS-94454 instructions/data.
+Overlay address identity must be requalified for another stage/revision.
+
+| Address / field | Meaning |
+| --- | --- |
+| `0x800e7e80` | Player actor; `+4` mode, `+5/+6` action/phase, `+0x2c/+0x30/+0x34` Q16 world position |
+| Player `+0x145` | Native air phase; zero after landing. `+0x29` is not a reliable standing/grounded flag |
+| `0x800bfab4`, `0x800bfbb4` | Native ownership bytes and inventory ordering |
+| `0x800a2be8`, `0x800a24f4` | Native item metadata and icon-index tables |
+| `0x800376ec` | Item-name renderer; menu/item/column/y in a0..a3 |
+| `0x8007e938` | Sprite wrapper: a0 is a sprite bank, a1/a2 anchor x/y, a3 UI layer |
+| `rw(0x800ed8c8) + layer*4` | Actual UI ordering-table link |
+| `0x8004ed0c`, caller `0x8004d6e4` | Native equipped-message producer and costume-equipped wrapper return |
+| `0x8004fa38` | Native message queue; a1 = -1 accepts already encoded text |
+| `0x8004ead0` | Encodes an item name: equipment colour `0xf4`, character minus 32, space/newline `0xfb`, ordinary colour `0xf0`, terminator `0xff` |
+| `0x800fb168`, `0x800f2624`, `0x800f2738` | Three active-list heads. Node `+0x20` is previous, `+0x24` next, `+0x1c` handler. The third list can be empty during gameplay |
+
+The inventory cap is an imported 8x4 sprite drawn at 2x, centred around the
+native icon anchor. The old broad text-render replacement could rename an
+ordinary Blackjack row while a timeout was active. The replacement handles
+only a pending hat transaction's costume-zero equipped message at its producer;
+it also emits a removal confirmation when the hat is toggled off.

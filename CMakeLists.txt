@@ -29,6 +29,9 @@ set(GAME_GENERATED_DISPATCH
 file(GLOB TOMBA2_MOD_PLUGIN_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.cpp")
+list(APPEND TOMBA2_MOD_PLUGIN_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/mario/smash_assets.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/mario/smash_audio.cpp")
 
 # The resident implementation is a build choice. Leave the original generated
 # loader available in REFERENCE without linking/preparing the resident service.

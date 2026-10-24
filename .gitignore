@@ -1,4 +1,6 @@
 # Build outputs
+/.research/
+/build-mario-assets/
 /build/
 /build-*/
 /out/

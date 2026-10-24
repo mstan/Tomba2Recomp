@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.20)
+project(Tomba2MarioAssets C CXX)
+enable_testing()
+set(CMAKE_CXX_STANDARD 17)
+add_executable(mario-pcm-test test_pcm.cpp)
+target_include_directories(mario-pcm-test PRIVATE ../../src/mods/mario)
+add_test(NAME mario-pcm COMMAND mario-pcm-test)
+set(PSX_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../psxrecomp-v4")
+add_executable(mario-import ../../tools/mario_import.cpp
+    ../../src/mods/mario/smash_assets.cpp ../../src/mods/mario/smash_audio.cpp
+    "${PSX_ROOT}/runtime/src/psx_sha256.c")
+target_include_directories(mario-import PRIVATE
+    ../../src/mods/mario "${PSX_ROOT}/runtime/include")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(mario-import PRIVATE -Wall -Wextra -Werror)
+endif()
+add_executable(mario-asset-test test_assets.cpp ../../src/mods/mario/smash_assets.cpp ../../src/mods/mario/smash_audio.cpp)
+target_include_directories(mario-asset-test PRIVATE ../../src/mods/mario)
+set(MARIO_TEST_CACHE "" CACHE FILEPATH "Owner-derived Mario cache for integration checks")
+add_test(NAME mario-assets COMMAND mario-asset-test "${MARIO_TEST_CACHE}")
+set_tests_properties(mario-assets PROPERTIES SKIP_RETURN_CODE 77)
