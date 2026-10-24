@@ -8,15 +8,38 @@ import time
 
 def request(port, command, **params):
     with socket.create_connection(("127.0.0.1", port), timeout=20) as connection:
-        stream = connection.makefile("rwb")
-        stream.write((json.dumps({"id": 1, "cmd": command, **params})+"\n").encode())
-        stream.flush()
-        # The server closes after one command. Some structured diagnostics
-        # pretty-print nested arrays across lines; a newline is not a complete
-        # response boundary. Bound the full reply (a 2 MiB RAM dump is 4 MiB).
-        payload = stream.read(8 * 1024 * 1024 + 1)
-        if len(payload) > 8 * 1024 * 1024:
-            raise RuntimeError("Debug response exceeded the 8 MiB probe limit")
+        connection.sendall((json.dumps({"id": 1, "cmd": command, **params})+"\n").encode())
+        # Diagnostics may pretty-print across lines. Stop at the complete JSON
+        # object: waiting for EOF races the server's close/reset on Windows.
+        # Track nesting outside quoted strings, then let json.loads validate.
+        chunks, size, depth = [], 0, 0
+        quoted = escaped = started = False
+        while True:
+            chunk = connection.recv(65536)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > 8 * 1024 * 1024:
+                raise RuntimeError("Debug response exceeded the 8 MiB probe limit")
+            chunks.append(chunk)
+            for byte in chunk:
+                if quoted:
+                    if escaped:
+                        escaped = False
+                    elif byte == 92:
+                        escaped = True
+                    elif byte == 34:
+                        quoted = False
+                elif byte == 34:
+                    quoted = True
+                elif byte in (123, 91):
+                    depth += 1
+                    started = True
+                elif byte in (125, 93):
+                    depth -= 1
+            if started and depth == 0 and not quoted:
+                break
+        payload = b"".join(chunks)
         response = json.loads(payload)
         if not response.get("ok"):
             raise RuntimeError(response)

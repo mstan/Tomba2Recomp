@@ -1,4 +1,5 @@
 #include "smash_assets.h"
+#include "presentation.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -17,12 +18,40 @@ int main(int argc,char**argv) {
         rejects([]{decompress_vpk({},100);});
         rejects([]{read_cache({});});
         rejects([]{extract_reloc(Bytes(rom_size),296);});
+        // Source +Z must follow the native direction of movement at all four
+        // quarter turns. The prior +X assumption rendered Mario sideways.
+        for(unsigned h=0;h<4096;h+=1024) {
+            Matrix world=mario_world(uint16_t(h),{});
+            Vec3 a=transform(world,{}),b=transform(world,{0,0,1});
+            float radians=float(h)*6.28318530718f/4096;
+            check(std::abs(b.x-a.x-0.72f*std::cos(radians))<0.0001f &&
+                  std::abs(b.z-a.z-0.72f*std::sin(radians))<0.0001f,
+                  "Imported forward axis does not match native heading");
+        }
         if(argc<2 || !argv[1][0]){std::cout<<"Malformed-input checks passed; owner cache unavailable\n";return 77;}
         std::ifstream stream(std::filesystem::u8path(argv[1]),std::ios::binary);
         Bytes cache{std::istreambuf_iterator<char>(stream),{}};
         auto files=read_cache(cache);auto model=decode_model(files);
         check(model.joints.size()==25,"Unexpected Mario joint count");
         check(model.triangles.size()==320,"Mario geometry lost/duplicated");
+        auto capture=decode_animation(562,files.at(562),model);
+        for(const auto& pose:capture.frames) {
+            auto before=pose_bones(model,pose),raised=before;
+            raise_capture_arms(raised);
+            for(auto chain:{std::array<unsigned,2>{3,6},{9,12}}) {
+                Vec3 root=transform(before[chain[0]],{}),hand=transform(before[chain[1]],{});
+                Vec3 held=transform(raised[chain[1]],{});
+                float length=std::sqrt((hand.x-root.x)*(hand.x-root.x)+
+                    (hand.y-root.y)*(hand.y-root.y)+(hand.z-root.z)*(hand.z-root.z));
+                check(std::abs(held.x-root.x)<0.001f && std::abs(held.z-root.z)<0.001f &&
+                      std::abs(held.y-root.y-length)<0.001f,
+                      "Overhead hold does not raise the imported hands without stretching");
+            }
+            // Legs/head/torso retain their imported pose, independent of arms.
+            for(unsigned i:{0,1,2,7,8,14,15,16,17,18,19,20,21,22,23,24})
+                for(unsigned r=0;r<3;++r)for(unsigned c=0;c<4;++c)
+                    check(before[i].m[r][c]==raised[i].m[r][c],"Capture pose changed a non-arm bone");
+        }
         auto atlas=make_texture_atlas(model);
         check(atlas.origins.size()==model.textures.size(),"Atlas lost a material");
         for(size_t i=0;i<model.textures.size();++i) {

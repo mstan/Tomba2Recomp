@@ -256,12 +256,37 @@ the card transaction diagnostic pretty-prints its arrays across lines.
 An r15 recorded capture route held the post pig, turned from native heading
 0 to 2048 with Left, and used Cross to execute phases 3/4/6 and release the
 pig through its native handler. This is still the special first-post pig;
-its visible placement remains below Mario, so overhead presentation is not
-implemented correctly yet. Evidence: `capture-route-r15.json` and
+its visible placement was below Mario, so that build did not implement
+overhead presentation correctly. Evidence: `capture-route-r15.json` and
 `capture-{hold,aim-left,throw}-r15.png` under `build-mario-assets`.
 
+The r16 fix raises only the imported arm render matrices and translates the
+captured actor's native model matrices during its draw call, then restores
+every matrix. Native actor coordinates, links, collision and release remain
+unchanged. The source model faces +Z, not the previously assumed +X; corrected
+yaw now follows native headings. Asset checks cover all four quarter turns,
+unchanged non-arm bones and rigid arm lengths. `interactions-r16b-blackjack/`
+passes 30 assertions, including hold, both aim directions, unchanged native
+captured coordinates, active overhead drawing and actual throw/release. The
+broader 21-assertion smoke also passes in `smoke-r16/`. Screenshots
+`facing-{left,right}-r16.png` and the interaction captures show the correction.
+
+Probe framing now stops at a complete JSON object instead of requiring EOF:
+the latter raced Windows socket reset during a history read. Two socket tests
+in `tests/mario/test_probe.py` exercise fragmented multiline replies (including
+quoted braces/escapes) and failure responses while the server keeps its socket
+open. Both pass; live interaction/history and 2 MiB RAM reads also pass.
+
+The r16 matched quiet-scene runs remain below the desired runtime target:
+forward order Tomba/Mario 59.49/55.65 VBlanks/s, reverse order Mario/Tomba
+47.81/57.29. Other compiler processes heavily used the host (one `cl` process
+reported 645% CPU), and long-frame outliers varied, so these are not a clean
+final performance qualification. Mario emitted 320 body triangles without
+culling; the original Smash fighter display state uses `G_CULL_BACK`. Check
+source geometry modes and built behavior before changing this policy.
+
 Still unverified: damage amounts and weapon-specific target requirements,
-overhead capture presentation and broader aim/throw, death/continue,
+broader capture/aim/throw target coverage, death/continue,
 rewind/audio replay, matched runtime performance, adaptive
 widescreen, picker/import UI, release defaults and packaging. A post approach
 caused native Tomba and Mario to enter the same blocked/hurt states; it is not

@@ -2,6 +2,7 @@
 #include "cpu_state.h"
 #include "mario/smash_assets.h"
 #include "mario/pcm_voice.h"
+#include "mario/presentation.h"
 
 #include <algorithm>
 #include <cmath>
@@ -30,6 +31,7 @@ std::map<uint32_t,Animation> animations;
 std::map<uint32_t,Bytes> voices;
 bool builder_nested=false,equipment_nested=false;
 bool weapon_nested=false,item_nested=false;
+bool captured_draw_nested=false;
 
 uint8_t rb(uint32_t p) {return psx_mod_read_byte(p);}
 uint16_t rh(uint32_t p) {return psx_mod_read_half(p);}
@@ -341,40 +343,13 @@ void player_initialized(CPUState* cpu,uint32_t) {
     state(DoubleJump,0);state(Clock,0);state(Voice,0);
 }
 
-struct Matrix {float m[3][4]{};};
-Matrix local_matrix(const Transform& t) {
-    const float a=std::cos(t.rotation.x),b=std::sin(t.rotation.x);
-    const float c=std::cos(t.rotation.y),d=std::sin(t.rotation.y);
-    const float e=std::cos(t.rotation.z),f=std::sin(t.rotation.z);
-    return {{{c*e*t.scale.x,(b*d*e-a*f)*t.scale.y,(a*d*e+b*f)*t.scale.z,t.translation.x},
-             {c*f*t.scale.x,(b*d*f+a*e)*t.scale.y,(a*d*f-b*e)*t.scale.z,t.translation.y},
-             {-d*t.scale.x,b*c*t.scale.y,a*c*t.scale.z,t.translation.z}}};
-}
-Matrix multiply(const Matrix& a,const Matrix& b) {
-    Matrix c;
-    for(unsigned r=0;r<3;++r) {
-        for(unsigned j=0;j<3;++j)for(unsigned k=0;k<3;++k)c.m[r][j]+=a.m[r][k]*b.m[k][j];
-        c.m[r][3]=a.m[r][3];
-        for(unsigned k=0;k<3;++k)c.m[r][3]+=a.m[r][k]*b.m[k][3];
-    }
-    return c;
-}
-Vec3 transform(const Matrix& m,const Vec3& v) {
-    return {m.m[0][0]*v.x+m.m[0][1]*v.y+m.m[0][2]*v.z+m.m[0][3],
-            m.m[1][0]*v.x+m.m[1][1]*v.y+m.m[1][2]*v.z+m.m[1][3],
-            m.m[2][0]*v.x+m.m[2][1]*v.y+m.m[2][2]*v.z+m.m[2][3]};
-}
 struct DrawVertex {Vec3 camera;float u,v,light;};
 void wf(uint32_t address,float value) {uint32_t bits;std::memcpy(&bits,&value,4);ww(address,bits);}
 DrawVertex lerp(const DrawVertex& a,const DrawVertex& b,float t) {
     return {{a.camera.x+(b.camera.x-a.camera.x)*t,a.camera.y+(b.camera.y-a.camera.y)*t,
              a.camera.z+(b.camera.z-a.camera.z)*t},a.u+(b.u-a.u)*t,a.v+(b.v-a.v)*t,a.light+(b.light-a.light)*t};
 }
-int draw_body(CPUState* cpu,uint32_t) {
-    if(!ready() || !state(Equipped) || cpu->gpr[4]!=player)return 0;
-    if(!psx_mod_texture_banks_supported()) {
-        psx_mod_counter_add("tomba2.mario.renderer_unavailable",1);return 0;
-    }
+PoseBones presentation_bones() {
     auto clip=animations.find(state(Clip));
     if(clip==animations.end())clip=animations.find(499);
     const Animation& animation=clip->second;
@@ -382,18 +357,55 @@ int draw_body(CPUState* cpu,uint32_t) {
     bool loop=animation.id==499 || animation.id==505 || animation.id==500 || animation.id==575 || animation.id==562;
     if(loop)frame%=std::max(1u,unsigned(animation.frames.size()-1));
     else frame=std::min(frame,unsigned(animation.frames.size()-1));
-    const auto& pose=animation.frames[frame];
-    std::array<Matrix,25> bones;
-    for(size_t i=0;i<25;++i) {
-        Matrix local=local_matrix(pose[i]);int parent=mario_model.joints[i].parent;
-        bones[i]=parent<0?local:multiply(bones[size_t(parent)],local);
+    auto bones=pose_bones(mario_model,animation.frames[frame]);
+    if(rb(player+4)==1 && rb(player+5)==3 && rb(player+6)>=1 && rb(player+6)<=4)
+        raise_capture_arms(bones);
+    return bones;
+}
+Matrix player_world() {
+    return mario_world(rh(player+0x56),{float(int32_t(rw(player+0x2c)))/65536,
+        float(int32_t(rw(player+0x30)))/65536,float(int32_t(rw(player+0x34)))/65536});
+}
+int draw_captured(CPUState* cpu,uint32_t address) {
+    uint32_t actor=cpu->gpr[4];
+    if(captured_draw_nested || rb(player+4)!=1 || rb(player+5)!=3 ||
+       rb(player+6)<1 || rb(player+6)>6 || rw(player+0x10)!=actor ||
+       actor<0x80010000u || actor>0x801ffe00u || rb(actor+4)!=2 || rb(actor+5)!=1)return 0;
+    unsigned count=std::min(rb(actor+8),rb(actor+9));
+    if(!count || count>32)return 0;
+    std::array<uint32_t,32> pointers{};
+    std::array<std::array<uint32_t,3>,32> saved{};
+    // Translate only the native model's render matrices. Never move the actor,
+    // change capture linkage, or replace native collision/aim/release logic.
+    // The callback safety gate prevents snapshots during this temporary span.
+    for(unsigned i=0;i<count;++i) {
+        uint32_t bone=rw(actor+0xc0+i*4);
+        if(bone<0x80010000u || bone>0x801fffbc || (bone&3))return 0;
+        for(unsigned j=0;j<i;++j)if(pointers[j]==bone)return 0;
+        pointers[i]=bone;
+        for(unsigned k=0;k<3;++k)saved[i][k]=rw(bone+0x2c+k*4);
     }
-    float heading=float(rh(player+0x56)&4095)*6.28318530718f/4096;
-    // The source pose faces +X. Native headings point (cos h, sin h).
-    float yaw=-heading,c=std::cos(yaw),s=std::sin(yaw);
-    Matrix world{{{c*0.72f,0,s*0.72f,float(int32_t(rw(player+0x2c)))/65536},
-                  {0,-0.72f,0,float(int32_t(rw(player+0x30)))/65536+128},
-                  {-s*0.72f,0,c*0.72f,float(int32_t(rw(player+0x34)))/65536}}};
+    Vec3 hands=capture_hands(presentation_bones(),player_world());
+    hands.y-=float(int16_t(rh(actor+0x84)));
+    int32_t delta[3]={int32_t(std::round(hands.x))-int32_t(rw(actor+0x2c))/65536,
+        int32_t(std::round(hands.y))-int32_t(rw(actor+0x30))/65536,
+        int32_t(std::round(hands.z))-int32_t(rw(actor+0x34))/65536};
+    for(unsigned i=0;i<count;++i)for(unsigned k=0;k<3;++k)
+        ww(pointers[i]+0x2c+k*4,saved[i][k]+uint32_t(delta[k]));
+    captured_draw_nested=true;original(cpu,address);captured_draw_nested=false;
+    for(unsigned i=0;i<count;++i)for(unsigned k=0;k<3;++k)
+        ww(pointers[i]+0x2c+k*4,saved[i][k]);
+    psx_mod_counter_add("tomba2.mario.overhead_draw",1);
+    return 1;
+}
+int draw_body(CPUState* cpu,uint32_t address) {
+    if(!ready() || !state(Equipped))return 0;
+    if(!psx_mod_texture_banks_supported()) {
+        psx_mod_counter_add("tomba2.mario.renderer_unavailable",1);return 0;
+    }
+    if(cpu->gpr[4]!=player)return draw_captured(cpu,address);
+    auto bones=presentation_bones();
+    Matrix world=player_world();
     Matrix view;
     for(unsigned i=0;i<9;++i)view.m[i/3][i%3]=float(int16_t(rh(0x1f8000f8+i*2)))/4096;
     for(unsigned i=0;i<3;++i)view.m[i][3]=float(int32_t(rw(0x1f80010c+i*4)));

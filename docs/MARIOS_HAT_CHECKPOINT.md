@@ -3,7 +3,7 @@
 Last updated: 2026-10-24. Work solo. Main tracking: `beads-hal6`.
 
 Worktree: `F:/Projects/psxrecomp/_wt-tomba2-marios-hat`, branch
-`mod/marios-hat`; title HEAD `d0e729b`. Nested framework branch
+`mod/marios-hat`; native-save checkpoint commit `edaef10`. Nested framework branch
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
@@ -11,7 +11,7 @@ Recovered session: `01a16fa4-c12b-7a33-b63d-2acf27dfa8b1`. Its later tool
 history completed a native save, but never completed the native reload check.
 The final `continue` failed during remote context compaction.
 
-Active private runtime: PID 64148, `build-mario/Tomba2Mario.exe`, hidden,
+Active private runtime: PID 61056, `build-mario/Tomba2Mario.exe`, hidden,
 muted, TCP port 4597. Use `tools/mario_probe.py`; preserve desktop focus.
 Private card/state directory is `build-mario/.research/test-saves`. Never
 substitute owner cards. Slots 7/8 are quiet Tomba/Mario outside Fisherman's
@@ -25,8 +25,7 @@ Card 2 remains empty, SHA-256:
 The pre-save observation is `build-mario-assets/native-card-before.json`;
 save-screen evidence is `native-card-saved.png`. Saved player position was
 `[280312448, -68881920, 260046848]`, Mario requested/equipped, native costume 0,
-only native items 0 and 10 owned. Continue checking native reload through the
-game's actual Load menu, then compare ownership/progress and costume behavior.
+only native items 0 and 10 owned. Native reload is now validated below.
 
 The previous session tried Triangle to exit Save, which does not exit this
 menu. Circle is Return; three bounded Circle taps returned to gameplay.
@@ -41,11 +40,23 @@ correction. `mario_probe.py` was fixed to read complete multiline responses.
 The post-pig capture route now demonstrates holding, a Left turn (heading
 0 -> 2048), and a native Cross throw/release through phases 3/4/6. It does
 not establish every target's throw behavior. `capture-route-r15.json` records
-the observations. Visual placement is still wrong (pig below Mario); inspect
-the imported arm pose and native rendering transforms before implementing
-overhead presentation. Live runtime currently follows that throw route.
+the observations. The r16 build fixes overhead presentation using temporary
+render-matrix translation and rigidly raised imported arms; gameplay coordinates
+remain native. It also fixes the imported +Z forward-axis mapping to native
+headings. Thirty interaction assertions and the broader 21-check smoke pass.
+See `interactions-r16b-blackjack/`, `smoke-r16/`, and facing screenshots.
+A history-read socket reset exposed EOF framing in the probe; complete-object
+framing and two socket tests now pass.
 
-Remaining gates include general hold/aim/throw and its presentation, native
+Current performance evidence is `perf-r16.json` and `perf-r16-reverse.json`.
+Mario is below 60 Hz in these runs; the host had heavy concurrent compiler
+load. Do not claim the performance gate passes. Investigate source backface
+culling: Smash `src/ft/ftdisplaymain.c` sets `G_CULL_BACK`, while the mod currently
+emits all 320 body triangles. Temporary offline pose probe files under
+`build-mario-assets/pose*` are disposable once this investigation is recorded;
+no imported pose/mesh data belongs in commits.
+
+Remaining gates include broader hold/aim/throw target coverage,
 death/continue, rewind/audio, matched built performance, adaptive
 widescreen, picker/import UI and final packaging. Existing passing r14 and
 weapon-family checks need not be repeated without a relevant change.

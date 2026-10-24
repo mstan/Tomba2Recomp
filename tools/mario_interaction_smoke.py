@@ -3,7 +3,7 @@
 Requires the quiet Fisherman's-house Mario fixture (slot 8 by default), with
 Blackjack equipped. Builds a nearby fixture by walking; no actor position,
 health, capture or success flags are written. Uses two disposable state slots.
-The post pig is a special native actor: this does not certify general throwing,
+The post pig is a special native actor: this does not certify every target's throwing,
 damage amounts, weapon-specific targets or progression.
 """
 import argparse
@@ -33,7 +33,7 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
     report = {"checks": [], "cases": [], "weapon": weapon,
               "acquisition_bypassed": weapon != 0, "unverified": [
         "damage amounts and weapon-specific target requirements",
-        "general hold/aim/throw", "acquisition and progression gates"]}
+        "hold/aim/throw for other target classes", "acquisition and progression gates"]}
     snapshots = []
 
     def check(name, condition):
@@ -163,6 +163,31 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
         check("current-build load restores the real capture link", restored["action"] == 3
               and restored["link"] == PIG and probe.state()["equipped"] == 1)
         probe.screenshot(output / "capture-restored.png")
+        held = trace("capture-hold", [(36, 0)])
+        check("native capture holds without input", all(
+            row["player"]["action"] == 3 and row["player"]["phase"] == 2
+            and row["player"]["link"] == PIG and row["pig"]["mode"] == 2
+            and row["pig"]["action"] == 1 for row in held["frames"]))
+        check("overhead model rendering actually ran", held["counter_delta"].get(
+            "tomba2.mario.overhead_draw", 0) > 0)
+        check("presentation retains native captured actor position", all(
+            row["player"]["position"][0] == row["pig"]["position"][0] and
+            row["player"]["position"][2] == row["pig"]["position"][2] and
+            row["pig"]["position"][1] - row["player"]["position"][1] == 100*65536
+            for row in held["frames"]))
+        trace("capture-aim-left", [(12, 0x80), (8, 0)])
+        check("native aim turns left while holding", probe.player()["heading"] == 2048
+              and probe.player()["action"] == 3 and probe.player()["phase"] == 2)
+        trace("capture-aim-right", [(12, 0x20), (8, 0)])
+        check("native aim turns right while holding", probe.player()["heading"] == 0
+              and probe.player()["action"] == 3 and probe.player()["phase"] == 2)
+        thrown = trace("capture-throw", [(4, 0x4000), (160, 0)])
+        check("Cross executes native throw and release", any(
+            row["player"]["action"] == 3 and row["player"]["phase"] == 6
+            for row in thrown["frames"]) and any(row["pig"]["mode"] == 0
+                                                  for row in thrown["frames"]))
+        check("native throw clears captured target kind", probe.ram(PLAYER+0x78, 1) == b"\0"
+              and probe.state()["equipped"] == 1)
         expected = bytearray(ownership)
         if weapon:
             expected[weapon] = 1
