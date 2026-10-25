@@ -1,5 +1,41 @@
 # Mario's Hat continuation checkpoint
 
+## Release continuation, 2026-10-25
+
+Recovered failed session `01a1705c-2e8e-7eb2-93c4-308f861fa7aa` and the owner's
+explicit approval to merge, with Mario labeled **EXPERIMENTAL 0.0.1**. Title
+PR: <https://github.com/mstan/Tomba2Recomp/pull/26>; framework API dependency:
+<https://github.com/RetroPortingToolKit/psxrecomp/pull/767>. Do not repeat the
+completed owner visual handoff.
+
+The US Windows preview version is `v0.3.0`. `packaging/release.toml` uses the
+shared public-channel packager, OpenBIOS only and diagnostics off. The mod is
+in the ordinary US catalog, default off, and still requires the verified
+original Smash US1.0 ROM before cached assets can be reused. Runtime production
+refusal checks cover missing selection, missing file and wrong SHA-256.
+
+Release and development native-hook arrays now agree; the earlier release
+config omitted Mario hooks. Current original-disc cache namespace is
+`cg18_67fb3a9e_gcacf1fd28_f2`: all54 recipes/29 images audit, yielding73 pairs
+and14328 manifest rows. Counts establish guarded candidates, not full coverage.
+The current integration passes the22 native gameplay/voice/current-build
+save-load assertions and loads the original private native card with the
+expected position/inventory. Both regional release catalogs exclude CD Speed
+and Fast Loading; Italian copies are retained developer-only/default-off.
+
+An initial public package was withheld after pacing measurements. The newer
+framework selected synchronized swaps on the165Hz panel, unlike the approved
+build's driver-off wall-clock pacing. The title now explicitly preserves that
+presentation default through `[video] vsync = "off"`; user preferences still
+override it. Keep the existing57Hz development qualification threshold. CPU
+contention and early-startup snapshot loads affected earlier samples; retain
+the reports and distinguish them from the final qualified profile.
+
+Current work/evidence: `G:/Temp/Codex/psxrecomp/tomba2-mario-feedback-20261024/merge-r29`.
+Requested artifacts go to title `dist/`. The original accepted r26/r27 build
+and owner cards remain untouched. Final merge/release status and hashes are
+recorded in Beads `beads-hal6` and the GitHub PR/release records.
+
 Last updated: 2026-10-24. Work solo. Main tracking: `beads-hal6`.
 
 Worktree: `F:/Projects/psxrecomp/_wt-tomba2-marios-hat`, branch

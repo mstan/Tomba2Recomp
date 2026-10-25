@@ -10,6 +10,8 @@ imported assets are already cached. No Nintendo ROM or imported asset is shipped
 - Corrected facing, chest perch, post/ledge grab, hanging and ladder presentation.
 - Diagnostics disabled in production, complete launcher fonts/artwork and
   current framework presentation controls retained.
+- Preserves the accepted wall-clock presentation default instead of adding
+  synchronized-swap stalls on a non-matching high-refresh monitor.
 - Current-build save/load and native memory-card progression were tested on
   representative village routes. Full progression, all-stage performance and
   complete native coverage remain unproven; the mod defaults off.

@@ -7,6 +7,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ReleaseContract(unittest.TestCase):
+    def test_release_keeps_the_qualified_presentation_and_clock(self):
+        development = tomllib.loads((ROOT / "game.toml").read_text(encoding="utf-8"))
+        release = tomllib.loads((ROOT / "packaging/release/game.toml").read_text(encoding="utf-8"))
+        for section in ("video", "timing"):
+            self.assertEqual(development[section], release[section], section)
+        self.assertEqual(release["video"]["vsync"], "off")
+
     def test_release_uses_the_tested_native_hook_sites(self):
         development = tomllib.loads((ROOT / "game.toml").read_text(encoding="utf-8"))
         release = tomllib.loads((ROOT / "packaging/release/game.toml").read_text(encoding="utf-8"))

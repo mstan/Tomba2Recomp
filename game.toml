@@ -155,6 +155,10 @@ lock_mode    = true
 # Antialiasing: linear present filtering for the sampled frame. The launcher
 # exposes both controls on the Video page and persists overrides to settings.toml.
 [video]
+# Preserve the accepted wall-clock-paced Windows profile. On a non-matching
+# high-refresh panel, synchronized swaps add stalls on top of the guest pacer.
+# The launcher still allows an explicit user VSync preference.
+vsync = "off"
 renderer          = "opengl"
 internal_resolution = "1080p"
 supersampling     = 2
