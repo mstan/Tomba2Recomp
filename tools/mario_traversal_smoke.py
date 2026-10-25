@@ -18,6 +18,7 @@ def run(probe, output):
     output.mkdir(parents=True, exist_ok=True)
     report = {"checks": [], "observations": [], "ram_writes": False,
               "travel_bypassed_by_private_fixtures": True}
+    snapshots = probe.call("get_snapshots")["snapshots"]
 
     def check(name, condition):
         report["checks"].append({"name": name, "passed": bool(condition)})
@@ -36,6 +37,26 @@ def run(probe, output):
         probe.savestate("load", slot)
         # Let restored RAM reach the renderer before queuing a composed shot.
         probe.wait_frames(8)
+
+    def post_trace(label, route):
+        state_address = probe.state()["address"]
+        probe.call("set_snapshot", slot=2, addr=hex(PLAYER))
+        probe.call("set_snapshot", slot=3, addr=hex(state_address))
+        start = probe.call("history")["newest"] + 1
+        probe.route(route)
+        end = probe.call("history")["newest"]
+        rows = []
+        for frame in range(start, end + 1, 2):
+            actor = bytes.fromhex(probe.call("read_frame_ram", frame=frame,
+                                            addr=hex(PLAYER), len=128)["hex"])
+            mario = bytes.fromhex(probe.call("read_frame_ram", frame=frame,
+                                            addr=hex(state_address), len=32)["hex"])
+            words = struct.unpack("<8I", mario)
+            rows.append({"frame": frame, "action": actor[5], "phase": actor[6],
+                         "y": struct.unpack_from("<i", actor, 0x30)[0],
+                         "clip": words[4], "clock": words[5]})
+        report.setdefault("post_traces", {})[label] = rows
+        return rows
 
     try:
         probe.wait_game_ready(90)
@@ -58,9 +79,22 @@ def run(probe, output):
         probe.route([(25, 0)])
         held, state = observe("post-hang-rest")
         check("hanging remains attached", held["action"] == 4 and state["clip"] == 573)
-        probe.route([(4, 0x4000), (28, 0)])
-        jumped, state = observe("post-release")
-        check("native release leaves hanging pose", jumped["action"] != 4 and state["clip"] != 573)
+        rows = post_trace("upward-release", [(4, 0x4000), (30, 0)])
+        check("post ascent uses jumping pose", any(row["action"] == 4 and row["phase"] == 2 and
+              row["clip"] == 509 and row["y"] < held["position"][1] for row in rows))
+        check("native release leaves hanging pose", any(row["action"] == 2 and
+              row["clip"] != 573 for row in rows))
+        # Reading the trace takes wall time; the native arc may already have
+        # reattached by the next live observation. Judge release in its history.
+        observe("post-release-settled")
+
+        restore(8)
+        rows = post_trace("fresh-grab", [(125, 0x20), (24, 0x4020), (40, 0x20), (20, 0)])
+        check("fresh native post grab plays Smash catch", any(row["action"] == 4 and
+              row["clip"] == 572 for row in rows))
+        held, state = observe("post-catch-settled", True)
+        check("catch finishes into hanging idle", held["action"] == 4 and
+              held["phase"] == 1 and state["clip"] == 573)
 
         restore(5)
         start, state = observe("ladder-step-a", True)
@@ -89,6 +123,9 @@ def run(probe, output):
         raise
     finally:
         probe.call("clear_input")
+        for snapshot in snapshots:
+            probe.call("set_snapshot", slot=snapshot["slot"],
+                       addr=snapshot["addr"] if snapshot["active"] else "0x0")
         (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     return report
 

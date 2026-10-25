@@ -22,6 +22,12 @@ inline unsigned capture_animation(unsigned phase,unsigned air=0) {
     // away from it. These share the capture action but never carry/throw it.
     return phase>=10?(air==2?513:509):phase>=8?520:phase>=5?563:phase>=2?562:561;
 }
+inline unsigned post_animation(unsigned phase,unsigned air,unsigned previous_clip,unsigned clock) {
+    // Finish the catch after native attachment phase0, then hold the ledge.
+    // Jumping up from a post is an ascent before it becomes a fall.
+    if(!phase || (phase==1 && previous_clip==572 && clock<10))return 572;
+    return phase==1?573:air==2?513:509;
+}
 constexpr unsigned punch_offset=202,punch_half_width=178;
 static_assert(punch_offset-punch_half_width==24);
 static_assert(punch_offset+punch_half_width==380); // 2.5 * previous extent152

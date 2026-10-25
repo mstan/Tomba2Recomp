@@ -60,6 +60,10 @@ int main(int argc,char**argv) {
               traversal_animation(11,0x40)==572 && traversal_animation(2,2)==499 &&
               traversal_animation(7,0x63)==509,
               "Ladder catch/climb/exit and sign-turn phases are conflated");
+        check(post_animation(0,0,509,0)==572 && post_animation(1,0,572,6)==572 &&
+              post_animation(1,0,572,10)==573 && post_animation(1,0,573,0)==573 &&
+              post_animation(2,1,573,0)==509 && post_animation(2,2,509,8)==513,
+              "Post grab, hang and upward release use the same or wrong pose");
         if(argc<2 || !argv[1][0]){std::cout<<"Malformed-input checks passed; owner cache unavailable\n";return 77;}
         std::ifstream stream(std::filesystem::u8path(argv[1]),std::ios::binary);
         Bytes cache{std::istreambuf_iterator<char>(stream),{}};

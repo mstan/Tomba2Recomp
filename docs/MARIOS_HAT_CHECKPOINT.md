@@ -8,13 +8,25 @@ See the latest title commit for the final culling/clearance fix. Nested framewor
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
-## Current owner-feedback build: r25 (production)
+## Current owner-feedback build: r26 (production)
 
-Owner handoff PID **33532** is open at recomp-ui, caption
+Owner handoff PID **24184** is open at recomp-ui, caption
 `Tomba! 2 - The Evil Swine Return - Launcher`, normal window and normal audio.
 The command explicitly uses `--launcher`. All hidden QA processes are stopped;
 no automated input goes to the owner process. Source is committed on
 `mod/marios-hat`. Passing evidence and private native cards are retained.
+
+The owner clarified the missing climbing pose was on **posts/ledges**. R26
+additionally plays Smash CliffCatch572 through the fresh native post grab,
+then CliffWait573, and uses jump509 during the native4/2 upward transition
+before fall513. Actual frame history records both native and mod guest state:
+`post-r26/post-grab-r26.json`, `post-upward-r26.json`, and the composed ascent
+image. `traversal-r26-post-final` passes24 checks, including fresh grab/catch,
+hanging rest, upward movement with the jump pose, and the earlier chest/ladder
+checks. An initial live end-observation saw native reattachment after reading
+the trace; release assertions now use its actual recorded frames. The prior30
+interaction checks and matched reach evidence remain valid for their unchanged
+code. R25 launcher33532 was closed normally and replaced with this build.
 
 The owner confirms the diagnostics-free build is **WAY more performant**.
 Keep future owner handoffs Release / `PSX_DEBUG_TOOLS=OFF`. The latest request
@@ -53,10 +65,10 @@ native collision enters0xA/12 and ascends. Only travel is bypassed; no action,
 inventory, collision link or success flag is written. Slot4 came from actual
 Right125, Right+Cross24, Right40 input from quiet Mario slot8.
 
-Production executable SHA256:
-`a3a3860401c41f6db61add8f0a1200d936061a3f6f941574d5d832e19d5607fc`.
+Current production executable SHA256:
+`82f964afe80aba5bcc43eda0d5d9250f6fb93248c9c1aac34d3cdbe0c90270f1`.
 Debug QA SHA256:
-`cbcd0abc355a636faa14986312936b660807790bbeb5746158b8abded4b0c75a`.
+`0c7d2a4c633df85aa25705d13bd2e9a71fc363feb62c336289fdd064da48d2e1`.
 Production has **158** original-byte-verified pairs (81 offline +77 runtime
 additions), same namespace `cg18_05391a69_gcacf1fd28_f2`; hooks/config unchanged.
 Owner play generated another unprovable orphan pair0009C000_AB864F9F, moved out

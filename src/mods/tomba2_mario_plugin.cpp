@@ -241,7 +241,7 @@ uint32_t action_clip() {
     case 0:return 499;case 1:return 505;
     case 2:return !rb(player+0x145)?499:rb(player+0x29)?518:state(DoubleJump)?511:rb(player+0x145)==1?509:513;
     case 3:return capture_animation(phase,rb(player+0x145));
-    case 4:return phase<=1?573:513;
+    case 4:return post_animation(phase,rb(player+0x145),state(Clip),state(Clock));
     case 5:case 0x32:return rb(player+0x146)==3?608:606;
     case 6:return 622;
     case 7:case 8:case 9:return 523;
