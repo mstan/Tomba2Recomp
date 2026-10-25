@@ -273,6 +273,8 @@ Invoke-Native {
     & $Cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release `
         "-DPSX_EXECUTION_PROFILE=$ExecutionProfile" `
         "-DPSX_GAME_VERSION=$Version" `
+        -DPSX_RELEASE_CHANNEL=public `
+        -DPSXRECOMP_BIOS_STEMS=OpenBIOS `
         -DPSX_DEBUG_TOOLS=OFF `
         -DPSX_MOD_DEVELOPER_CHANNEL=OFF `
         -DPSX_PGXP_VARIANT=OFF `
