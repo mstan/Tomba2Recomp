@@ -7,10 +7,47 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
-from mario_playtest_gate import validate_aot, validate_qualification, validate_production_build, framework_tools
+from mario_playtest_gate import (validate_aot, validate_qualification, validate_production_build,
+                                framework_tools, RUNTIME_REQUIRED, stage_runtime_files,
+                                validate_runtime_files)
 
 
 class GateTest(unittest.TestCase):
+    def test_runtime_staging_restores_missing_or_changed_assets_and_preserves_user_data(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            build, stage = root / "build", root / "stage"
+            stage.mkdir()
+            exe = stage / "Mario.exe"
+            for name in RUNTIME_REQUIRED:
+                source = build / name
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_bytes(name.encode())
+            settings = stage / "settings.toml"
+            card = stage / "cards/card1.mcd"
+            card.parent.mkdir()
+            settings.write_bytes(b"owner settings")
+            card.write_bytes(b"owner native save")
+            with self.assertRaisesRegex(RuntimeError, "Missing or changed runtime support"):
+                validate_runtime_files(build, exe)
+            manifest = stage_runtime_files(build, exe)
+            self.assertEqual(len(manifest), len(RUNTIME_REQUIRED))
+            for name in ("assets/fonts/LatoLatin-Regular.ttf", "assets/img/boxart.tga", "bios/openbios.bin"):
+                target = stage / name
+                target.unlink()
+                with self.assertRaisesRegex(RuntimeError, "Missing or changed runtime support"):
+                    validate_runtime_files(build, exe)
+                stage_runtime_files(build, exe)
+                target.write_bytes(b"stale support file")
+                with self.assertRaisesRegex(RuntimeError, "Missing or changed runtime support"):
+                    validate_runtime_files(build, exe)
+                stage_runtime_files(build, exe)
+            self.assertEqual(settings.read_bytes(), b"owner settings")
+            self.assertEqual(card.read_bytes(), b"owner native save")
+            (build / RUNTIME_REQUIRED[0]).unlink()
+            with self.assertRaisesRegex(RuntimeError, "inventory is incomplete"):
+                stage_runtime_files(build, exe)
+
     def test_production_refuses_diagnostics_and_stale_staging(self):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch)

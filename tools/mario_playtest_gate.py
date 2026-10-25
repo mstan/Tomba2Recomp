@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
 import sys
@@ -224,9 +225,71 @@ def validate_production_build(build, exe):
             "Staged production executable differs from the completed build")
 
 
+RUNTIME_REQUIRED = (
+    "assets/fonts/LatoLatin-Regular.ttf", "assets/fonts/LatoLatin-Bold.ttf",
+    "assets/fonts/NotoSansSymbols2-Regular.ttf", "assets/fonts/OpenMoji-black-glyf.ttf",
+    "assets/img/boxart.tga", "assets/img/brand_mark.tga", "assets/img/brand_psx.tga",
+    "assets/img/flags.png", "assets/img/memcard.tga", "assets/img/pad_analog.tga",
+    "assets/img/pad_digital.tga", "assets/img/verdict_ok.tga", "assets/img/verdict_bad.tga",
+    "assets/img/verdict_none.tga", "assets/img/verdict_warn.tga", "assets/psxrecomp.png",
+    "bios/openbios.bin", "bios/OpenBIOS.LICENSE",
+)
+
+
+def ordinary_path(path):
+    require(not path.is_symlink() and not getattr(path, "is_junction", lambda: False)(),
+            "Runtime support path must not be a link: " + str(path))
+
+
+def runtime_files(build):
+    """Inventory the build's bounded support folders, never user profiles/cards."""
+    files = []
+    for name in ("assets", "bios"):
+        folder = build / name
+        ordinary_path(folder)
+        require(folder.is_dir(), "Build runtime support folder is missing: " + name)
+        for parent, directories, names in os.walk(folder, followlinks=False):
+            for entry in directories + names:
+                ordinary_path(Path(parent) / entry)
+            files.extend((Path(parent) / entry).relative_to(build) for entry in names)
+    require(set(map(Path, RUNTIME_REQUIRED)).issubset(files),
+            "Build runtime support inventory is incomplete")
+    return sorted(files)
+
+
+def staged_support_path(directory, relative):
+    path = directory
+    for part in relative.parts:
+        path = path / part
+        ordinary_path(path)
+    return path
+
+
+def validate_runtime_files(build, exe):
+    manifest = []
+    for relative in runtime_files(build):
+        target = staged_support_path(exe.parent, relative)
+        expected = digest(build / relative)
+        require(target.is_file() and digest(target) == expected,
+                "Missing or changed runtime support file: " + relative.as_posix())
+        manifest.append({"path": relative.as_posix(), "sha256": expected})
+    return manifest
+
+
+def stage_runtime_files(build, exe):
+    for relative in runtime_files(build):
+        source = build / relative
+        target = staged_support_path(exe.parent, relative)
+        if source.resolve() != target.resolve():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+    return validate_runtime_files(build, exe)
+
+
 def verify_production(args):
     validate_production_build(args.build, args.exe)
     report = {"identity": identity(args), "runtime_additions_audit": audit_runtime_additions(args),
+              "runtime_support_files": validate_runtime_files(args.build, args.exe),
               "debug_tools": False, "cmake_build_type": "Release", "compile_flags_verified": True,
               "validation_scope": "Production artifact/cache verification; no TCP performance measurement claimed."}
     args.qualification.write_text(json.dumps(report, indent=2) + "\n")
@@ -235,10 +298,13 @@ def verify_production(args):
 
 
 def launch_production(args):
+    validate_production_build(args.build, args.exe)
+    stage_runtime_files(args.build, args.exe)
     report = verify_production(args)
     env = dict(os.environ)
     for key in ("SDL_AUDIO_DRIVER", "SDL_AUDIODRIVER", "PSX_HEADLESS", "PSX_NO_LAUNCHER",
-                "PSX_INTERNAL_RESOLUTION", "PSX_HIRES_WINDOW", "PSX_TEXWIN_BATCH"):
+                "PSX_INTERNAL_RESOLUTION", "PSX_HIRES_WINDOW", "PSX_TEXWIN_BATCH",
+                "LNG_SCRIPT", "LNG_TEST_HIDDEN", "LNG_FORCE_SCALE", "LNG_SMOKE_FRAMES"):
         env.pop(key, None)
     env["PATH"] = str(Path(args.gcc).parent) + os.pathsep + env.get("PATH", "")
     command = [str(args.exe), "--launcher", "--game", str(args.config),

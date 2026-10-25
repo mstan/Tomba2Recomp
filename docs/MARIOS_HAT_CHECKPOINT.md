@@ -8,13 +8,33 @@ See the latest title commit for the final culling/clearance fix. Nested framewor
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
-## Current owner-feedback build: r26 (production)
+## Current owner-feedback build: r26 (production), r27 launcher repair
 
-Owner handoff PID **24184** is open at recomp-ui, caption
+Owner handoff PID **26928** is open at recomp-ui, caption
 `Tomba! 2 - The Evil Swine Return - Launcher`, normal window and normal audio.
 The command explicitly uses `--launcher`. All hidden QA processes are stopped;
 no automated input goes to the owner process. Source is committed on
 `mod/marios-hat`. Passing evidence and private native cards are retained.
+
+R27 repairs the handoff folder, which omitted `assets/` and `bios/` during
+manual staging. This caused the fallback pixel font and absent artwork.
+Assets resolve beside the executable, independent of working directory.
+The gate now stages both build-generated folders automatically and checks
+every support file by SHA-256, including the required fonts, box art and BIOS.
+Verification refuses missing/changed files; launch restores them before checking.
+Owner settings, mods and native cards are outside that copy operation. The
+four gate tests pass, including missing font/cover/BIOS, tampering, incomplete
+build inventory and preservation of user settings/native saves. Owner launch
+also clears hidden/script/smoke-test environment overrides.
+
+Actual production Play was clicked through the Windows computer-use skill in
+a muted private clone. The launcher exited into the production runtime;
+OpenGL/BIOS initialization and executed guest PCs `0x80017D74`/`0x80017DAC`
+were observed. Hidden LNG_SCRIPT clicks/keys did not activate Play and are
+not counted as launch evidence. No game/engine rebuild was needed. The private
+clone was stopped and removed; compact screenshots, startup logs and receipts
+remain in `launcher-r27`. Owner PID24184 was already closed before this retry.
+The repaired owner handoff retains normal audio, normal window and DualSense.
 
 The owner clarified the missing climbing pose was on **posts/ledges**. R26
 additionally plays Smash CliffCatch572 through the fresh native post grab,
