@@ -1,0 +1,49 @@
+format_version = 9
+id = "tomba2.character.mario-hat"
+version = "0.0.1"
+name = "Mario's Hat"
+author = "mstan"
+description = "Equip Mario's Hat to play as Smash 64 Mario in Tomba's world."
+resolver = "declarative"
+prepare = "tomba2.mario.import"
+save_compatibility = "shared"
+channel = "experimental"
+
+[[target]]
+game_id = "SCUS-94454"
+disc_sha256 = "8e9568388155787384c3166a5934a495fbff3fa57154ab0489b0f214fe05a8ab"
+
+[[feature]]
+id = "mario-hat"
+name = "Mario's Hat"
+description = "Adds a permanent costume item. Mario can double jump, punch, and grab and throw enemies. Requires your Smash 64 US ROM."
+group = "Characters"
+default_enabled = false
+
+[[resource]]
+feature = "mario-hat"
+id = "smash-rom"
+label = "Super Smash Bros. 64 ROM"
+description = "Select the original US 1.0 ROM. Mario's assets are imported locally."
+format = "n64-rom"
+file_patterns = "*.z64,*.v64,*.n64"
+file_description = "Nintendo 64 ROM"
+required = true
+input_only = true
+shared_source = "n64.smash64.us"
+size = 16777216
+sha256 = "15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d"
+
+[[resource]]
+feature = "mario-hat"
+id = "mario-assets"
+label = "Mario assets"
+format = "file"
+required = true
+hidden = true
+size = 678804
+sha256 = "1cbe9ce74e63464da8582d14dea5f8ba94e30a8c0258f03fee80f9abb3ace588"
+
+[[plugin]]
+feature = "mario-hat"
+id = "tomba2.mario.hat"

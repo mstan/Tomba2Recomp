@@ -4,6 +4,7 @@ version = "1.0.0"
 name = "Velocita CD"
 author = "psxrecomp"
 description = "Velocita del lettore CD emulato. Riduce i caricamenti senza accelerare il gioco, quindi non altera movimento o route basate sul timing."
+channel = "developer"
 resolver = "declarative"
 save_compatibility = "shared"
 

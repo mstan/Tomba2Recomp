@@ -29,6 +29,9 @@ set(GAME_GENERATED_DISPATCH
 file(GLOB TOMBA2_MOD_PLUGIN_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/*.cpp")
+list(APPEND TOMBA2_MOD_PLUGIN_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/mario/smash_assets.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mods/mario/smash_audio.cpp")
 
 # The resident implementation is a build choice. Leave the original generated
 # loader available in REFERENCE without linking/preparing the resident service.
@@ -85,13 +88,11 @@ endif()
 set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
 set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
 
-# USA Seamless Loading replaces the generic CD-speed and host-turbo mods.
-# Restore the caller's selection afterward: Italian has no resident adapter.
-set(_tomba2_previous_builtin_allowlist "${PSX_BUILTIN_MOD_ALLOWLIST}")
-set(PSX_BUILTIN_MOD_ALLOWLIST
-    psx.enhancement.pgxp
-    psx.presentation.bezel)
+# Keep framework presentation controls available as new ones are added.
+# Generic loading/pacing controls are excluded from every release.
 psxrecomp_add_runtime_target(psx-runtime
+    EXCLUDE_BUILTIN_MODS psx.enhancement.cd-speed psx.enhancement.fast-loading
+        psx.enhancement.8mb-ram psx.enhancement.hd-textures
     PGXP
     GAME_GENERATED_FULL_C "${GAME_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_GENERATED_DISPATCH}"
@@ -114,8 +115,6 @@ psxrecomp_add_runtime_target(psx-runtime
     DEFAULT_GAME_CONFIG_PATH "game.toml"
     LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
 )
-set(PSX_BUILTIN_MOD_ALLOWLIST "${_tomba2_previous_builtin_allowlist}")
-unset(_tomba2_previous_builtin_allowlist)
 
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
@@ -132,13 +131,18 @@ if(BUILD_TESTING)
     add_executable(tomba2_preloaded_mods_test
         tests/test_preloaded_mods.cpp
         "${PSXRECOMP_ROOT}/runtime/src/mod_packages.cpp"
+        "${PSXRECOMP_ROOT}/runtime/src/mod_media.cpp"
+        "${PSXRECOMP_ROOT}/runtime/src/iso_reader.cpp"
+        "${PSXRECOMP_ROOT}/runtime/src/cue_sheet.cpp"
         "${PSXRECOMP_ROOT}/runtime/src/crc32.c"
         "${PSXRECOMP_ROOT}/runtime/src/psx_sha256.c"
     )
     target_include_directories(tomba2_preloaded_mods_test PRIVATE
         "${PSXRECOMP_ROOT}/runtime/include"
+        "${PSXRECOMP_ROOT}/recompiler/include"
         "${PSXRECOMP_ROOT}/recompiler/lib/toml11"
     )
+    target_link_libraries(tomba2_preloaded_mods_test PRIVATE chdr-static)
     add_test(
         NAME tomba2_preloaded_mods_test
         COMMAND "$<TARGET_FILE:tomba2_preloaded_mods_test>"
@@ -171,6 +175,7 @@ if(PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE)
 endif()
 
 psxrecomp_add_runtime_target(psx-runtime-ita
+    EXCLUDE_BUILTIN_MODS psx.enhancement.cd-speed psx.enhancement.fast-loading
     GAME_GENERATED_FULL_C "${GAME_ITA_GENERATED_FULL}"
     GAME_GENERATED_DISPATCH_C "${GAME_ITA_GENERATED_DISPATCH}"
     EXTRAS_SOURCES ${TOMBA2_MOD_PLUGIN_SOURCES}

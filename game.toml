@@ -13,15 +13,52 @@ seeds = "seeds/ghidra_funcs.txt"
 # bios_thunks = "seeds/tomba2_bios_thunks.txt"  # optional; add once inventoried
 out_dir = "generated"
 strict = true
-mod_function_entry_funcs = ["0x8003F9A8", "0x8003FA44", "0x8008179C", "0x8003D0BC"]
+mod_function_entry_funcs = [
+    "0x8003F9A8", "0x8003FA44", "0x8008179C", "0x8003D0BC", "0x80036240", "0x800368D0", "0x80035FAC", "0x800349A4", "0x80057FD4", "0x80067EF4", "0x8003CDD8", "0x8005950C", "0x800574E0", "0x80069858", "0x80058648", "0x8006AE28", "0x8006BB6C", "0x8006C478", "0x800376EC", "0x8007E938", "0x80074590", "0x8004FA38"
+]
 mod_instruction_sites = [
-    "0x8003FA14", "0x8003FA9C",
-    "0x8007724C", "0x800772E8", "0x80077394",
-    "0x80077428", "0x800774BC", "0x80077550",
+    "0x8003FA14",
+    "0x8003FA9C",
+    "0x8007724C",
+    "0x800772E8",
+    "0x80077394",
+    "0x80077428",
+    "0x800774BC",
+    "0x80077550",
     "0x80050CB4",
     "0x8002B314",
-    "0x8003BB90", "0x80079BB4",
-    "0x8007708C", "0x80077640", "0x80077E88",
+    "0x8003BB90",
+    "0x80079BB4",
+    "0x8007708C",
+    "0x80077640",
+    "0x80077E88",
+    "0x80033D2C",
+    "0x80034278",
+    "0x800349C4",
+    "0x80034A18",
+    "0x80034A70",
+    "0x80034AA8",
+    "0x80035FC4",
+    "0x80036358",
+    "0x80036960",
+    "0x800369BC",
+    "0x80036A2C",
+    "0x80036BDC",
+    "0x80036CB4",
+    "0x800371D0",
+    "0x800376B4",
+    "0x8003774C",
+    "0x800377B8",
+    "0x80037FDC",
+    "0x80038128",
+    "0x80038198",
+    "0x80038338",
+    "0x800383AC",
+    "0x800383DC",
+    "0x80039584",
+    "0x800396CC",
+    "0x800396FC",
+    "0x800534DC",
 ]
 
 [timing]
@@ -118,6 +155,10 @@ lock_mode    = true
 # Antialiasing: linear present filtering for the sampled frame. The launcher
 # exposes both controls on the Video page and persists overrides to settings.toml.
 [video]
+# Preserve the accepted wall-clock-paced Windows profile. On a non-matching
+# high-refresh panel, synchronized swaps add stalls on top of the guest pacer.
+# The launcher still allows an explicit user VSync preference.
+vsync = "off"
 renderer          = "opengl"
 internal_resolution = "1080p"
 supersampling     = 2

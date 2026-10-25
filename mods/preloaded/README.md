@@ -5,8 +5,9 @@ page. They contain metadata only; trusted native activation callbacks are
 compiled into Tomba2Recomp.
 
 Seamless Loading is enabled by default and replaces generic CD Speed and
-host-paced Fast Loading in the USA catalog. Widescreen, Frame Blending, and Skip
-FMVs are disabled by default. Debug Menu is withheld pending native coverage;
+host-paced Fast Loading in the USA catalog. Widescreen, Skip FMVs and Mario's
+Hat are disabled by default. Mario's Hat is Experimental version 0.0.1 and
+requires a verified original Super Smash Bros. 64 US 1.0 ROM. Debug Menu is withheld pending native coverage;
 its development package lives outside this catalog in `mods/development`.
 The target hash is the SHA-256 of the SCUS-94454 MODE2/2352 data-track BIN used
 by the mod loader for identity.

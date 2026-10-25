@@ -1,0 +1,107 @@
+#pragma once
+
+#include "smash_assets.h"
+#include <algorithm>
+#include <cmath>
+
+namespace tomba2::mario {
+struct Matrix {float m[3][4]{};};
+inline Matrix local_matrix(const Transform& t) {
+    const float a=std::cos(t.rotation.x),b=std::sin(t.rotation.x);
+    const float c=std::cos(t.rotation.y),d=std::sin(t.rotation.y);
+    const float e=std::cos(t.rotation.z),f=std::sin(t.rotation.z);
+    return {{{c*e*t.scale.x,(b*d*e-a*f)*t.scale.y,(a*d*e+b*f)*t.scale.z,t.translation.x},
+             {c*f*t.scale.x,(b*d*f+a*e)*t.scale.y,(a*d*f-b*e)*t.scale.z,t.translation.y},
+             {-d*t.scale.x,b*c*t.scale.y,a*c*t.scale.z,t.translation.z}}};
+}
+inline Matrix multiply(const Matrix& a,const Matrix& b) {
+    Matrix c;
+    for(unsigned r=0;r<3;++r) {
+        for(unsigned j=0;j<3;++j)for(unsigned k=0;k<3;++k)c.m[r][j]+=a.m[r][k]*b.m[k][j];
+        c.m[r][3]=a.m[r][3];
+        for(unsigned k=0;k<3;++k)c.m[r][3]+=a.m[r][k]*b.m[k][3];
+    }
+    return c;
+}
+inline Vec3 transform(const Matrix& m,const Vec3& v) {
+    return {m.m[0][0]*v.x+m.m[0][1]*v.y+m.m[0][2]*v.z+m.m[0][3],
+            m.m[1][0]*v.x+m.m[1][1]*v.y+m.m[1][2]*v.z+m.m[1][3],
+            m.m[2][0]*v.x+m.m[2][1]*v.y+m.m[2][2]*v.z+m.m[2][3]};
+}
+using PoseBones=std::array<Matrix,25>;
+inline bool visible_face(uint8_t cull,const float (&x)[3],const float (&y)[3]) {
+    float area=(x[1]-x[0])*(y[2]-y[0])-(y[1]-y[0])*(x[2]-x[0]);
+    // The source-to-world Y reflection makes source front faces positive in
+    // PS1 screen coordinates. Preserve explicit two-sided/front-cull modes.
+    return area!=0 && !(cull&1 && area>0) && !(cull&2 && area<0);
+}
+inline PoseBones pose_bones(const Model& model,const std::array<Transform,25>& pose) {
+    PoseBones bones;
+    for(size_t i=0;i<bones.size();++i) {
+        Matrix local=local_matrix(pose[i]);int parent=model.joints[i].parent;
+        bones[i]=parent<0?local:multiply(bones[size_t(parent)],local);
+    }
+    return bones;
+}
+inline Matrix mario_world(uint16_t heading,Vec3 position) {
+    // The imported model faces +Z (arms are mirrored across source X).
+    // Native RotMatrix yaw turns local +X toward -Z at heading 0x400.
+    // Match (cos h, -sin h); gameplay's 0/0x800 headings hid the Z sign bug.
+    float h=float(heading&4095)*6.28318530718f/4096;
+    float c=-std::sin(h),s=std::cos(h);
+    return {{{c*0.72f,0,s*0.72f,position.x},
+             {0,-0.72f,0,position.y+128},
+             {-s*0.72f,0,c*0.72f,position.z}}};
+}
+inline void raise_capture_arms(PoseBones& bones) {
+    // Rigidly raise the imported arm chains around their shoulders. Preserve
+    // all source segment lengths and elbow/hand articulation. These are
+    // presentation matrices; the native skeleton still drives gameplay.
+    for(auto chain: {std::array<unsigned,3>{3,6,6}, {9,12,13}}) {
+        unsigned root=chain[0],hand=chain[1],last=chain[2];
+        Vec3 p=transform(bones[root],{}),q=transform(bones[hand],{});
+        Vec3 v{q.x-p.x,q.y-p.y,q.z-p.z};
+        float length=std::sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+        if(length<0.001f)continue;
+        v={v.x/length,v.y/length,v.z/length};
+        float x=-v.z,z=v.x,s2=x*x+z*z;
+        Matrix r{{{1,0,0,0},{0,1,0,0},{0,0,1,0}}};
+        if(s2<0.000001f) {
+            if(v.y<0) {r.m[0][0]=-1;r.m[1][1]=-1;}
+        } else {
+            // Rodrigues: I + [v cross up] + [v cross up]^2/(1+v.y).
+            float k=(1-v.y)/s2;
+            r.m[0][0]=1-z*z*k;r.m[0][1]=-z;r.m[0][2]=x*z*k;
+            r.m[1][0]=z;r.m[1][1]=v.y;r.m[1][2]=-x;
+            r.m[2][0]=x*z*k;r.m[2][1]=x;r.m[2][2]=1-x*x*k;
+        }
+        Vec3 rotated=transform(r,p);
+        r.m[0][3]=p.x-rotated.x;r.m[1][3]=p.y-rotated.y;r.m[2][3]=p.z-rotated.z;
+        for(unsigned i=root;i<=last;++i)bones[i]=multiply(r,bones[i]);
+    }
+}
+inline Vec3 capture_hands(const PoseBones& bones,const Matrix& world) {
+    Vec3 a=transform(bones[6],{}),b=transform(bones[12],{});
+    return transform(world,{(a.x+b.x)*0.5f,(a.y+b.y)*0.5f,(a.z+b.z)*0.5f});
+}
+inline void rotate_limb_x(PoseBones& bones,unsigned first,unsigned last,float angle) {
+    Vec3 pivot=transform(bones[first],{});
+    float c=std::cos(angle),s=std::sin(angle);
+    Matrix r{{{1,0,0,0},{0,c,-s,0},{0,s,c,0}}};
+    Vec3 q=transform(r,pivot);
+    r.m[0][3]=pivot.x-q.x;r.m[1][3]=pivot.y-q.y;r.m[2][3]=pivot.z-q.z;
+    for(unsigned i=first;i<=last;++i)bones[i]=multiply(r,bones[i]);
+}
+inline void climb_ladder(PoseBones& bones,float phase) {
+    // Smash64 supplies ledge hanging and pull-up, but no repeating ladder
+    // motion. Articulate those imported limbs around their existing joints;
+    // alternating reaches and knee lifts never stretch a source segment.
+    float step=std::sin(phase);
+    rotate_limb_x(bones,3,6,0.35f+0.4f*step);
+    rotate_limb_x(bones,9,13,0.35f-0.4f*step);
+    rotate_limb_x(bones,14,18,-0.4f-0.45f*step);
+    rotate_limb_x(bones,16,18,0.6f+0.6f*step);
+    rotate_limb_x(bones,19,23,-0.4f+0.45f*step);
+    rotate_limb_x(bones,21,23,0.6f-0.6f*step);
+}
+} // namespace tomba2::mario

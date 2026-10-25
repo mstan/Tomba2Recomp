@@ -1,3 +1,25 @@
+# Tomba! 2 v0.3.0 - Experimental Mario's Hat
+
+The US Windows preview adds optional **Mario's Hat, EXPERIMENTAL 0.0.1**.
+Enable it in Mods, select your original Super Smash Bros. 64 US 1.0 ROM,
+and equip the costume in game. A verified ROM remains required even when
+imported assets are already cached. No Nintendo ROM or imported asset is shipped.
+
+- Imported Mario appearance, motions and voice cues, double jump, extended punch
+  reach and native grab/throw interactions.
+- Corrected facing, chest perch, post/ledge grab, hanging and ladder presentation.
+- Diagnostics disabled in production, complete launcher fonts/artwork and
+  current framework presentation controls retained.
+- Preserves the accepted wall-clock presentation default instead of adding
+  synchronized-swap stalls on a non-matching high-refresh monitor.
+- Current-build save/load and native memory-card progression were tested on
+  representative village routes. Full progression, all-stage performance and
+  complete native coverage remain unproven; the mod defaults off.
+- CD Speed and host-paced Fast Loading packages are excluded from releases.
+
+This release targets the US disc on Windows x64. Existing Italian and Linux
+release artifacts remain available separately.
+
 # Tomba! 2 v0.2.1 - Startup loading fix
 
 Fixes a startup hang immediately after the Whoopee Camp logo movie that could
