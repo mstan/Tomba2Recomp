@@ -426,6 +426,27 @@ and **58.63 Hz** moving; its exact-identity report is
 `qa/PLAYTEST_QUALIFICATION.json`. The 54 compile logs are retained, while roughly
 1 GB of disposable compiler jobs and duplicate caches has been removed.
 
+## R24: bucket dialogue and production comparison
+
+Owner feedback exposed that r23's costume-only facing exception was too narrow.
+The native yaw matrix faces (cos h, **-sin h**) in X/Z; the imported conversion
+used +sin h. R24 corrects this globally, removes the special-case half-turn,
+and corrects the fist's Z direction. The exact bucket-on-fishing-wire dialogue
+was reproduced through real native pickup contact and visually compared with
+Tomba. Tests retain its independently observed native yaw/matrix values.
+
+Busy-area slowdown also survives r23's narrow village gate. R24 with GPU timer
+queries disabled measured 59.65 Hz in the busy fixture; the owner requested the
+stronger experiment of compiling diagnostics out entirely. That Release build
+uses `-DPSX_DEBUG_TOOLS=OFF`, retains the same 1080p/5x/adaptive-wide profile, and
+stages 123 native pairs whose guards match original recipe bytes. One unproven
+runtime-only pair was excluded. This is an owner-requested production trial,
+with its hashes/flags in `production-playtest/PRODUCTION_BUILD.json`; no TCP
+performance qualification is claimed for it. Native cards are separately copied,
+and debug save states are not carried across. See the checkpoint for the open
+owner process, exact repro and retained evidence. Production build scratch is
+retained for ongoing feedback and must be cleaned when no longer needed.
+
 ## US reverse-engineering notes
 
 Addresses below were checked against live US SCUS-94454 instructions/data.

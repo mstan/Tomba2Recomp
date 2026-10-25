@@ -302,7 +302,7 @@ void fist_position(uint32_t actor) {
     wh(actor+0x80,64);wh(actor+0x82,128);
     ww(actor+0x2c,rw(player+0x2c)+uint32_t(int32_t(std::cos(heading)*88*65536)));
     ww(actor+0x30,rw(player+0x30)-16*65536);
-    ww(actor+0x34,rw(player+0x34)+uint32_t(int32_t(std::sin(heading)*88*65536)));
+    ww(actor+0x34,rw(player+0x34)-uint32_t(int32_t(std::sin(heading)*88*65536)));
 }
 void punch_collision(CPUState* cpu,uint32_t) {
     if(!ready() || !weapon_record(cpu->gpr[4]))return;
@@ -367,7 +367,7 @@ PoseBones presentation_bones() {
     return bones;
 }
 Matrix player_world() {
-    return mario_world(presentation_heading(rh(player+0x56),rb(player+4),rb(player+5)),
+    return mario_world(rh(player+0x56),
         {float(int32_t(rw(player+0x2c)))/65536,
         float(int32_t(rw(player+0x30)))/65536,float(int32_t(rw(player+0x34)))/65536});
 }

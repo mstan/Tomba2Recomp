@@ -45,17 +45,13 @@ inline PoseBones pose_bones(const Model& model,const std::array<Transform,25>& p
 }
 inline Matrix mario_world(uint16_t heading,Vec3 position) {
     // The imported model faces +Z (arms are mirrored across source X).
-    // Native headings face (cos h, sin h) in the world's X/Z plane.
+    // Native RotMatrix yaw turns local +X toward -Z at heading 0x400.
+    // Match (cos h, -sin h); gameplay's 0/0x800 headings hid the Z sign bug.
     float h=float(heading&4095)*6.28318530718f/4096;
-    float c=std::sin(h),s=std::cos(h);
+    float c=-std::sin(h),s=std::cos(h);
     return {{{c*0.72f,0,s*0.72f,position.x},
              {0,-0.72f,0,position.y+128},
              {-s*0.72f,0,c*0.72f,position.z}}};
-}
-inline uint16_t presentation_heading(uint16_t heading,uint8_t mode,uint8_t action) {
-    // The native costume sequence turns its model to the camera using its
-    // opposite bind-facing convention. Keep that turn, but show Mario's face.
-    return uint16_t((heading+(mode==4 && action==0x11?2048:0))&4095);
 }
 inline void raise_capture_arms(PoseBones& bones) {
     // Rigidly raise the imported arm chains around their shoulders. Preserve

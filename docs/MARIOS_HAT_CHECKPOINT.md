@@ -10,6 +10,57 @@ Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates
 
 ## Current owner-feedback build: r23
 
+**Latest: r24 production experiment is open, awaiting owner feedback.** R23 was
+not cleared: the owner still saw slowdown and supplied
+`Tomba2MarioCandidate_yuyoKmNbvm.png`, then identified the trigger as grabbing
+the bucket on the fishing wire. The exact "carrying the Water" dialogue is now
+reproduced and visually corrected in `cutscene-repro/bucket-fixed-r24-verified.png`.
+
+The root cause was the shared heading conversion: native RotMatrix yaw maps
+forward to **(cos h, -sin h)**, whereas Mario used (cos h, +sin h). Horizontal
+0/2048 headings hid the error. R24 fixes the global Z sign, removes the ad hoc
+costume-only half-turn and matches the fist's Z direction. The bucket cutscene
+is mode 4/action 30/heading 1027; its captured native Q12 matrix +X column is
+{-19,0,-4096}. Asset regression tests now use those independent native values.
+Additional scripted yaw at +0x14e was investigated, but is zero in this actual
+failure. No extra mode exception or native-matrix replacement was needed.
+
+Repro: private slot 2 is a pre-bucket house approach at X=10500. Teleport the
+player's X only to 10320, wait 10 frames, hold Cross 30 frames then release 70.
+The actual native bucket contact grants item 40 and starts its dialogue; no
+inventory or success flags are written. After settling, slot 0 holds the exact
+dialogue. Native Tomba and pre-fix Mario references are retained. Slot 6 is a
+busy gameplay fixture near X=11700; damage moves the player left, so assert
+positive health/live gameplay during timing. Earlier `perf-busy-r23.json` and
+`perf-busy-live-r23.json` reached death and are invalid performance comparisons.
+
+Live owner observation in the busier area was 20.648 ms (~48 Hz), 1111 primitives,
+190.6 batches. Native dispatch exceeds 99.9%; interpreted work is small. GPU timer
+instrumentation issues hundreds of timestamp queries per busy frame. The R24
+diagnostic build with `PSX_GL_PERF=0` measured **59.65 Hz** on the busy fixture
+(`perf-no-queries-r24.json`), with health 2/live mode 1. An earlier cold R23 attempt
+timed out and is inconclusive. Other owner game processes were also using the GPU;
+they were left untouched. Do not claim the production runtime's FPS from this
+diagnostic measurement.
+
+The owner explicitly requested a production build with no diagnostics. It was
+built Release with **PSX_DEBUG_TOOLS=OFF**, and build.ninja confirms
+PSX_NO_DEBUG_TOOLS=1. `production-playtest/Tomba2MarioProd.exe` SHA-256 is
+`ff9c897ca5fcf4eefae5fa92ae2524c0477e82398f31948257b65806230ac38b`.
+The production directory has **123** original-byte-verified native pairs (81
+offline + 42 additions). Runtime-only `0009A000_AB864F9F.dll` lacks an original
+recipe guard match and was excluded from this staging, not relabelled as audited.
+`PRODUCTION_BUILD.json` records flags, hashes, audit and experiment scope. The
+existing TCP qualifier does not qualify a diagnostics-free binary.
+
+Production owner PID **61636** is open in a normal window with normal audio,
+same 1080p/5x/adaptive-wide profile and separately copied native cards. It has
+no TCP listener. The production copy deliberately contains no cross-build debug
+save states; use native Continue. Startup reached game main(). All hidden QA
+processes have stopped. Do not automate against or close the owner production
+window until finished. Retain prod-build for quick iteration during feedback;
+it and task temp need cleanup when this handoff is finished. Preserve all cards.
+
 The owner finished the r21 playtest; its window is closed. The active follow-up
 addresses lag, backwards costume transformation, short punches, high/fast Mario
 voices and surviving Tomba vocals. Work remains solo, with no import UI requested.

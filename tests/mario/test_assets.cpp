@@ -27,25 +27,30 @@ int main(int argc,char**argv) {
         check(visible_face(0,front_x,front_y) && visible_face(0,back_x,back_y) &&
               !visible_face(3,front_x,front_y) && !visible_face(3,back_x,back_y),
               "Explicit two-sided/both-cull modes were lost");
-        // Source +Z must follow the native direction of movement at all four
-        // quarter turns. The prior +X assumption rendered Mario sideways.
+        // Native RotMatrix's +X column at four quarter turns, independently
+        // of the imported model's +Z bind-facing convention.
+        const Vec3 native_forward[]={{1,0,0},{0,0,-1},{-1,0,0},{0,0,1}};
         for(unsigned h=0;h<4096;h+=1024) {
             Matrix world=mario_world(uint16_t(h),{});
             Vec3 a=transform(world,{}),b=transform(world,{0,0,1});
-            float radians=float(h)*6.28318530718f/4096;
-            check(std::abs(b.x-a.x-0.72f*std::cos(radians))<0.0001f &&
-                  std::abs(b.z-a.z-0.72f*std::sin(radians))<0.0001f,
+            check(std::abs(b.x-a.x-0.72f*native_forward[h/1024].x)<0.0001f &&
+                  std::abs(b.z-a.z-0.72f*native_forward[h/1024].z)<0.0001f,
                   "Imported forward axis does not match native heading");
         }
         // The native costume presentation ends at yaw 0x400, facing the
         // camera. Imported +Z must point toward the viewer there, not away.
-        Matrix costume=mario_world(presentation_heading(1024,4,0x11),{});
+        Matrix costume=mario_world(1024,{});
         Vec3 origin=transform(costume,{}),face=transform(costume,{0,0,1});
         check(std::abs(face.x-origin.x)<0.0001f && face.z<origin.z,
               "Costume transformation shows the back of Mario's head");
-        check(presentation_heading(1024,1,0x11)==1024 &&
-              presentation_heading(1024,4,0x10)==1024,
-              "Costume facing correction leaked into other native actions");
+        // Bucket pickup dialogue: native mode4/action30, heading1027. The
+        // captured Q12 world matrix's +X column is {-19,0,-4096}. Mario must
+        // face the same way without an action-specific half-turn exception.
+        Matrix dialogue=mario_world(1027,{});
+        Vec3 dialogue_origin=transform(dialogue,{}),dialogue_face=transform(dialogue,{0,0,1});
+        check(std::abs(dialogue_face.x-dialogue_origin.x-0.72f*(-19.0f/4096))<0.001f &&
+              std::abs(dialogue_face.z-dialogue_origin.z+0.72f)<0.001f,
+              "Bucket pickup dialogue disagrees with the native render matrix");
         if(argc<2 || !argv[1][0]){std::cout<<"Malformed-input checks passed; owner cache unavailable\n";return 77;}
         std::ifstream stream(std::filesystem::u8path(argv[1]),std::ios::binary);
         Bytes cache{std::istreambuf_iterator<char>(stream),{}};
