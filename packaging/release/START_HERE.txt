@@ -1,4 +1,4 @@
-Tomba2Recomp - Tomba! 2: The Evil Swine Return, recompiled
+Tomba2Recomp @VERSION@ - Tomba! 2: The Evil Swine Return, recompiled
 ==========================================================
 
 WHAT YOU NEED
