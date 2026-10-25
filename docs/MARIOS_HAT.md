@@ -67,8 +67,9 @@ compiler and Ninja, then build the small test project:
 
 Without an owner cache, the asset test runs malformed-input checks then reports
 skipped (77); the separate deterministic PCM test requires no ROM. The native
-picker/import UI still needs direct end-to-end validation; importer success
-alone does not establish that UI workflow.
+picker/import UI has not been validated; importer success alone does not
+establish that UI workflow. The owner explicitly waived import UI work for
+the current gameplay handoff on 2026-10-24.
 
 ## Runtime implementation
 
@@ -310,10 +311,34 @@ were recorded, and both private card files still match the post-save hashes.
 `render-r18-identity.json` records the tested binary/source hashes. The hidden,
 muted runtime was stopped after testing; its build, fixtures and evidence remain.
 
+The r20 basic checks survived the failed session and were recovered from
+`build-mario-assets/basic-r20/`. Native contact damage reached zero health,
+the death/Continue screen appeared, and Cross returned to responsive gameplay
+with positive native health, Mario still equipped, a rearmed extra jump and
+unchanged inventory. All six Continue assertions passed, with no RAM writes
+or dispatch misses. Both private card hashes match the validated r18 values.
+
+The enabled adaptive widescreen profile followed 960x720, 1280x720,
+1680x720 and 960x720 windows (eight assertions). Composed `present_shot`
+captures show real additional terrain/scenery at 16:9 and 21:9 and the return
+to 4:3. These are introductory-village checks, not an all-stage widescreen
+audit. The r21 follow-up passes seven checks: wide inventory opens/closes,
+Mario remains equipped, current-build save/load restores health, inventory
+and rearmed extra jump, both cards are unchanged, and dispatch misses remain
+zero. Evidence: `build-mario-assets/handoff-r21/preflight.json` and its two
+composed screenshots. An initial probe requested invalid slot 12 and aborted;
+the corrected report uses slot 9 (valid slots are 0 through 11).
+
+Slot 9 is now the post-Continue Mario gameplay handoff fixture outside the
+Fisherman's house, replacing the disposable r20 widescreen fixture. The
+earlier voice-restore reports remain evidence; rerunning the voice smoke
+regenerates its fixture. The owner will assess actual Mario gameplay and give
+feedback. No new build or engine change was needed for these checks.
+
 Still unverified: damage amounts and weapon-specific target requirements,
-broader capture/aim/throw target coverage, death/continue,
-rewind/audio replay, broader runtime performance, adaptive
-widescreen, picker/import UI, release defaults and packaging. A post approach
+broader capture/aim/throw target coverage, rewind/audio replay, broader runtime
+performance and widescreen coverage, release defaults and packaging. Import UI
+is waived for this handoff. A post approach
 caused native Tomba and Mario to enter the same blocked/hurt states; it is not
 proof of a working hit or capture. The later controlled interaction fixture
 above provides separate hit/stun and capture evidence. Relocated actor `0x800fc8d8` was visually
@@ -329,8 +354,8 @@ matching the final hook/codegen configuration. Do not blindly copy or rename
 the old cache namespace, or restart every recipe before checking which inputs
 and artifacts can be reused by the supported pipeline.
 
-No release archive, owner QA handoff or feature completion is established by
-these tests. A future archive must exclude ROMs/imported caches and both
+These tests qualify the basic development-build handoff, not feature
+completion or a release archive. A future archive must exclude ROMs/imported caches and both
 `psx.enhancement.cd-speed` and `psx.enhancement.fast-loading` packages. Keep the
 optional character feature default off. Keep both Beads issues in progress
 until their requested outcomes are validated.

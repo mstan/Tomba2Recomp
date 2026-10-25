@@ -8,6 +8,41 @@ See the latest title commit for the final culling/clearance fix. Nested framewor
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
+## Latest continuation: basic checks and owner handoff
+
+Recovered session `01a16ff8-ba29-74e3-b816-76eb9a46503d`, including the final
+direction: **no import UI work; test basics such as death/continue and
+widescreen, then hand off Mario gameplay for owner feedback**.
+
+The previous session's r20 process (PID 34768) was still running hidden/muted.
+Its on-disk death/Continue report passes six assertions without RAM writes;
+the adaptive 4:3 -> 16:9 -> 21:9 -> 4:3 report passes eight assertions.
+Composed captures were visually reviewed for real margin scenery. The r21
+follow-up passes seven wide-inventory/current-build-load/card/dispatch checks
+in `build-mario-assets/handoff-r21/preflight.json`. Both private cards still
+match the hashes below. Binary SHA-256 remains
+`e7b0af2dfeca4f77a5f6756a9e11513782f68198c1955bd3c03fe532eb5e3e8e`.
+
+**Slot 9 is now the owner gameplay fixture**, Mario equipped outside the
+Fisherman's house after Continue (native health 4). Slots 7/8 and 10/11 remain
+the earlier private fixtures. The old voice test regenerates slot 9 when run;
+do not run it against an owner playtest. Save-state slot IDs are 0 through 11.
+The r20 hidden process has been stopped. The owner playtest was launched as
+PID 60228 in a normal 1280x720 window with normal audio, the same private
+cards/profile, and slot 9 loaded only after US MAIN.EXE was actually ready.
+`handoff-r21/owner-launch.json` confirms equipped Mario, health 4, active host
+audio and zero dispatch misses. Automated input has ended. Leave that process
+for owner feedback; do not run additional gameplay checks against it.
+
+No release archive is requested. Broader combat, rewind/audio, performance,
+all-stage widescreen and final AOT/package qualification remain open; they do
+not require redoing the completed basic checks before owner gameplay feedback.
+The retained r21 reports, two composed screenshots, startup logs and slot 9
+are useful handoff evidence. Clean them with the other private build/evidence
+trees after feedback and implementation/release delivery; preserve native cards.
+
+## Earlier r15-r18 checkpoint
+
 Recovered session: `01a16fa4-c12b-7a33-b63d-2acf27dfa8b1`. Its later tool
 history completed a native save, but never completed the native reload check.
 The final `continue` failed during remote context compaction.
@@ -17,7 +52,7 @@ Build: `build-mario/Tomba2Mario.exe`; TCP port 4597. Use the documented hidden,
 muted launch in `MARIOS_HAT.md` for further unattended QA and preserve focus.
 Private card/state directory is `build-mario/.research/test-saves`. Never
 substitute owner cards. Slots 7/8 are quiet Tomba/Mario outside Fisherman's
-house, 9 is voice, 10/11 are disposable interaction fixtures.
+house, 10/11 are disposable interaction fixtures. See above for current slot 9.
 
 On recovery, card 1 contains one real native file `BASCUSP94454T2-00` in block
 1 (state `0x51`). SHA-256:
@@ -66,11 +101,12 @@ The r18-only change adjusts captured-model height and does not affect quiet
 rendering. Earlier r16 slow/noisy results remain recorded in `MARIOS_HAT.md`.
 Temporary offline pose probes/exports/contact images were audited and removed.
 
-Remaining gates include broader hold/aim/throw target coverage,
-death/continue, rewind/audio, broader built performance, adaptive
-widescreen, picker/import UI and final packaging. Existing passing r14 and
+Remaining release gates include broader hold/aim/throw target coverage,
+rewind/audio, broader built performance, wider stage coverage and final
+packaging. Import UI was waived by the owner. Existing passing r14 and
 weapon-family checks need not be repeated without a relevant change.
 
 Preserve the successful AOT extraction/audit and private asset cache described
-in `MARIOS_HAT.md`. No release/owner handoff has occurred. Unattended work stays
-hidden/muted; an eventual owner handoff must be windowed with normal audio.
+in `MARIOS_HAT.md`. No release has occurred. The owner gameplay handoff is
+recorded above. Unattended work stays hidden/muted; owner playtests are
+windowed with normal audio.
