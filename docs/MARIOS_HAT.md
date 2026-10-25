@@ -25,13 +25,13 @@ statements are not a claim that every interaction below has passed QA.
 
 ## Local import
 
-The development manifest is
-`mods/development/tomba2.character.mario-hat/0.1.0/manifest.toml`.
-It is default off and is not yet in the bundled catalog. The existing format-9
+The bundled US manifest is
+`mods/preloaded/packages/tomba2.character.mario-hat/0.0.1/manifest.toml`.
+Version 0.0.1 is Experimental and default off. The existing format-9
 native resource picker/import pipeline uses `prepare = "tomba2.mario.import"`.
 The ROM resource is input-only, shared as `n64.smash64.us`; the prepared asset
-resource is hidden. The development runtime currently has a manually installed
-copy of the manifest and a private enabled Mods profile.
+resource is hidden. The US runtime stages this manifest into its normal Mods
+catalog, including release builds. The Italian catalog does not include it.
 
 The importer accepts canonical US 1.0 data in `.z64`, `.v64` or `.n64` byte
 orders, normalizes it and verifies size and SHA-256 before extraction:

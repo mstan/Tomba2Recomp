@@ -21,6 +21,7 @@ constexpr const char* kUsFrameRatePackage =
     "tomba2.experimental.interpolated-frame-rate";
 constexpr const char* kUsSkipFmvsPackage = "tomba2.enhancement.skip-fmvs";
 constexpr const char* kUsDebugMenuPackage = "tomba2.debug.debug-menu";
+constexpr const char* kUsMarioPackage = "tomba2.character.mario-hat";
 
 constexpr const char* kItaWidescreenPackage = "tombi2.enhancement.widescreen";
 constexpr const char* kItaFrameRatePackage =
@@ -86,6 +87,7 @@ int register_plugins() {
              "tomba2.framerate.240",
              "tomba2.fmv.skip",
              "tomba2.seamless",
+             "tomba2.mario.hat",
              "tomba2.debug.menu"}) {
         if (!PSXRecompV4::mod_register_activation_plugin(id, no_op_plugin)) {
             return fail(std::string("could not register test plugin ") + id);
@@ -192,6 +194,24 @@ int check_skip_fmvs(PSXRecompV4::ModPackageManager& manager,
     return 0;
 }
 
+int check_mario(PSXRecompV4::ModPackageManager& manager) {
+    const auto* package = manager.selected_package(kUsMarioPackage);
+    const auto* feature = manager.selected_feature(kUsMarioPackage, "mario-hat");
+    if (!package || package->version != "0.0.1" || !feature ||
+        feature->channel != PSXRecompV4::ModChannel::Experimental ||
+        feature->default_enabled || manager.feature_enabled(kUsMarioPackage, "mario-hat"))
+        return fail("Mario must ship as Experimental 0.0.1 and default off");
+    bool required_rom = false;
+    for (const auto& resource : package->resources)
+        if (resource.id == "smash-rom")
+            required_rom = resource.required && resource.input_only &&
+                resource.format == "n64-rom" && resource.size == 16777216 &&
+                resource.sha256 == "15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d";
+    if (!required_rom || package->prepare != "tomba2.mario.import")
+        return fail("Mario must require the verified original Smash 64 ROM");
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -211,7 +231,9 @@ int main(int argc, char** argv) {
     fs::copy(fs::path(argv[2]), ita_root, fs::copy_options::recursive);
 
     PSXRecompV4::ModPackageManager us_manager;
-    if (load_catalog(us_root, us_manager, 4, 4) != 0) return 1;
+    us_manager.set_developer_channel_visible(false);
+    if (load_catalog(us_root, us_manager, 5, 5) != 0) return 1;
+    if (check_mario(us_manager) != 0) return 1;
     if (us_manager.packages().find(kUsDebugMenuPackage) !=
         us_manager.packages().end()) {
         return fail("US catalog must not ship the uncompiled Debug Menu variant");
@@ -231,9 +253,8 @@ int main(int argc, char** argv) {
     if (check_widescreen(us_manager, kUsWidescreenPackage, kGameId,
                          kDiscSha256, "US") != 0)
         return 1;
-    if (check_frame_rate(us_manager, kUsFrameRatePackage, kGameId,
-                         kDiscSha256, "US") != 0)
-        return 1;
+    if (us_manager.selected_package(kUsFrameRatePackage))
+        return fail("US catalog must not ship the retired frame-rate package");
     if (check_skip_fmvs(us_manager, kUsSkipFmvsPackage, kGameId,
                         kDiscSha256, "US") != 0)
         return 1;
@@ -259,7 +280,7 @@ int main(int argc, char** argv) {
 
     fs::remove_all(us_root, ec);
     fs::remove_all(ita_root, ec);
-    std::cout << "Tomba 2 preloaded mods: 4 US packages, resident loading opt-out, "
+    std::cout << "Tomba 2 preloaded mods: 5 US packages, Experimental Mario 0.0.1 with required ROM, resident loading opt-out, "
                  "7 localized Italian packages, no bundled debug menu, "
                  "3 widescreen choices, 7 interpolated frame-rate choices, "
                  "motion-adaptive clarity blend, game-owned FMV skipping, "

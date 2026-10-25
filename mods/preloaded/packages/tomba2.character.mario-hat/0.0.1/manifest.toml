@@ -1,13 +1,13 @@
 format_version = 9
 id = "tomba2.character.mario-hat"
-version = "0.1.0"
+version = "0.0.1"
 name = "Mario's Hat"
 author = "mstan"
 description = "Equip Mario's Hat to play as Smash 64 Mario in Tomba's world."
 resolver = "declarative"
 prepare = "tomba2.mario.import"
 save_compatibility = "shared"
-channel = "developer"
+channel = "experimental"
 
 [[target]]
 game_id = "SCUS-94454"
