@@ -36,6 +36,15 @@ copy of the manifest and a private enabled Mods profile.
 The importer accepts canonical US 1.0 data in `.z64`, `.v64` or `.n64` byte
 orders, normalizes it and verifies size and SHA-256 before extraction:
 
+The ROM is mandatory whenever the mod runs, including when imported assets
+already exist. The trusted preparer validates the selected ROM before checking
+the asset cache. Keep that ROM accessible at the selected path; a cache alone
+does not satisfy the requirement. Missing selection, an unavailable file and
+a correctly sized N64 file with the wrong SHA-256 were each rejected by the
+production executable (exit 1), with the valid imported cache still available.
+The isolated rejection evidence is `rom-requirement-r28/report.json` under the
+retained feedback task directory. No owner gameplay was relaunched.
+
 | Identity | Value |
 | --- | --- |
 | Canonical ROM bytes | 16,777,216 |

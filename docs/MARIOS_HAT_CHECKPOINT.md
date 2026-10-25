@@ -10,7 +10,7 @@ Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates
 
 ## Current owner-feedback build: r26 (production), r27 launcher repair
 
-Owner handoff PID **26928** is open at recomp-ui, caption
+The repaired owner handoff opened recomp-ui as PID **26928**, caption
 `Tomba! 2 - The Evil Swine Return - Launcher`, normal window and normal audio.
 The command explicitly uses `--launcher`. All hidden QA processes are stopped;
 no automated input goes to the owner process. Source is committed on
@@ -35,6 +35,16 @@ not counted as launch evidence. No game/engine rebuild was needed. The private
 clone was stopped and removed; compact screenshots, startup logs and receipts
 remain in `launcher-r27`. Owner PID24184 was already closed before this retry.
 The repaired owner handoff retains normal audio, normal window and DualSense.
+
+The owner accepted the repaired build ("this looks good") and authorized
+committing and pushing all work to a branch. Publish the title branch
+`mod/marios-hat` and its pinned framework dependency as
+`mod/tomba2-marios-hat`; preserve the tested submodule pins. The Smash 64 ROM
+requirement already exists: required input-only original US1.0 ROM, normalized
+size/SHA-256 checked before cached-asset reuse. Three isolated production
+checks reject missing selection, missing file and wrong SHA-256 even with the
+valid asset cache available; see `rom-requirement-r28/report.json`. These reject
+before renderer/game startup and do not repeat the owner's cleared playtest.
 
 The owner clarified the missing climbing pose was on **posts/ledges**. R26
 additionally plays Smash CliffCatch572 through the fresh native post grab,
