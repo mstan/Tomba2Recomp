@@ -20,6 +20,13 @@ FIRST RUN
      Interpolation is disabled and hidden. Skip FMVs remains optional.
   4. Press Launch. Your choices are remembered for next time.
 
+EXPERIMENTAL MARIO'S HAT (USA ONLY)
+  Optional mod version 0.0.1, disabled by default. Enable it in Mods and select
+  your original Super Smash Bros. 64 US 1.0 ROM. The ROM is verified before
+  cached imported assets can be used. Equip Mario's Hat from the costume menu.
+  Mario can double jump, punch, and grab/throw enemies. Broader progression
+  coverage remains experimental. No Nintendo ROM or imported asset is bundled.
+
 WHERE THINGS LIVE
   saves/     memory cards
   cache/     converted native code, grows as you play

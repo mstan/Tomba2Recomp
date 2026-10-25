@@ -36,7 +36,7 @@ retail dump; clear it to return to bundled OpenBIOS.
 Tomba 2's mods live on the launcher's **Mods** page. Seamless Loading is enabled
 by default for the US disc, replacing the generic CD Speed and Fast Loading
 options. Adaptive widescreen and 1080p internal rendering are also enabled by default.
-Interpolation is disabled and hidden; Skip FMVs remains optional. Italian retains its existing loading options.
+Interpolation is disabled and hidden; Skip FMVs remains optional. Generic CD Speed and host-paced Fast Loading are excluded from both regional release catalogs.
 
 ## Layout
 
@@ -69,6 +69,13 @@ The boot EXE is a small loader; the bulk of the game streams from disc as code
 overlays at runtime (same architecture as Tomba! 1).
 
 ## Built-in mods
+
+**Mario's Hat (EXPERIMENTAL 0.0.1, US only)** is optional and disabled by default.
+Select your original Super Smash Bros. 64 US 1.0 ROM in Mods, then equip the
+costume in game. The verified ROM is required before imported assets can be used,
+including on later launches with a warm cache. No Nintendo ROM or imported assets
+are bundled. Mario has double jump, extended punches and native grab/throw moves;
+full progression and all-stage behavior remain experimental.
 
 Enable **Tomba 2 Widescreen** on the Mods page and select 16:9, 21:9, or
 Adaptive. Adaptive follows the live window or fullscreen aspect from 4:3 up to

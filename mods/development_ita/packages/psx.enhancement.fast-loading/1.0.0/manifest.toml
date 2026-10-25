@@ -4,6 +4,7 @@ version = "1.0.0"
 name = "Caricamento rapido (pacing host)"
 author = "psxrecomp"
 description = "Accelera il tempo reale dei caricamenti senza cambiare nulla che il gioco possa osservare. Ogni frame guest, interrupt CD e callback resta schedulato normalmente."
+channel = "developer"
 resolver = "declarative"
 save_compatibility = "shared"
 

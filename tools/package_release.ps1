@@ -142,8 +142,7 @@ function Copy-TreeTo {
         throw "Copy-TreeTo: source directory not found: $Source"
     }
     if (Test-Path -LiteralPath $Destination) {
-        Assert-StagePath $Destination
-        Remove-Item -LiteralPath $Destination -Recurse -Force
+        Remove-StageTree $Destination
     }
     New-Dir (Split-Path -Parent $Destination) | Out-Null
     Copy-Item -LiteralPath $Source -Destination $Destination -Recurse -Force
@@ -158,6 +157,29 @@ function Assert-StagePath {
         ($absolute -ne $stageBase -and -not $absolute.StartsWith($stageBase + '\', [StringComparison]::OrdinalIgnoreCase))) {
         throw "Refusing stage cleanup outside this project: $absolute"
     }
+}
+
+function Remove-StageTree {
+    param([Parameter(Mandatory)][string]$Path)
+    Assert-StagePath $Path
+    $pending = [System.Collections.Generic.Stack[string]]::new()
+    $pending.Push([System.IO.Path]::GetFullPath($Path))
+    while ($pending.Count) {
+        $directory = $pending.Pop()
+        $item = Get-Item -LiteralPath $directory -Force
+        if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            throw "Refusing stage cleanup through a reparse point: $directory"
+        }
+        foreach ($child in Get-ChildItem -LiteralPath $directory -Force) {
+            if ($child.Name -eq '.git' -or
+                ($child.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+                throw "Unexpected repository or reparse point in stage: $($child.FullName)"
+            }
+            if ($child.PSIsContainer) { $pending.Push($child.FullName) }
+        }
+    }
+    Remove-Item -LiteralPath $Path -Recurse -ErrorAction Stop
+    if (Test-Path -LiteralPath $Path) { throw "Stage cleanup incomplete: $Path" }
 }
 
 # cmake writes benign warnings to STDERR; under Stop, PS 5.1 promotes native
@@ -250,7 +272,9 @@ if ($SkipRegen) {
 Invoke-Native {
     & $Cmake -S $Root -B $BuildPath -G Ninja -DCMAKE_BUILD_TYPE=Release `
         "-DPSX_EXECUTION_PROFILE=$ExecutionProfile" `
+        "-DPSX_GAME_VERSION=$Version" `
         -DPSX_DEBUG_TOOLS=OFF `
+        -DPSX_MOD_DEVELOPER_CHANNEL=OFF `
         -DPSX_PGXP_VARIANT=OFF `
         -DPSX_SETUP_WIZARD=OFF `
         -DPSX_NETPLAY=OFF `
@@ -258,9 +282,8 @@ Invoke-Native {
 } "cmake configure"
 Invoke-Native { & $Cmake --build $BuildPath --target $RuntimeTarget -j $Jobs } "cmake build"
 
-if (Test-Path -LiteralPath $StageRoot) {
-    Assert-StagePath $StageRoot
-    Remove-Item -LiteralPath $StageRoot -Recurse -Force
+if (Test-Path -LiteralPath $Stage) {
+    Remove-StageTree $Stage
 }
 New-Dir $Stage | Out-Null
 New-Dir (Join-Path $Stage "saves") | Out-Null
@@ -316,6 +339,11 @@ Write-Host "Bundled recomp-ui launcher assets: $fontCount font(s) + $imgCount im
 # Italian retains its separately localized catalog.
 Add-ModCatalog -BuildPath $BuildPath -Stage $Stage `
                -RuntimeTarget $RuntimeTarget | Out-Null
+foreach ($forbidden in @('psx.enhancement.cd-speed', 'psx.enhancement.fast-loading')) {
+    if (Test-Path -LiteralPath (Join-Path $Stage "mods/bundled/$forbidden")) {
+        throw "Prohibited loading mod in release catalog: $forbidden"
+    }
+}
 
 # Player-facing game.toml: same effective runtime settings as the dev config,
 # minus dev-only sections (debug port, overlay autocompile command, [audit]).
@@ -381,7 +409,7 @@ Write-Host "Verified no baked absolute BIOS path in the exe"
 
 # No user-machine or copyrighted files may ride along in the stage. OpenBIOS
 # and its license are intentionally bundled; retail BIOS images remain banned.
-$strayPatterns = @("SCPH*.BIN","*.cue","*.iso","*.mcd","bios.cfg","disc.cfg",
+$strayPatterns = @("SCPH*.BIN","*.cue","*.iso","*.mcd","*.mcr","*.z64","*.v64","*.n64","*.wav","*.cache","bios.cfg","disc.cfg",
                    "settings.toml","keybinds.ini","overlay_captures.json")
 $stray = foreach ($pat in $strayPatterns) { Get-ChildItem $Stage -Recurse -File -Filter $pat -ErrorAction SilentlyContinue }
 if ($stray) {
@@ -401,7 +429,7 @@ $PsxRecompSha = (& git -C (Join-Path $Root "psxrecomp-v4") rev-parse --short HEA
 $LoadingReleaseNote = if ($Variant -eq 'usa') {
     '- Seamless Loading defaults on; generic CD Speed/Fast Loading and the slow debug menu are excluded.'
 } else {
-    '- Italian retains its existing loading options; Seamless Loading is USA-only.'
+    '- Generic CD Speed/Fast Loading are excluded; Seamless Loading is USA-only.'
 }
 
 @"
@@ -422,6 +450,8 @@ $LoadingReleaseNote
 - Interpreter/runtime-compilation fallback remains available for gaps.
 - Adaptive widescreen and 1080p default on; supported scene visibility and sea/cloud seams are repaired.
 - Original two-VBlank scene cadence is retained; interpolation is off and hidden.
+- USA Mario's Hat is optional, EXPERIMENTAL version 0.0.1. It requires your verified Super Smash Bros. 64 US 1.0 ROM.
+- Imported Nintendo assets and ROMs are never included in the package.
 - Existing memory cards and disc selection remain available.
 
 This package includes the MIT-licensed OpenBIOS from PCSX-Redux and its notice
@@ -441,7 +471,7 @@ Known items in this release:
 # sorted entry names and one fixed timestamp (SOURCE_DATE_EPOCH, defaulting to
 # the git commit date) so a rebuild of the same sources is byte-identical and
 # the published SHA256 is meaningful.
-if (Test-Path -LiteralPath $ZipPath) { Remove-Item -LiteralPath $ZipPath -Force }
+if (Test-Path -LiteralPath $ZipPath) { Remove-Item -LiteralPath $ZipPath -ErrorAction Stop }
 
 if ($env:SOURCE_DATE_EPOCH) {
     $epoch = [int64]$env:SOURCE_DATE_EPOCH
