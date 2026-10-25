@@ -184,6 +184,24 @@ class Probe:
         from pathlib import Path
         return self.call("screenshot_hires", path=str(Path(path).resolve()))
 
+    def composed_screenshot(self, path):
+        """Wait for the queued present capture before changing the scene."""
+        from pathlib import Path
+        path = Path(path).resolve()
+        before = self.call("present_shot_seq")["seq"]
+        receipt = self.call("present_shot", path=str(path))
+        deadline = time.monotonic() + self.timeout
+        while True:
+            completion = self.call("present_shot_seq")
+            if completion["seq"] != before:
+                break
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Composed screenshot did not complete")
+            time.sleep(0.02)
+        if not completion["wrote"] or not path.is_file():
+            raise RuntimeError("Composed screenshot did not produce its file")
+        return receipt
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)

@@ -84,4 +84,24 @@ inline Vec3 capture_hands(const PoseBones& bones,const Matrix& world) {
     Vec3 a=transform(bones[6],{}),b=transform(bones[12],{});
     return transform(world,{(a.x+b.x)*0.5f,(a.y+b.y)*0.5f,(a.z+b.z)*0.5f});
 }
+inline void rotate_limb_x(PoseBones& bones,unsigned first,unsigned last,float angle) {
+    Vec3 pivot=transform(bones[first],{});
+    float c=std::cos(angle),s=std::sin(angle);
+    Matrix r{{{1,0,0,0},{0,c,-s,0},{0,s,c,0}}};
+    Vec3 q=transform(r,pivot);
+    r.m[0][3]=pivot.x-q.x;r.m[1][3]=pivot.y-q.y;r.m[2][3]=pivot.z-q.z;
+    for(unsigned i=first;i<=last;++i)bones[i]=multiply(r,bones[i]);
+}
+inline void climb_ladder(PoseBones& bones,float phase) {
+    // Smash64 supplies ledge hanging and pull-up, but no repeating ladder
+    // motion. Articulate those imported limbs around their existing joints;
+    // alternating reaches and knee lifts never stretch a source segment.
+    float step=std::sin(phase);
+    rotate_limb_x(bones,3,6,0.35f+0.4f*step);
+    rotate_limb_x(bones,9,13,0.35f-0.4f*step);
+    rotate_limb_x(bones,14,18,-0.4f-0.45f*step);
+    rotate_limb_x(bones,16,18,0.6f+0.6f*step);
+    rotate_limb_x(bones,19,23,-0.4f+0.45f*step);
+    rotate_limb_x(bones,21,23,0.6f-0.6f*step);
+}
 } // namespace tomba2::mario

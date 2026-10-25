@@ -8,9 +8,77 @@ See the latest title commit for the final culling/clearance fix. Nested framewor
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
-## Current owner-feedback build: r23
+## Current owner-feedback build: r25 (production)
 
-**Latest: r24 production experiment is open, awaiting owner feedback.** R23 was
+Owner handoff PID **33532** is open at recomp-ui, caption
+`Tomba! 2 - The Evil Swine Return - Launcher`, normal window and normal audio.
+The command explicitly uses `--launcher`. All hidden QA processes are stopped;
+no automated input goes to the owner process. Source is committed on
+`mod/marios-hat`. Passing evidence and private native cards are retained.
+
+The owner confirms the diagnostics-free build is **WAY more performant**.
+Keep future owner handoffs Release / `PSX_DEBUG_TOOLS=OFF`. The latest request
+is chest perching, 2-3x punch reach, climbing/hanging animations, then reopening
+at recomp-ui. The previous production process was already closed by the owner.
+
+R25 maps native capture phases8/9 to Smash Teeter/balance520, rather than the
+throw's final pose. Phases10..12 are the spring away from a chest and now use
+jump/fall. Native hang4/1 uses looping Smash CliffWait573. The house ladder is
+traversal0xA/11 catch, /12 climb, /13 exit: native motion0x40 -> CliffCatch572,
+0x41 -> CliffWait573 with alternating rigid hand/knee movement, then
+CliffClimbQuick2 576 for exit. Smash64 has no repeating ladder motion, so that
+cycle adapts the imported hang skeleton without stretching limbs or moving
+native roots. Approach jumps/falls/landings and sign turns have separate poses.
+All assets were already in the r2 import; no reimport or ROM redistribution.
+
+Punch center202 + half-width178 gives forward extent380, **2.5x** the previous
+152, preserving near edge24. Native vertical bounds, handlers and four active
+ticks remain. Actual matched post-pig inputs now hit at pretravel0/2/4/6,
+which R23 missed; all0..14 hit and the distant miss still passes.
+
+Validation: asset/PCM2/2 (36 real motions, including balance and exit), gate3/3
+with diagnostic/stale staging refusal, 30 live hit/grab/hold/turn/throw checks,
+and 20 traversal checks including native chest spring, hang/release, continuing
+ladder motion, current-build state restore and actual roof exit. Composed
+images reviewed in `traversal-r25-balance`. An initial test incorrectly assumed
+the chest spring must leave action3 immediately; observed native3/11 air1
+corrected both the test and the spring animation. A deep crouch experiment was
+replaced by the source balance pose after visual inspection.
+
+Evidence root remains `G:/Temp/Codex/psxrecomp/tomba2-mario-feedback-20261024`.
+Private QA fixtures: slot1 chest perch, slot4 post hang, slot5 mid-ladder,
+slot11 disposable current-build ladder save. Slot2 remains pre-bucket house.
+To reproduce the ladder, load slot2, teleport X only to11100, hold Up47 frames;
+native collision enters0xA/12 and ascends. Only travel is bypassed; no action,
+inventory, collision link or success flag is written. Slot4 came from actual
+Right125, Right+Cross24, Right40 input from quiet Mario slot8.
+
+Production executable SHA256:
+`a3a3860401c41f6db61add8f0a1200d936061a3f6f941574d5d832e19d5607fc`.
+Debug QA SHA256:
+`cbcd0abc355a636faa14986312936b660807790bbeb5746158b8abded4b0c75a`.
+Production has **158** original-byte-verified pairs (81 offline +77 runtime
+additions), same namespace `cg18_05391a69_gcacf1fd28_f2`; hooks/config unchanged.
+Owner play generated another unprovable orphan pair0009C000_AB864F9F, moved out
+of the executable cache into `unverified-runtime-cache-r25` (106KB), alongside
+the previously excluded0009A000 case. All other new pairs pass original guards.
+No full-static-coverage or production TCP-FPS claim. Native production cards
+were retained in place and their hashes are unchanged across staging.
+
+`mario_playtest_gate.py launch-production --build <prod-build> --exe <staged-exe>
+--inventory <original-inventory> --qualification <PRODUCTION_BUILD.json>
+--cards <retained-cards>` checks Release, diagnostics OFF, actual compile flag,
+built/staged executable equality and original-byte-audited shards before
+launching **--launcher**, normal audio, without automated gameplay. This is the
+owner path; the old `launch` command remains for explicit diagnostic tests.
+Preserve production-playtest/native cards, QA fixtures, prod-build for quick
+iteration, and compact passing evidence until owner feedback; clean those
+task outputs when no longer needed. The broader feature/release issue remains
+open; do not redo the cleared earlier death/Continue/widescreen/native-save gates.
+
+## Earlier r24 production experiment / r23 fixes
+
+**Historical r24 experiment, subsequently cleared for performance.** R23 was
 not cleared: the owner still saw slowdown and supplied
 `Tomba2MarioCandidate_yuyoKmNbvm.png`, then identified the trigger as grabbing
 the bucket on the fishing wire. The exact "carrying the Water" dialogue is now
@@ -53,7 +121,7 @@ recipe guard match and was excluded from this staging, not relabelled as audited
 `PRODUCTION_BUILD.json` records flags, hashes, audit and experiment scope. The
 existing TCP qualifier does not qualify a diagnostics-free binary.
 
-Production owner PID **61636** is open in a normal window with normal audio,
+The earlier production owner PID **61636** ran in a normal window with normal audio,
 same 1080p/5x/adaptive-wide profile and separately copied native cards. It has
 no TCP listener. The production copy deliberately contains no cross-build debug
 save states; use native Continue. Startup reached game main(). All hidden QA

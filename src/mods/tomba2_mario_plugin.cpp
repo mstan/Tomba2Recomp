@@ -4,6 +4,7 @@
 #include "mario/pcm_voice.h"
 #include "mario/voice_cues.h"
 #include "mario/presentation.h"
+#include "mario/action_animation.h"
 
 #include <algorithm>
 #include <cmath>
@@ -238,12 +239,13 @@ uint32_t action_clip() {
     if(rb(player+4)!=1)return 523;
     switch(action) {
     case 0:return 499;case 1:return 505;
-    case 2:return rb(player+0x29)?518:state(DoubleJump)?511:rb(player+0x145)==1?509:513;
-    case 3:return phase>=5?563:phase>=2?562:561;
-    case 4:return 523;case 5:case 0x32:return rb(player+0x146)==3?608:606;
+    case 2:return !rb(player+0x145)?499:rb(player+0x29)?518:state(DoubleJump)?511:rb(player+0x145)==1?509:513;
+    case 3:return capture_animation(phase,rb(player+0x145));
+    case 4:return phase<=1?573:513;
+    case 5:case 0x32:return rb(player+0x146)==3?608:606;
     case 6:return 622;
     case 7:case 8:case 9:return 523;
-    case 0xa:case 0xb:case 0xc:case 0xd:return 575;
+    case 0xa:case 0xb:case 0xc:case 0xd:return traversal_animation(phase,rb(player+0x46));
     case 0x10:return 588;
     case 0x11:return 571;
     default:return rb(player+0x145)?513:499;
@@ -297,12 +299,12 @@ void fist_position(uint32_t actor) {
     float heading=float(rh(player+0x56)&4095)*6.28318530718f/4096;
     // Native horizontal half/full widths are +0x80/+0x82 (6ACAC initializes
     // ordinary weapons to 50/100). +0x76 is weapon-private state, not radius.
-    // 88 + 64 = 152 forward units versus the old 72 + 50 = 122, with nearly
-    // identical close overlap. Keep vertical bounds and native damage rules.
-    wh(actor+0x80,64);wh(actor+0x82,128);
-    ww(actor+0x2c,rw(player+0x2c)+uint32_t(int32_t(std::cos(heading)*88*65536)));
+    // 202 + 178 = 380 forward units (2.5x152), retaining the old near edge24.
+    // Keep vertical bounds and native damage rules.
+    wh(actor+0x80,punch_half_width);wh(actor+0x82,punch_half_width*2);
+    ww(actor+0x2c,rw(player+0x2c)+uint32_t(int32_t(std::cos(heading)*punch_offset*65536)));
     ww(actor+0x30,rw(player+0x30)-16*65536);
-    ww(actor+0x34,rw(player+0x34)-uint32_t(int32_t(std::sin(heading)*88*65536)));
+    ww(actor+0x34,rw(player+0x34)-uint32_t(int32_t(std::sin(heading)*punch_offset*65536)));
 }
 void punch_collision(CPUState* cpu,uint32_t) {
     if(!ready() || !weapon_record(cpu->gpr[4]))return;
@@ -358,10 +360,12 @@ PoseBones presentation_bones() {
     if(clip==animations.end())clip=animations.find(499);
     const Animation& animation=clip->second;
     unsigned frame=state(Clock);
-    bool loop=animation.id==499 || animation.id==505 || animation.id==500 || animation.id==575 || animation.id==562;
+    bool loop=animation.id==499 || animation.id==505 || animation.id==500 || animation.id==520 || animation.id==573 || animation.id==562;
     if(loop)frame%=std::max(1u,unsigned(animation.frames.size()-1));
     else frame=std::min(frame,unsigned(animation.frames.size()-1));
     auto bones=pose_bones(mario_model,animation.frames[frame]);
+    if(animation.id==573 && ladder_animation(rb(player+5),rb(player+0x46)))
+        climb_ladder(bones,float(state(Clock))*0.12f);
     if(rb(player+4)==1 && rb(player+5)==3 && rb(player+6)>=1 && rb(player+6)<=4)
         raise_capture_arms(bones);
     return bones;
@@ -501,8 +505,8 @@ void activate() {
     voices.clear();
     for(uint32_t voice=429;voice<=441;++voice)voices.emplace(voice,files.at(voice_cache_base+voice));
     animations.clear();
-    for(uint32_t id:{499,500,502,505,508,509,510,511,512,513,515,518,523,538,
-                        541,561,562,563,564,571,572,573,575,588,597,606,607,608,
+    for(uint32_t id:{499,500,502,505,508,509,510,511,512,513,515,518,520,523,538,
+                        541,561,562,563,564,571,572,573,575,576,588,597,606,607,608,
                         611,622,623,624,625,626})
         animations.emplace(id,decode_animation(id,files.at(id),mario_model));
     memory=psx_mod_alloc_guest_memory(8192,16);

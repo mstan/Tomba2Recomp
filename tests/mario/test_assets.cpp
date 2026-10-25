@@ -1,5 +1,6 @@
 #include "smash_assets.h"
 #include "presentation.h"
+#include "action_animation.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -51,6 +52,14 @@ int main(int argc,char**argv) {
         check(std::abs(dialogue_face.x-dialogue_origin.x-0.72f*(-19.0f/4096))<0.001f &&
               std::abs(dialogue_face.z-dialogue_origin.z+0.72f)<0.001f,
               "Bucket pickup dialogue disagrees with the native render matrix");
+        check(capture_animation(8)==520 && capture_animation(9)==520 &&
+              capture_animation(2)==562 && capture_animation(6)==563 &&
+              capture_animation(11,1)==509 && capture_animation(11,2)==513,
+              "Chest perching uses a carry/throw pose or breaks ordinary capture");
+        check(traversal_animation(12,0x41)==573 && traversal_animation(13,0x41)==576 &&
+              traversal_animation(11,0x40)==572 && traversal_animation(2,2)==499 &&
+              traversal_animation(7,0x63)==509,
+              "Ladder catch/climb/exit and sign-turn phases are conflated");
         if(argc<2 || !argv[1][0]){std::cout<<"Malformed-input checks passed; owner cache unavailable\n";return 77;}
         std::ifstream stream(std::filesystem::u8path(argv[1]),std::ios::binary);
         Bytes cache{std::istreambuf_iterator<char>(stream),{}};
@@ -61,6 +70,23 @@ int main(int argc,char**argv) {
         for(const auto& t:model.triangles) {check(t.cull<=3,"Invalid source cull mode");back_culled+=t.cull==2;}
         check(back_culled>0,"Source fighter backface mode was not retained");
         auto capture=decode_animation(562,files.at(562),model);
+        auto hang=decode_animation(573,files.at(573),model);
+        auto base=pose_bones(model,hang.frames[0]),reach_a=base,reach_b=base;
+        climb_ladder(reach_a,1.570796327f);climb_ladder(reach_b,4.71238898f);
+        for(auto segment:{std::array<unsigned,2>{3,5},{5,6},{9,11},{11,12},
+                          {14,16},{16,17},{19,21},{21,22}}) {
+            auto length=[&](const PoseBones& bones) {
+                Vec3 a=transform(bones[segment[0]],{}),b=transform(bones[segment[1]],{});
+                return std::sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z));
+            };
+            check(std::abs(length(base)-length(reach_a))<0.001f &&
+                  std::abs(length(base)-length(reach_b))<0.001f,"Ladder motion stretches a limb");
+        }
+        for(unsigned tip:{6,12,17,22}) {
+            Vec3 a=transform(reach_a[tip],{}),b=transform(reach_b[tip],{});
+            check(std::abs(a.y-b.y)+std::abs(a.z-b.z)>10,
+                  "Ladder hand or foot does not alternate between steps");
+        }
         for(const auto& pose:capture.frames) {
             auto before=pose_bones(model,pose),raised=before;
             raise_capture_arms(raised);
@@ -95,8 +121,8 @@ int main(int argc,char**argv) {
         // Real source motions, including non-blocking cubic translation,
         // auxiliary roots and the distinct item/grab/throw streams.
         unsigned frames=0,motions=0;
-        for(uint32_t id:{499,500,502,505,508,509,510,511,512,513,515,518,
-                        523,538,541,561,562,563,564,571,572,573,575,588,597,
+        for(uint32_t id:{499,500,502,505,508,509,510,511,512,513,515,518,520,
+                        523,538,541,561,562,563,564,571,572,573,575,576,588,597,
                         606,607,608,611,622,623,624,625,626}) {
             auto anim=decode_animation(id,files.at(id),model);
             ++motions;
@@ -125,7 +151,11 @@ int main(int argc,char**argv) {
             // Inspectable data for an independent software-rendered asset QA.
             std::ofstream out(std::filesystem::u8path(argv[2]));
             out<<"{\"joints\":[";
-            auto pose=decode_animation(499,files.at(499),model).frames.at(0);
+            uint32_t inspect_id=argc>3?uint32_t(std::stoul(argv[3])):499;
+            auto inspect=decode_animation(inspect_id,files.at(inspect_id),model);
+            unsigned inspect_frame=argc>4?unsigned(std::stoul(argv[4])):0;
+            auto pose=inspect.frames.at(inspect_frame);
+            std::cout<<"Exported motion "<<inspect_id<<" frame "<<inspect_frame<<" / "<<inspect.frames.size()<<'\n';
             for(size_t i=0;i<model.joints.size();++i) {
                 const auto&t=pose[i];if(i)out<<',';
                 out<<'['<<model.joints[i].parent<<','<<t.translation.x<<','<<t.translation.y<<','<<t.translation.z

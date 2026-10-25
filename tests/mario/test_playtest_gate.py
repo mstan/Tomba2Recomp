@@ -7,10 +7,34 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
-from mario_playtest_gate import validate_aot, validate_qualification, framework_tools
+from mario_playtest_gate import validate_aot, validate_qualification, validate_production_build, framework_tools
 
 
 class GateTest(unittest.TestCase):
+    def test_production_refuses_diagnostics_and_stale_staging(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            build = root / "build"
+            build.mkdir()
+            exe = root / "Mario.exe"
+            exe.write_bytes(b"production")
+            (build / exe.name).write_bytes(b"production")
+            settings = "CMAKE_BUILD_TYPE:STRING=Release\nPSX_DEBUG_TOOLS:BOOL=OFF\n"
+            (build / "CMakeCache.txt").write_text(settings)
+            (build / "build.ninja").write_text("DEFINES = -DPSX_NO_DEBUG_TOOLS=1\n")
+            validate_production_build(build, exe)
+            (build / "CMakeCache.txt").write_text(settings.replace("=OFF", "=ON"))
+            with self.assertRaisesRegex(RuntimeError, "diagnostics OFF"):
+                validate_production_build(build, exe)
+            (build / "CMakeCache.txt").write_text(settings)
+            (build / "build.ninja").write_text("DEFINES = -DPSX_DEBUG_TOOLS=1\n")
+            with self.assertRaisesRegex(RuntimeError, "compile flags"):
+                validate_production_build(build, exe)
+            (build / "build.ninja").write_text("DEFINES = -DPSX_NO_DEBUG_TOOLS=1\n")
+            exe.write_bytes(b"old staging")
+            with self.assertRaisesRegex(RuntimeError, "differs"):
+                validate_production_build(build, exe)
+
     def test_missing_changed_and_wrong_namespace_shards_are_refused(self):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch)

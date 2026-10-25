@@ -212,6 +212,45 @@ def validate_qualification(current, report):
             "No passing runtime performance qualification")
 
 
+def validate_production_build(build, exe):
+    """Refuse a diagnostic, stale, or unstaged owner-facing executable."""
+    cache = (build / "CMakeCache.txt").read_text().splitlines()
+    require("CMAKE_BUILD_TYPE:STRING=Release" in cache, "Production handoff requires Release")
+    require("PSX_DEBUG_TOOLS:BOOL=OFF" in cache, "Production handoff requires diagnostics OFF")
+    require("-DPSX_NO_DEBUG_TOOLS=1" in (build / "build.ninja").read_text(),
+            "Production compile flags do not disable diagnostic instrumentation")
+    built = build / exe.name
+    require(built.is_file() and digest(built) == digest(exe),
+            "Staged production executable differs from the completed build")
+
+
+def verify_production(args):
+    validate_production_build(args.build, args.exe)
+    report = {"identity": identity(args), "runtime_additions_audit": audit_runtime_additions(args),
+              "debug_tools": False, "cmake_build_type": "Release", "compile_flags_verified": True,
+              "validation_scope": "Production artifact/cache verification; no TCP performance measurement claimed."}
+    args.qualification.write_text(json.dumps(report, indent=2) + "\n")
+    print("Verified diagnostics-free production build and original-byte-audited native cache", flush=True)
+    return report
+
+
+def launch_production(args):
+    report = verify_production(args)
+    env = dict(os.environ)
+    for key in ("SDL_AUDIO_DRIVER", "SDL_AUDIODRIVER", "PSX_HEADLESS", "PSX_NO_LAUNCHER",
+                "PSX_INTERNAL_RESOLUTION", "PSX_HIRES_WINDOW", "PSX_TEXWIN_BATCH"):
+        env.pop(key, None)
+    env["PATH"] = str(Path(args.gcc).parent) + os.pathsep + env.get("PATH", "")
+    command = [str(args.exe), "--launcher", "--game", str(args.config),
+               "--bios", str(args.bios), "--memcard-dir", str(args.cards)]
+    with args.exe.with_suffix(".stdout.log").open("w") as out, args.exe.with_suffix(".stderr.log").open("w") as err:
+        process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=out, stderr=err)
+    report["owner_launch"] = {"pid": process.pid, "command": command, "normal_audio": True,
+                              "entry": "recomp-ui launcher", "no_automated_input": True}
+    args.qualification.write_text(json.dumps(report, indent=2) + "\n")
+    print("Owner recomp-ui launcher opened; PID", process.pid, flush=True)
+
+
 def launch(args):
     current = identity(args)
     validate_qualification(current, json.loads(args.qualification.read_text()))
@@ -236,13 +275,14 @@ def launch(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("prepare", "qualify", "launch"))
+    parser.add_argument("action", choices=("prepare", "qualify", "launch", "verify-production", "launch-production"))
     parser.add_argument("--exe", type=Path)
     parser.add_argument("--config", type=Path, default=ROOT / ".research/game-test.toml")
     parser.add_argument("--recompiler", type=Path, default=FRAMEWORK / "recompiler/build/psxrecomp-game.exe")
     parser.add_argument("--inventory", type=Path)
     parser.add_argument("--work", type=Path)
     parser.add_argument("--stage", type=Path)
+    parser.add_argument("--build", type=Path)
     parser.add_argument("--gcc", default="C:/msys64/mingw64/bin/gcc.exe")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--qualification", type=Path)
@@ -263,7 +303,14 @@ def main():
         prepare(args)
     else:
         require(args.exe and args.qualification, "qualify/launch need exe and qualification")
-        if args.action == "qualify":
+        if args.action in ("verify-production", "launch-production"):
+            require(args.build and args.inventory, "verify-production needs build and original-input inventory")
+            if args.action == "launch-production":
+                require(args.cards and args.cards.is_dir(), "launch-production needs the retained native cards")
+                launch_production(args)
+            else:
+                verify_production(args)
+        elif args.action == "qualify":
             require(args.inventory and args.inventory.is_file(), "qualify needs the audited original-input inventory")
             qualify(args)
         else:
