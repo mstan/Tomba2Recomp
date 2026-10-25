@@ -37,6 +37,15 @@ int main(int argc,char**argv) {
                   std::abs(b.z-a.z-0.72f*std::sin(radians))<0.0001f,
                   "Imported forward axis does not match native heading");
         }
+        // The native costume presentation ends at yaw 0x400, facing the
+        // camera. Imported +Z must point toward the viewer there, not away.
+        Matrix costume=mario_world(presentation_heading(1024,4,0x11),{});
+        Vec3 origin=transform(costume,{}),face=transform(costume,{0,0,1});
+        check(std::abs(face.x-origin.x)<0.0001f && face.z<origin.z,
+              "Costume transformation shows the back of Mario's head");
+        check(presentation_heading(1024,1,0x11)==1024 &&
+              presentation_heading(1024,4,0x10)==1024,
+              "Costume facing correction leaked into other native actions");
         if(argc<2 || !argv[1][0]){std::cout<<"Malformed-input checks passed; owner cache unavailable\n";return 77;}
         std::ifstream stream(std::filesystem::u8path(argv[1]),std::ios::binary);
         Bytes cache{std::istreambuf_iterator<char>(stream),{}};

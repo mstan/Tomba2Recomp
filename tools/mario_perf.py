@@ -11,6 +11,26 @@ import time
 from mario_probe import Probe
 
 
+def measure_route(probe, steps):
+    # Queueing many steps performs one debug RPC per step. Exclude that setup
+    # cost, then count actual guest progress between midpoint-timed frame reads.
+    route = probe.start_route(steps)
+    t0 = time.monotonic()
+    first = probe.counters()["frame"]
+    t1 = time.monotonic()
+    route.update(probe.wait_route())
+    t2 = time.monotonic()
+    last = probe.counters()["frame"]
+    t3 = time.monotonic()
+    elapsed = (t2 + t3 - t0 - t1) / 2
+    frames = last - first
+    if frames <= 0 or elapsed <= 0:
+        raise RuntimeError("No forward guest-frame interval for performance measurement")
+    return {"route": route, "wall_seconds": elapsed, "measured_vblanks": frames,
+            "guest_vblanks_per_second": frames / elapsed,
+            "frame_read_uncertainty_seconds": ((t1 - t0) + (t3 - t2)) / 2}
+
+
 def compare(probe, frames=700, reverse=False):
     if frames < 600:
         raise ValueError("Allow the 256-present performance ring to replace its prior samples")
@@ -25,13 +45,9 @@ def compare(probe, frames=700, reverse=False):
         state, player = probe.state(), probe.player()
         if state["equipped"] != equipped or player["mode"] != 1 or player["air"]:
             raise RuntimeError(f"{label} fixture is not quiet grounded gameplay")
-        start = time.monotonic()
-        route = probe.wait_frames(frames)
-        elapsed = time.monotonic() - start
+        measurement = measure_route(probe, [(frames, 0)])
         report["cases"].append({"form": label, "player": player,
-                                "wall_seconds": elapsed,
-                                "guest_vblanks_per_second": frames/elapsed,
-                                "route": route, "perf": probe.call("frame_perf"),
+                                **measurement, "perf": probe.call("frame_perf"),
                                 "native": probe.call("overlay_loader_status")})
     if report["cases"][0]["player"]["position"] != report["cases"][1]["player"]["position"]:
         raise RuntimeError("Fixture positions differ; comparison is not matched")

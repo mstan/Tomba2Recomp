@@ -2,6 +2,7 @@
 #include "cpu_state.h"
 #include "mario/smash_assets.h"
 #include "mario/pcm_voice.h"
+#include "mario/voice_cues.h"
 #include "mario/presentation.h"
 
 #include <algorithm>
@@ -51,7 +52,8 @@ void mix_voice(int16_t* stereo,uint32_t frames) {
     if(clip==voices.end())return;
     const auto& bytes=clip->second;
     VoicePosition position{state(VoiceCursor),state(VoiceFraction)};
-    auto mixed=mix_pcm_voice(bytes.data(),bytes.size(),stereo,frames,position);
+    auto mixed=mix_pcm_voice(bytes.data(),bytes.size(),stereo,frames,position,
+                             voice_sample_rate(state(Voice)));
     state(VoiceCursor,position.cursor);state(VoiceFraction,position.fraction);
     if(mixed.finished)state(Voice,0);
     psx_mod_counter_add("tomba2.mario.voice_frames",mixed.frames);
@@ -220,11 +222,15 @@ void costume_toast(CPUState* cpu,uint32_t) {
 }
 int player_sound(CPUState* cpu,uint32_t) {
     if(!ready() || !state(Equipped))return 0;
-    uint32_t caller=cpu->gpr[31]&0x1fffffff;
-    if((cpu->gpr[4]&255)==0x1d && caller>=0x53000 && caller<0x68000) {
-        cpu->gpr[2]=0;return 1;
-    }
-    return 0;
+    uint8_t sound=uint8_t(cpu->gpr[4]);
+    // High-bit sounds belong to the current area's bank, not the common
+    // Tomba vocal table. Do not silence an unrelated area/NPC effect.
+    if(sound>=0x70)return 0;
+    uint32_t replacement=native_voice_replacement(sound,rb(0x800a4d18+sound*8));
+    if(!replacement)return 0;
+    play_voice(replacement);
+    psx_mod_counter_add("tomba2.mario.native_voice_replaced",1);
+    cpu->gpr[2]=0;return 1;
 }
 
 uint32_t action_clip() {
@@ -248,13 +254,9 @@ void player_tick(CPUState* cpu,uint32_t) {
     if(!state(Equipped))return;
     if(rb(player+0x6f)!=0) {state(Equipped,0);state(Requested,0);return;}
     unsigned action=rb(player+5);
-    if(action!=state(PreviousAction)) {
-        if(action==5 || action==6)play_voice(429);
-        else if(action==3)play_voice(438);
-        else if(action>=7 && action<=9)play_voice(440);
-        state(PreviousAction,action);
-    }
-    if(action==2 && rb(player+0x145)==1 && !state(PreviousAir))play_voice(435);
+    // Native vocal events choose their replacement in player_sound. Do not
+    // restart that voice a second time just because an action byte changed.
+    state(PreviousAction,action);
     state(PreviousAir,rb(player+0x145));
     // +0x145 is the native air phase (zero after landing). +0x29 is not a
     // grounded flag: it remains zero during ordinary idle/walking here.
@@ -293,15 +295,18 @@ void weapon_spawn(CPUState* cpu,uint32_t) {
 }
 void fist_position(uint32_t actor) {
     float heading=float(rh(player+0x56)&4095)*6.28318530718f/4096;
-    // One native player body width forward, at Mario's punching hand height.
-    ww(actor+0x2c,rw(player+0x2c)+uint32_t(int32_t(std::cos(heading)*72*65536)));
+    // Native horizontal half/full widths are +0x80/+0x82 (6ACAC initializes
+    // ordinary weapons to 50/100). +0x76 is weapon-private state, not radius.
+    // 88 + 64 = 152 forward units versus the old 72 + 50 = 122, with nearly
+    // identical close overlap. Keep vertical bounds and native damage rules.
+    wh(actor+0x80,64);wh(actor+0x82,128);
+    ww(actor+0x2c,rw(player+0x2c)+uint32_t(int32_t(std::cos(heading)*88*65536)));
     ww(actor+0x30,rw(player+0x30)-16*65536);
-    ww(actor+0x34,rw(player+0x34)+uint32_t(int32_t(std::sin(heading)*72*65536)));
+    ww(actor+0x34,rw(player+0x34)+uint32_t(int32_t(std::sin(heading)*88*65536)));
 }
 void punch_collision(CPUState* cpu,uint32_t) {
     if(!ready() || !weapon_record(cpu->gpr[4]))return;
     fist_position(cpu->gpr[4]);
-    wh(cpu->gpr[4]+0x76,std::min<uint16_t>(rh(cpu->gpr[4]+0x76),40));
     psx_mod_counter_add("tomba2.mario.punch_collision",1);
 }
 int punch_weapon(CPUState* cpu,uint32_t address) {
@@ -331,7 +336,6 @@ int punch_weapon(CPUState* cpu,uint32_t address) {
             fist_position(actor);
             bool active=!hammer || (rb(actor+5)==1 && rb(actor+6)>=3);
             if(active) {wb(actor,1);++age;}
-            wh(actor+0x76,std::min<uint16_t>(rh(actor+0x76),40));
         }
         wb(actor+1,0);ww(entry+4,((lifetime+1)<<16)|age);
     }
@@ -363,7 +367,8 @@ PoseBones presentation_bones() {
     return bones;
 }
 Matrix player_world() {
-    return mario_world(rh(player+0x56),{float(int32_t(rw(player+0x2c)))/65536,
+    return mario_world(presentation_heading(rh(player+0x56),rb(player+4),rb(player+5)),
+        {float(int32_t(rw(player+0x2c)))/65536,
         float(int32_t(rw(player+0x30)))/65536,float(int32_t(rw(player+0x34)))/65536});
 }
 int draw_captured(CPUState* cpu,uint32_t address) {

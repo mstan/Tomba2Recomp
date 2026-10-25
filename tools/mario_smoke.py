@@ -80,10 +80,13 @@ def run(probe, output, tomba_slot, mario_slot, scratch_slot):
         probe.screenshot(output / "mario-gameplay.png")
         probe.savestate("save", mario_slot)
         jumps = count("tomba2.mario.double_jump")
+        native_voices = count("tomba2.mario.native_voice_replaced")
         probe.tap(0x4000, release=6)
         first = observe("first jump")
         check("first jump follows native airborne state", first["player"]["air"] != 0 and
               first["state"]["double_jump"] == 0)
+        check("native Tomba jump vocal is replaced through its real sound event",
+              count("tomba2.mario.native_voice_replaced") > native_voices)
         probe.tap(0x4000, release=4)
         second = observe("second jump")
         check("second jump applies upward velocity once", second["state"]["double_jump"] == 1 and

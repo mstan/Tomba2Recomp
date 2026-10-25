@@ -52,6 +52,11 @@ inline Matrix mario_world(uint16_t heading,Vec3 position) {
              {0,-0.72f,0,position.y+128},
              {-s*0.72f,0,c*0.72f,position.z}}};
 }
+inline uint16_t presentation_heading(uint16_t heading,uint8_t mode,uint8_t action) {
+    // The native costume sequence turns its model to the camera using its
+    // opposite bind-facing convention. Keep that turn, but show Mario's face.
+    return uint16_t((heading+(mode==4 && action==0x11?2048:0))&4095);
+}
 inline void raise_capture_arms(PoseBones& bones) {
     // Rigidly raise the imported arm chains around their shoulders. Preserve
     // all source segment lengths and elbow/hand articulation. These are

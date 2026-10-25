@@ -369,6 +369,63 @@ The temporary r15–r18 offline pose-probe source, executable, raw exported mesh
 pose JSON and contact images were audited and removed after the presentation
 checks; no new bulk scratch remains outside the retained build/evidence trees.
 
+## Owner feedback and gated r23 playtests
+
+R23 corrects costume-transformation facing, extends the fist's forward native
+collision extent from 122 to 152 units, and restores the imported voices' source
+pitch and duration. Smash FGM 429..441 selects tables 296..308; their first pitch
+commands lower the raw waveforms by approximately an octave. The previous mixer
+ignored that articulation. Common Tomba vocal events now choose Mario cues at
+the native sound wrapper instead of adding a second voice from action changes.
+See `MARIOS_HAT_CHECKPOINT.md` for exact fields, rates and current evidence paths.
+
+R23 passes 22 broad gameplay checks, 30 real interaction checks, native asset/PCM
+tests and Python gate tests. A matched input route demonstrates a newly reachable
+pig hit while distant punches still miss. Resolve that target by native handler
+and authored coordinates: actor-pool addresses change after Continue/reloads.
+
+The new playtest tool prevents a repeat of a stale/incomplete shard handoff:
+
+1. `prepare` rebuilds the verified original-disc recipes with the supported
+   framework pipeline and stages its audit with the matching cache namespace.
+2. `qualify` verifies every audited artifact, proves runtime page/orphan additions
+   against bounded original-disc bytes, binds the debug port to the actual hidden
+   executable, and measures standing and movement with private fixtures. It
+   requires >=57 VBlanks/s, >99% native dispatch, no misses, live Mario gameplay
+   and no artifact changes during the measurement.
+3. `launch` accepts only a passing report for the exact executable, configuration,
+   tool and cache. It opens a normal window with normal audio and private cards.
+
+Use Python 3.11+ and native Windows GCC. Example qualification/handoff after a
+hidden, muted QA process is running on 4598 with current-build slots 7/8/10:
+
+```powershell
+$py = 'C:\Users\Matthew\AppData\Local\Programs\Python\Python312\python.exe'
+$qa = 'G:\Temp\Codex\psxrecomp\tomba2-mario-feedback-20261024\qa'
+& $py tools/mario_playtest_gate.py qualify --exe "$qa\Tomba2MarioCandidate.exe" `
+  --inventory build-mario-aot/disc-aot-5gv1i6ou/runtime-input-inventory.json `
+  --qualification "$qa\PLAYTEST_QUALIFICATION.json" --port 4598
+# Stop that automated process before the owner-facing launch:
+& $py tools/mario_playtest_gate.py launch --exe "$qa\Tomba2MarioCandidate.exe" `
+  --qualification "$qa\PLAYTEST_QUALIFICATION.json" --cards "$qa\cards" --port 4598
+```
+
+The first cold movement qualification correctly failed (54.92 Hz plus new cache
+files). With the additions retained and independently checked, a fresh process
+passed at 59.57/59.50 Hz standing as Tomba/Mario and 58.79 Hz moving. The cache
+remained stable and native dispatch exceeded 99.9%. These are village-route
+measurements at the current profile; they do not establish every area's
+performance or release readiness. Never rename an old namespace to satisfy the
+gate. A new binary/configuration/cache requires new qualification.
+
+The final timing code queues debug inputs before measuring and uses actual
+guest-frame progress between midpoint-timed counter reads. Earlier movement
+rates included the setup time for 24 input RPCs and understated throughput.
+The corrected final gate passes at **59.99/60.03 Hz** standing as Tomba/Mario
+and **58.63 Hz** moving; its exact-identity report is
+`qa/PLAYTEST_QUALIFICATION.json`. The 54 compile logs are retained, while roughly
+1 GB of disposable compiler jobs and duplicate caches has been removed.
+
 ## US reverse-engineering notes
 
 Addresses below were checked against live US SCUS-94454 instructions/data.

@@ -29,7 +29,7 @@ def cached_voice(path, voice=437):
     raise ValueError("Voice is absent from cache")
 
 
-def expected_pcm(source):
+def expected_pcm(source, source_rate=16009):
     # Independent explicit arithmetic, including C++ division toward zero.
     def divide(a, b):
         return a//b if a >= 0 else -((-a)//b)
@@ -40,7 +40,7 @@ def expected_pcm(source):
         value = a + divide((b-a)*fraction, 44100)
         fade = min(128, cursor, len(source)-1-cursor)
         samples.append(divide(value*fade*3, 128*4))
-        fraction += 32000
+        fraction += source_rate
         cursor += fraction//44100
         fraction %= 44100
     return np.asarray(samples, dtype=np.float64)

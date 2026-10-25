@@ -15,8 +15,19 @@ from mario_probe import Probe
 
 
 PLAYER = 0x800e7e80
-PIG = 0x800fd430
 PIG_HANDLER = 0x80145230
+
+
+def find_post_pig(probe):
+    # Actor-pool addresses change after Continue/native loads. Identify the
+    # actual first post pig by its native handler AND authored path position;
+    # another pig can occupy the old address with the same handler.
+    matches = [a for a in probe.actors() if a["handler"] == PIG_HANDLER and
+               a["position"][0] == 6190 * 65536 and
+               abs(a["position"][2] - 3968 * 65536) < 32 * 65536]
+    if len(matches) != 1:
+        raise RuntimeError("Expected exactly one authored first-post pig")
+    return matches[0]["address"]
 
 
 def actor(data):
@@ -56,7 +67,7 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
                 return bytes.fromhex(probe.call("read_frame_ram", frame=frame,
                                                addr=hex(address), len=128)["hex"])
             rows.append({"frame": frame, "player": actor(read(PLAYER)),
-                         "pig": actor(read(PIG))})
+                         "pig": actor(read(pig_address))})
         after = counters()
         result = {"label": label, "receipt": receipt, "frames": rows,
                   "counter_delta": {k: v - before.get(k, 0) for k, v in after.items()
@@ -69,7 +80,7 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
         probe.savestate("load", slot)
         probe.wait_frames(8)
         check("fixture has Mario equipped", probe.state()["equipped"] == 1)
-        pig = actor(probe.ram(PIG, 128))
+        pig = actor(probe.ram(pig_address, 128))
         check("verified post-pig identity and initial state", pig["handler"] == PIG_HANDLER
               and pig["mode"] == 1 and pig["action"] == 0)
 
@@ -79,8 +90,12 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
 
     try:
         probe.wait_game_ready()
+        probe.savestate("load", mario_slot)
+        probe.wait_frames(8)
+        pig_address = find_post_pig(probe)
+        report["pig_address"] = hex(pig_address)
         snapshots = probe.call("get_snapshots")["snapshots"]
-        for slot, address in enumerate((PLAYER, PIG)):
+        for slot, address in enumerate((PLAYER, pig_address)):
             probe.call("set_snapshot", slot=slot, addr=hex(address))
         restore(mario_slot)
         check("fixture starts outside Fisherman's house", all(abs(a-b) < 64*65536
@@ -150,7 +165,7 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
                 break
         check("bounded native input route reaches capture", capture is not None)
         check("real jump enters native capture and links the pig", any(
-            row["player"]["action"] == 3 and row["player"]["link"] == PIG
+            row["player"]["action"] == 3 and row["player"]["link"] == pig_address
             and row["pig"]["mode"] == 2 and row["pig"]["action"] == 1
             for row in capture["frames"]))
         check("native capture settles while Mario remains equipped",
@@ -161,12 +176,12 @@ def run(probe, output, mario_slot, near_slot, capture_slot, weapon=0):
         probe.wait_frames(8)
         restored = actor(probe.ram(PLAYER, 128))
         check("current-build load restores the real capture link", restored["action"] == 3
-              and restored["link"] == PIG and probe.state()["equipped"] == 1)
+              and restored["link"] == pig_address and probe.state()["equipped"] == 1)
         probe.screenshot(output / "capture-restored.png")
         held = trace("capture-hold", [(36, 0)])
         check("native capture holds without input", all(
             row["player"]["action"] == 3 and row["player"]["phase"] == 2
-            and row["player"]["link"] == PIG and row["pig"]["mode"] == 2
+            and row["player"]["link"] == pig_address and row["pig"]["mode"] == 2
             and row["pig"]["action"] == 1 for row in held["frames"]))
         check("overhead model rendering actually ran", held["counter_delta"].get(
             "tomba2.mario.overhead_draw", 0) > 0)

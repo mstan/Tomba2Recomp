@@ -8,12 +8,13 @@ namespace tomba2::mario {
 struct VoicePosition {uint32_t cursor=0,fraction=0;};
 struct VoiceMix {uint32_t frames=0;bool finished=false;};
 
-// 32 kHz signed little-endian mono -> 44.1 kHz stereo. All mutable state is
+// Source-rate signed little-endian mono -> 44.1 kHz stereo. All mutable state is
 // explicit so guest-memory save/load, rewind and rollback resume identically.
 inline VoiceMix mix_pcm_voice(const uint8_t* pcm,size_t bytes,int16_t* stereo,
-                              uint32_t frames,VoicePosition& position) {
+                              uint32_t frames,VoicePosition& position,uint32_t source_rate=32000) {
     if(!pcm || bytes%2 || bytes/2>std::numeric_limits<uint32_t>::max() ||
-       position.fraction>=44100 || position.cursor>=bytes/2)return {0,true};
+       !source_rate || source_rate>192000 || position.fraction>=44100 ||
+       position.cursor>=bytes/2)return {0,true};
     if(!stereo || !frames)return {};
     uint32_t count=uint32_t(bytes/2),mixed=0;
     auto sample=[&](uint32_t i) {
@@ -27,7 +28,7 @@ inline VoiceMix mix_pcm_voice(const uint8_t* pcm,size_t bytes,int16_t* stereo,
         value=int32_t(int64_t(value)*fade*3/(128*4));
         for(unsigned ch=0;ch<2;++ch)
             stereo[f*2+ch]=int16_t(std::clamp(int32_t(stereo[f*2+ch])+value,-32768,32767));
-        position.fraction+=32000;
+        position.fraction+=source_rate;
         position.cursor+=position.fraction/44100;position.fraction%=44100;
         ++mixed;
     }

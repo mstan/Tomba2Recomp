@@ -8,6 +8,69 @@ See the latest title commit for the final culling/clearance fix. Nested framewor
 `mod/tomba2-marios-hat`, snapshot fix `9e4cf574`. Both were clean on resume.
 Read `MARIOS_HAT.md` for design, build commands, completed checks and open gates.
 
+## Current owner-feedback build: r23
+
+The owner finished the r21 playtest; its window is closed. The active follow-up
+addresses lag, backwards costume transformation, short punches, high/fast Mario
+voices and surviving Tomba vocals. Work remains solo, with no import UI requested.
+
+`build-mario/Tomba2MarioCandidate.exe` is the new build (SHA-256
+`6eeb99f20e136399230f3473fabc2de75b2b8c7dd7f755ddc1bba3967d3310bd`).
+The old `Tomba2Mario.exe` is preserved. The private playable runtime and evidence
+are under `G:/Temp/Codex/psxrecomp/tomba2-mario-feedback-20261024/qa` and its
+parent. Its copied cards are separate from the owner's earlier private cards;
+never copy these fixtures back over the earlier cards.
+
+Changes and completed checks:
+
+- Apply a half-turn only to native mode 4/action 0x11 costume presentation.
+  The unequip screenshot clearly shows Mario's face; equip has the same native
+  state, but the captured frame is obscured by the transformation flare.
+- Punch horizontal half/full widths are **actor +0x80/+0x82 = 64/128**;
+  forward offset is 88. Old extent was 72+50=122; new extent is 88+64=152.
+  **+0x76 is weapon-private state, not a hitbox radius.** The matched native pig
+  route now hits at pretravel 8 where the old build misses; distant misses and
+  ordinary native target handling remain intact.
+- Apply Smash's actual FGM source pitch commands to the raw imported PCM:
+  mostly -1199 cents, yielding 16009 Hz from the 32000 Hz synthesizer.
+  Voice 430 uses 16280 Hz; 435 uses 16374 Hz. Audio capture correlation is 0.869
+  against independently decoded/resampled source audio. Keep WAVs private.
+- Replace the common Tomba vocal band (group 1, sound 0x1d..0x37), including
+  death/hurt/effort cues; ordinary effects and area/NPC banks pass through.
+  Remove duplicate action-byte voice triggers. A real native jump proves the
+  replacement hook is exercised.
+- R23 broad gameplay: **22/22**; real interaction suite: **30/30**. Asset/PCM
+  tests and Python gate refusal tests pass. No unknown dispatches were recorded.
+
+All 54 verified original-disc recipes (29 images) were rebuilt for the final
+`cg18_05391a69_gcacf1fd28_f2` namespace: 81 audited pairs, 14619 manifest rows.
+The offline inventory remains `build-mario-aot/disc-aot-5gv1i6ou/` and must be
+preserved. Fourteen runtime page/orphan additions also match the original recipe
+bytes; the offline auditor alone rejects their different page bases, so the
+playtest tool separately checks their bounded function guards.
+
+`tools/mario_playtest_gate.py` has prepare/qualify/launch actions. Qualification
+requires the full audited shard set, a hidden runtime with isolated cards, native
+dispatch coverage, no dispatch misses, >=57 VBlanks/s standing and moving, and
+unchanged executable/config/tool/cache identities. Launch refuses missing, stale
+or failed qualification. Do not weaken its threshold or rename cache namespaces.
+
+The first cold movement run failed at 54.92 Hz and generated extra shards;
+its failure is retained. After those original-byte-verified additions were
+staged, a **fresh process restart** passed: Tomba/Mario standing 59.57/59.50 Hz,
+movement 58.79 Hz, stable cache and no misses. This qualifies the measured village
+route only; broader stages, rewind/audio and release packaging remain open.
+The final gate also fixes a measurement defect: queueing 24 debug input steps
+was previously included in movement wall time. It now queues first and measures
+actual guest-frame progress between midpoint-timed frame-counter reads. Final
+qualification passes at **59.99/60.03 Hz** standing and **58.63 Hz** moving.
+Use `qa/PLAYTEST_QUALIFICATION.json` for this final gated handoff.
+
+Retain the playable `qa` directory, useful reports/captures, original extraction
+and private asset cache for feedback. The 54 compile logs are retained compactly;
+compile-job scratch and duplicate staged caches were audited and removed
+(about 1 GB). Preserve all native cards. The earlier r21 handoff below is historical.
+
 ## Latest continuation: basic checks and owner handoff
 
 Recovered session `01a16ff8-ba29-74e3-b816-76eb9a46503d`, including the final
