@@ -1,3 +1,11 @@
+# Tomba! 2 v0.3.1 - Widescreen menus and fishing line
+
+- Pause and journal menus use their authored 4:3 aspect immediately, including
+  when restoring a current-build snapshot with the pause menu open.
+- The Fisherman's Village bucket stays attached to its fishing line in
+  widescreen. Background expansion no longer stretches world line segments.
+- Checked on a fresh US new game at 4:3, 16:9, 21:9 and adaptive window sizes.
+
 # Tomba! 2 v0.3.0 - Experimental Mario's Hat
 
 The US Windows preview adds optional **Mario's Hat, EXPERIMENTAL 0.0.1**.
