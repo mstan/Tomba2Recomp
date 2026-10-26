@@ -1,6 +1,7 @@
 #include "mod_plugins.h"
 #include "cpu_state.h"
 #include "gte_nclip_stats.h"
+#include "gpu.h"
 
 /*
  * Projection, backdrop, overlay-cull, and resident-object participation hooks
@@ -13,6 +14,19 @@ static uint32_t tomba2_packet_arena;
 static uint32_t tomba2_packet_peak;
 extern void tomba2_terrain_visibility_activate(void);
 extern void tomba2_actor_queue_activate(void);
+
+static int tomba2_native_menu_scene(void) {
+    /* MAIN.EXE reads this scratchpad byte at 8003BB50/54. The game sets 1
+     * for Pause and 2 for the journal/inventory, and clears it on return.
+     * These screens need their authored aspect immediately, rather than
+     * waiting for the generic GTE-activity grace period to expire. Qualify
+     * the US consumer so boot and unrelated overlays cannot supply a flag. */
+    if (psx_mod_read_word(0x8003BB50u) != 0x3C021F80u ||
+        psx_mod_read_word(0x8003BB54u) != 0x90420136u)
+        return 0;
+    const uint32_t mode = psx_mod_read_byte(0x1F800136u);
+    return mode == 1u || mode == 2u;
+}
 
 int tomba2_widescreen_packet_room(uint32_t bytes) {
     if (!tomba2_packet_arena || psx_mod_widescreen_view_x_margin() <= 0)
@@ -118,6 +132,7 @@ static void tomba2_register_far_model_sites(const char *plugin) {
 }
 
 static void tomba2_native_projection_activate(void) {
+    gpu_ws_set_native_scene_predicate(tomba2_native_menu_scene);
     /* Only the two audited terrain consumers may recover a positive face
      * whose integer area rounded to zero. Model winding stays architectural;
      * the shared runtime also verifies the complete word and GTE provenance. */
