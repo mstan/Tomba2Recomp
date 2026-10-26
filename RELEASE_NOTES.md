@@ -1,9 +1,18 @@
+# Tomba! 2 v0.3.2 - High-resolution fishing line alignment
+
+- Fixes the remaining string offset above the Fisherman's Village bucket at
+  higher internal resolutions. Expanded line segments now start a world draw
+  batch instead of inheriting the previous background batch's stretch.
+- Reproduced from the owner's slot 01 and checked at 4:3, 16:9, 21:9 and
+  adaptive window sizes, including camera movement and current-build save/load.
+- Retains the immediate 4:3 pause and journal presentation from v0.3.1.
+
 # Tomba! 2 v0.3.1 - Widescreen menus and fishing line
 
 - Pause and journal menus use their authored 4:3 aspect immediately, including
   when restoring a current-build snapshot with the pause menu open.
-- The Fisherman's Village bucket stays attached to its fishing line in
-  widescreen. Background expansion no longer stretches world line segments.
+- Background expansion no longer classifies world line segments as backdrops.
+  The remaining high-resolution batch-state offset is fixed in v0.3.2.
 - Checked on a fresh US new game at 4:3, 16:9, 21:9 and adaptive window sizes.
 
 # Tomba! 2 v0.3.0 - Experimental Mario's Hat
