@@ -122,6 +122,22 @@ tomba2_add_loading_implementation(psx-runtime)
 tomba2_add_terrain_implementation(psx-runtime)
 
 if(BUILD_TESTING)
+    add_executable(tomba2_widescreen_menu_test tests/test_widescreen_menu.c)
+    target_include_directories(tomba2_widescreen_menu_test PRIVATE
+        "${PSXRECOMP_ROOT}/runtime/include")
+    if(MSVC)
+        target_compile_options(tomba2_widescreen_menu_test PRIVATE /Gy)
+        target_link_options(tomba2_widescreen_menu_test PRIVATE /OPT:REF)
+    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(tomba2_widescreen_menu_test PRIVATE
+            -ffunction-sections -fdata-sections)
+        if(APPLE)
+            target_link_options(tomba2_widescreen_menu_test PRIVATE -Wl,-dead_strip)
+        else()
+            target_link_options(tomba2_widescreen_menu_test PRIVATE -Wl,--gc-sections)
+        endif()
+    endif()
+    add_test(NAME tomba2_widescreen_menu_test COMMAND tomba2_widescreen_menu_test)
     add_executable(tomba2_seamless_prepare_test
         tests/test_seamless_prepare.cpp
         src/mods/tomba2_seamless_prepare.cpp
