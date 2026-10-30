@@ -8,6 +8,8 @@ This build includes the combined qualified engine optimizations and uses the sha
 
 Automated gameplay validation for this release batch is limited to Ape Escape and Tomba 2. The other titles use build and package checks followed by owner visual approval; no per-title performance gain is claimed.
 
+# Tomba! 2 v0.3.2 - High-resolution fishing line alignment
+
 - Fixes the remaining string offset above the Fisherman's Village bucket at
   higher internal resolutions. Expanded line segments now start a world draw
   batch instead of inheriting the previous background batch's stretch.
