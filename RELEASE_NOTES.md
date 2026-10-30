@@ -1,4 +1,12 @@
-# Tomba! 2 v0.3.2 - High-resolution fishing line alignment
+# Tomba! 2 - The Evil Swine Return release notes
+
+## v0.3.3 — shared optimization release
+
+Fresh settings enable Internal Resolution at 4x. The Mods selector offers 1x through 32x; saved choices are preserved, and GPU texture and memory limits still apply. Disabling the mod selects native resolution.
+
+This build includes the combined qualified engine optimizations and uses the shared release pipeline with selective runtime PGO. CD Speed and Fast Loading packages are excluded. Existing memory cards remain supported.
+
+Automated gameplay validation for this release batch is limited to Ape Escape and Tomba 2. The other titles use build and package checks followed by owner visual approval; no per-title performance gain is claimed.
 
 - Fixes the remaining string offset above the Fisherman's Village bucket at
   higher internal resolutions. Expanded line segments now start a world draw
