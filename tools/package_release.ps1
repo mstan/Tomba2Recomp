@@ -306,6 +306,7 @@ Invoke-Native {
 } "execution identity staging"
 Copy-FileInto (Join-Path $Root "README.md") $Stage
 Copy-FileInto (Join-Path $Root "LICENSE") $Stage
+Copy-FileInto (Join-Path $Root "PERMISSIONS.md") $Stage
 $StartHere = if ($Variant -eq 'ita') { 'START_HERE_ITA.txt' } else { 'START_HERE.txt' }
 Copy-FileTo (Join-Path $PackagingRelease $StartHere) (Join-Path $Stage 'START_HERE.txt')
 $BundledBiosSrc = Join-Path $BuildPath "bios"

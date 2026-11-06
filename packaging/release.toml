@@ -30,7 +30,7 @@ ship = true
 
 [payload]
 start_here = "packaging/release/START_HERE.txt"
-files = ["README.md", "LICENSE", "RELEASE_NOTES.md",
+files = ["README.md", "LICENSE", "PERMISSIONS.md", "RELEASE_NOTES.md",
   {from = "packaging/release/input.ini", to = "input.ini"}]
 
 [[hooks.post_stage]]
