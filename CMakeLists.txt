@@ -167,6 +167,8 @@ if(BUILD_TESTING)
     )
 endif()
 
+option(TOMBA2_BUILD_ITALIAN_RUNTIME "Build the Italian PAL runtime target" ON)
+if(TOMBA2_BUILD_ITALIAN_RUNTIME)
 # ---------------------------------------------------------------------------
 # Italian PAL release (Tombi! 2 - The Evil Swine Return, SCES-02686).
 # Same runtime, same mod plugins; only the game image differs. The recompiler
@@ -213,3 +215,5 @@ recomp_target_launcher_language(psx-runtime-ita it)
 # mods/preloaded_ita to the framework, which wipes mods/bundled and stages
 # exactly the Italian catalog for this target. The US packages that the old
 # hand-written rm -rf list stripped can no longer be present at all.)
+
+endif()
