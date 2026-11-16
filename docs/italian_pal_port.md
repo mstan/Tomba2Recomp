@@ -236,7 +236,6 @@ The Italian release stages a separate localized preloaded catalog from
 user-facing enhancements:
 
 * `tombi2.enhancement.widescreen`
-* `tombi2.experimental.interpolated-frame-rate`
 * `tombi2.enhancement.skip-fmvs`
 
 Each Italian package declares the SCES-02686 target:
@@ -246,8 +245,10 @@ game_id = "SCES-02686"
 disc_sha256 = "b9c8ff05f265f2ec359bc559b0731109de15c0a0d0d036b0da23ddbf98a19188"
 ```
 The test suite in `tests/test_preloaded_mods.cpp` validates declarative
-resolution for the 4 US packages in `mods/preloaded` and the 3 localized
-Italian packages in `mods/preloaded_ita`. The Italian target intentionally has
+resolution for the 5 US packages in `mods/preloaded` and the 4 localized
+Italian packages in `mods/preloaded_ita`, and verifies that neither catalog
+ships the retired frame-blending control. Presentation keeps the original game
+cadence. The Italian target intentionally has
 no Debug Menu package until its PAL hook and signature addresses are mapped and
 validated.
 

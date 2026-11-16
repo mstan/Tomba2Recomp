@@ -80,13 +80,6 @@ int register_plugins() {
              "tomba2.widescreen.16-9",
              "tomba2.widescreen.21-9",
              "tomba2.widescreen.adaptive",
-             "tomba2.framerate.display",
-             "tomba2.framerate.60",
-             "tomba2.framerate.90",
-             "tomba2.framerate.120",
-             "tomba2.framerate.144",
-             "tomba2.framerate.165",
-             "tomba2.framerate.240",
              "tomba2.fmv.skip",
              "tomba2.seamless",
              "psx.pgxp",
@@ -138,41 +131,6 @@ int check_widescreen(PSXRecompV4::ModPackageManager& manager,
             return 1;
     }
     if (!manager.set_feature_enabled(package_id, "widescreen", false, &error)) {
-        return fail(error);
-    }
-    return 0;
-}
-
-int check_frame_rate(PSXRecompV4::ModPackageManager& manager,
-                     const char* package_id, const char* game_id,
-                     const char* disc_sha256, const char* label) {
-    std::string error;
-    if (!manager.set_feature_enabled(
-            package_id, "interpolated-frame-rate", true, &error)) {
-        return fail(error);
-    }
-    for (const auto& [choice, plugin] :
-         {std::pair{"display", "tomba2.framerate.display"},
-          std::pair{"60", "tomba2.framerate.60"},
-          std::pair{"90", "tomba2.framerate.90"},
-          std::pair{"120", "tomba2.framerate.120"},
-          std::pair{"144", "tomba2.framerate.144"},
-          std::pair{"165", "tomba2.framerate.165"},
-          std::pair{"240", "tomba2.framerate.240"}}) {
-        if (!manager.set_feature_option(
-                package_id, "interpolated-frame-rate", "rate", choice,
-                &error)) {
-            return fail(error);
-        }
-        const auto plan = manager.resolve(game_id, "", disc_sha256);
-        if (expect_single_plugin(
-                plan, plugin,
-                std::string("wrong ") + label +
-                    " interpolated frame-rate plan for " + choice) != 0)
-            return 1;
-    }
-    if (!manager.set_feature_enabled(
-            package_id, "interpolated-frame-rate", false, &error)) {
         return fail(error);
     }
     return 0;
@@ -278,7 +236,7 @@ int main(int argc, char** argv) {
         return 1;
 
     PSXRecompV4::ModPackageManager ita_manager;
-    if (load_catalog(ita_root, ita_manager, 5, 5) != 0) return 1;
+    if (load_catalog(ita_root, ita_manager, 4, 4) != 0) return 1;
     if (ita_manager.packages().find(kUsDebugMenuPackage) !=
         ita_manager.packages().end()) {
         return fail("Italian catalog must not include Debug Menu");
@@ -289,9 +247,8 @@ int main(int argc, char** argv) {
     if (check_widescreen(ita_manager, kItaWidescreenPackage, kItaGameId,
                          kItaDiscSha256, "Italian") != 0)
         return 1;
-    if (check_frame_rate(ita_manager, kItaFrameRatePackage, kItaGameId,
-                         kItaDiscSha256, "Italian") != 0)
-        return 1;
+    if (ita_manager.selected_package(kItaFrameRatePackage))
+        return fail("Italian catalog must not ship the retired frame-rate package");
     if (check_skip_fmvs(ita_manager, kItaSkipFmvsPackage, kItaGameId,
                         kItaDiscSha256, "Italian") != 0)
         return 1;
@@ -299,9 +256,8 @@ int main(int argc, char** argv) {
     fs::remove_all(us_root, ec);
     fs::remove_all(ita_root, ec);
     std::cout << "Tomba 2 preloaded mods: 5 US packages, Experimental Mario 0.0.1 with required ROM, resident loading opt-out, "
-                 "5 localized Italian packages, no bundled debug menu, "
-                 "3 widescreen choices, 7 interpolated frame-rate choices, "
-                 "motion-adaptive clarity blend, game-owned FMV skipping, "
+                 "4 localized Italian packages, no bundled debug menu, "
+                 "3 widescreen choices, original frame cadence, game-owned FMV skipping, "
                  "stock guest code untouched\n";
     return 0;
 }

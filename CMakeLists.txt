@@ -66,7 +66,7 @@ endif()
 # Tomba 2's trusted, game-owned mod catalogs. The authentic 4:3/non-interpolated
 # presentation and stock guest code remain the disabled baseline. The Italian
 # runtime ships a SEPARATE localized catalog: Italian psx.* manifests that
-# override the framework's English ones at the same id and version, the three
+# override the framework's English ones at the same id and version, the two
 # tombi2.* packages, and deliberately NO tomba2.debug.debug-menu (its payload is
 # US-layout-specific).
 #
