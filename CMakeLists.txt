@@ -210,6 +210,7 @@ psxrecomp_add_runtime_target(psx-runtime-ita
 
 set_target_properties(psx-runtime-ita PROPERTIES OUTPUT_NAME
     "${_tomba2_ita_exe_name}")
+psxrecomp_add_playtest_diagnostics(psx-runtime-ita GAME_ID SCES-02686 MOD_ID tomba2.diagnostics)
 tomba2_add_loading_implementation(psx-runtime-ita)
 tomba2_add_terrain_implementation(psx-runtime-ita)
 
