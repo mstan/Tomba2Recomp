@@ -118,6 +118,10 @@ psxrecomp_add_runtime_target(psx-runtime
 
 # Distinct process name (see comment above).
 set_target_properties(psx-runtime PROPERTIES OUTPUT_NAME "${_tomba2_exe_name}")
+# Independent visible Mods controls; the shared recorder honors saved choices.
+include("${PSXRECOMP_ROOT}/runtime/playtest_diagnostics.cmake")
+psxrecomp_add_playtest_diagnostics(psx-runtime GAME_ID SCUS-94454 MOD_ID tomba2.diagnostics)
+
 tomba2_add_loading_implementation(psx-runtime)
 tomba2_add_terrain_implementation(psx-runtime)
 
