@@ -371,6 +371,7 @@ Invoke-Native {
         --runtime-config (Join-Path $Stage $GameConfigName) --recompiler $RecompBin `
         --runtime-build-dir $BuildPath --runtime-target $RuntimeTarget `
         --work-dir (Join-Path $BuildPath 'aot-release') --stage $Stage `
+        --compiler-cache (Join-Path $Root 'tools/_toolchain_cache/aot') `
         --gcc (Join-Path $MingwBin 'gcc.exe') --workers ([Math]::Min(2, $Jobs))
 } 'original-disc AOT extraction, complete inventory build and audit'
 Add-OverlayToolchain -Stage $Stage -RecompDir $RecompDir -RecompTools $RecompTools `
