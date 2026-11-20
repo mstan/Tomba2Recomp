@@ -438,6 +438,7 @@ fi
     --runtime-config "$player_toml" --recompiler "$recompiler_bin" \
     --runtime-build-dir "$build_dir" --runtime-target "$runtime_target" \
     --work-dir "$build_dir/aot-release" --stage "$payload" \
+    --compiler-cache "$root/tools/_toolchain_cache/aot" \
     --gcc "${AOT_GCC:-gcc}" --workers "${AOT_WORKERS:-3}"
 
 # The self-contained overlay toolchain: a pinned relocatable CPython plus

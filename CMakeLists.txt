@@ -91,6 +91,9 @@ set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
 # Keep framework presentation controls available as new ones are added.
 # Generic loading/pacing controls are excluded from every release.
 psxrecomp_add_runtime_target(psx-runtime
+    # USA XA playback waits on an IRQ-updated RAM counter. This five-instruction
+    # loop makes no stores or MMIO accesses before returning to its anchor.
+    NATIVE_IDLE_WAIT_SITES 0x80050CE4
     EXCLUDE_BUILTIN_MODS psx.enhancement.cd-speed psx.enhancement.fast-loading
         psx.enhancement.8mb-ram psx.enhancement.hd-textures
     PGXP
