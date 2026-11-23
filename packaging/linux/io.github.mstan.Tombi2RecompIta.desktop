@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Tombi! 2 (Italiano) Recompiled
+Comment=Ricompilazione statica di Tombi! 2
+Exec=Tombi2Recomp-ita
+Icon=io.github.mstan.Tombi2RecompIta
+Categories=Game;
+Terminal=false
