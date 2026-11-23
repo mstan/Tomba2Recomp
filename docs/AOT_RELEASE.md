@@ -19,29 +19,35 @@ filename table. Addresses and hashes are never borrowed from another region.
 
 ## Build and package
 
-The US release uses the shared channel-enforcing packager and the title's
-`packaging/release.toml` configuration:
+The USA Windows ZIP and Linux AppImage use the shared packager and the title’s
+`packaging/release.toml` configuration.
 
 ```powershell
-& 'C:/msys64/mingw64/bin/python.exe' psxrecomp-v4/tools/package_title_release.py --channel public --platform windows --jobs 2
+& 'C:/msys64/mingw64/bin/python.exe' psxrecomp-v4/tools/package_title_release.py --channel public --platform all --jobs 2
+& 'C:/msys64/mingw64/bin/python.exe' psxrecomp-v4/tools/package_title_release.py --channel playtest --platform all --jobs 2
 ```
 
-It verifies the actual public/diagnostics-off build flags, records source and
-artifact identities in `RELEASE_MANIFEST.json`, and reopens the finished archive
-for verification. The US post-stage gate also checks Experimental Mario 0.0.1,
-the required verified Smash ROM, and absence of imported Nintendo assets or
-prohibited loading controls. Other regional/platform artifacts remain separate
-until their matching shared packaging configuration is qualified.
+The command records source and artifact identities in `RELEASE_MANIFEST.json`
+and reopens each finished archive for verification. Both channels start with
+gameplay recording enabled and the optional display disabled. A player's saved
+choices carry over. The USA post-stage check verifies that Experimental Mario
+0.0.1 requires a verified Smash ROM and omits imported Nintendo assets and the
+prohibited loading packages.
 
 Provide original discs at the paths in `game.toml` / `game_ita.toml` and use the
-pinned framework emitter. Both packagers always run fresh extraction and compile
-every recipe in isolation, then audit every native pair against original bytes.
-They require native coverage for every recipe and stage every audited pair.
-Missing inputs, changed evidence, compiler failures and incomplete audits stop
-packaging. Existing gameplay captures and caches are not inputs.
+pinned framework emitter. The original disc supplies the game’s AOT recipes. The
+packager audits each native pair against the source disc and stops if the
+recipe cannot be verified or does not have native coverage.
+
+Set `PSXRECOMP_BIOS_ROM` to your verified SCPH-1001 dump for the separate
+BIOS-resident AOT recipe. It supplies build input for that recipe. The desktop
+archives bundle OpenBIOS and contain no retail BIOS image.
+
+The Italian shared configuration is `packaging/release-ita.toml`. Keep using the
+established Italian release commands until the shared configuration has passed
+its original-disc checks.
 
 ```powershell
-./tools/package_release.ps1 -Variant usa -BuildDir build-release-usa
 ./tools/package_release.ps1 -Variant ita -BuildDir build-release-ita
 ```
 
@@ -50,7 +56,6 @@ packaging. Existing gameplay captures and caches are not inputs.
 `-Version` overrides the default in `packaging/release/VERSION`.
 
 ```sh
-bash tools/package_appimage.sh --variant usa --build-dir /path/to/build-usa
 bash tools/package_appimage.sh --variant ita --build-dir /path/to/build-ita
 ```
 

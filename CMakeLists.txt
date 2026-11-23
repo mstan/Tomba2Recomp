@@ -88,6 +88,8 @@ endif()
 set(TOMBA2_PRELOADED_MODS "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded")
 set(TOMBA2_PRELOADED_MODS_ITA "${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded_ita")
 
+option(TOMBA2_BUILD_USA_RUNTIME "Build the USA NTSC runtime target" ON)
+if(TOMBA2_BUILD_USA_RUNTIME)
 # Keep framework presentation controls available as new ones are added.
 # Generic loading/pacing controls are excluded from every release.
 psxrecomp_add_runtime_target(psx-runtime
@@ -127,6 +129,7 @@ psxrecomp_add_playtest_diagnostics(psx-runtime GAME_ID SCUS-94454 MOD_ID tomba2.
 
 tomba2_add_loading_implementation(psx-runtime)
 tomba2_add_terrain_implementation(psx-runtime)
+endif()
 
 if(BUILD_TESTING)
     add_executable(tomba2_widescreen_menu_test tests/test_widescreen_menu.c)
@@ -199,6 +202,9 @@ if(PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE)
     set(_tomba2_ita_debug_port "${PSXRECOMP_GAME_ITA_DEBUG_PORT_OVERRIDE}")
 endif()
 
+set(TOMBA2_ITA_PLAYER_CONFIG "game_ita.toml" CACHE STRING
+    "Player config filename for the Italian runtime")
+
 psxrecomp_add_runtime_target(psx-runtime-ita
     EXCLUDE_BUILTIN_MODS psx.enhancement.cd-speed psx.enhancement.fast-loading
     GAME_GENERATED_FULL_C "${GAME_ITA_GENERATED_FULL}"
@@ -207,7 +213,7 @@ psxrecomp_add_runtime_target(psx-runtime-ita
     PRELOADED_MODS_DIR "${TOMBA2_PRELOADED_MODS_ITA}"
     DEBUG_PORT ${_tomba2_ita_debug_port}
     WINDOW_TITLE "Tombi! 2 (Italian) Recompiled"
-    DEFAULT_GAME_CONFIG_PATH "game_ita.toml"
+    DEFAULT_GAME_CONFIG_PATH "${TOMBA2_ITA_PLAYER_CONFIG}"
     LAUNCHER_BOXART "${CMAKE_SOURCE_DIR}/recomp/launcher/boxart.tga"
 )
 

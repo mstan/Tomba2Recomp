@@ -1,4 +1,4 @@
-Tombi! 2 Recompiled - Italiano (SCES-02686)
+Tombi! 2 Recompiled @VERSION@ - Italiano (SCES-02686)
 ========================================
 
 REQUISITI

@@ -13,10 +13,11 @@ launcher_boxart = "recomp/launcher/boxart.tga"
 
 [build]
 regenerate = true
+pgo_train_frames = 600
 cmake_args = [
   "-DPSX_EXECUTION_PROFILE=ENHANCED", "-DPSX_PGXP_VARIANT=OFF",
   "-DPSX_SETUP_WIZARD=OFF", "-DPSX_NETPLAY=OFF",
-  "-DPSX_MOD_DEVELOPER_CHANNEL=OFF"
+  "-DPSX_MOD_DEVELOPER_CHANNEL=OFF", "-DTOMBA2_BUILD_ITALIAN_RUNTIME=OFF"
 ]
 windows_cmake_args = ["-DCMAKE_EXE_LINKER_FLAGS=-Wl,--no-insert-timestamp"]
 
@@ -28,10 +29,22 @@ cps = false
 [overlay_toolchain]
 ship = true
 
+[diagnostics]
+game_id = "SCUS-94454"
+package_id = "tomba2.diagnostics"
+replay_helper = true
+
 [payload]
 start_here = "packaging/release/START_HERE.txt"
 files = ["README.md", "LICENSE", "PERMISSIONS.md", "RELEASE_NOTES.md",
   {from = "packaging/release/input.ini", to = "input.ini"}]
+
+[linux]
+app_run = "psxrecomp-v4/tools/new_project_layout/templates/AppRun.in"
+desktop_file = "packaging/linux/io.github.mstan.Tomba2Recomp.desktop"
+icon = "recomp/launcher/boxart.tga"
+payload_dir = "tomba2recomp"
+env_prefix = "TOMBA2_RECOMP"
 
 [[hooks.post_stage]]
 command = ["{python}", "tools/verify_mario_release.py", "{stage}"]
