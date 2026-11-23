@@ -35,9 +35,13 @@ choices carry over. The USA post-stage check verifies that Experimental Mario
 prohibited loading packages.
 
 Provide original discs at the paths in `game.toml` / `game_ita.toml` and use the
-pinned framework emitter. The original disc supplies every AOT recipe. The
+pinned framework emitter. The original disc supplies the game’s AOT recipes. The
 packager audits each native pair against the source disc and stops if the
 recipe cannot be verified or does not have native coverage.
+
+Set `PSXRECOMP_BIOS_ROM` to your verified SCPH-1001 dump for the separate
+BIOS-resident AOT recipe. It supplies build input for that recipe. The desktop
+archives bundle OpenBIOS and contain no retail BIOS image.
 
 The Italian shared configuration is `packaging/release-ita.toml`. Keep using the
 established Italian release commands until the shared configuration has passed
