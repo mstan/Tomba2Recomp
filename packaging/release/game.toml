@@ -69,11 +69,8 @@ guest_cycle_scale = 2
 guest_cycle_scale_batch = true
 
 [runtime]
-# HLE boot shell-skip (master 582aecc): skips the PSX boot animation via the
-# HLE tier's one-shot shell intercept; kernel init + game EXE load still run
-# on the real recompiled BIOS at host speed. Set false to watch BIOS logos.
-# Full HLE kernel tier (bios_hle) stays OFF here — LLE is the baseline; Tomba1
-# is the HLE validation title.
+# The native BIOS provider initializes the guest kernel and disc executable.
+# Keep the optional boot animation skipped.
 fast_boot = true
 # Seamless Loading is enabled by default on the Mods page. The USA catalog
 # excludes generic CD Speed and host-paced Fast Loading; guest/audio pacing
@@ -152,6 +149,14 @@ lock_mode    = true
 # Internal resolution uses the shared 1080p preset; settings may override it.
 # Antialiasing: linear present filtering for the sampled frame. The launcher
 # exposes both controls on the Video page and persists overrides to settings.toml.
+# Old PGXP Off followed this title's former disabled baseline. Preserve that
+# explicit choice while exposing the current defaults through Video Settings.
+[legacy_player_settings.pgxp_disabled_baseline]
+geometry_correction = false
+perspective_texturing = false
+pgxp_cpu_mode = false
+pgxp_culling = false
+
 [video]
 # Preserve the accepted wall-clock-paced Windows profile. On a non-matching
 # high-refresh panel, synchronized swaps add stalls on top of the guest pacer.
@@ -162,6 +167,11 @@ internal_resolution = "1080p"
 supersampling     = 2
 antialiasing      = true
 texture_filtering = "nearest"
+# The retired USA PGXP package enabled geometry and perspective by default.
+geometry_correction = true
+perspective_texturing = true
+pgxp_cpu_mode = false
+pgxp_culling = false
 # Native scene interpolation is owned by the game mod.
 # Hide the generic Display controls and ignore stale settings.toml values.
 frame_interpolation = false

@@ -100,6 +100,14 @@ lock_mode    = true
 # that Tomba 2 holds full speed on the OpenGL path; lower to 1 for slower GPUs.
 # Antialiasing: linear present filtering for the sampled frame. The launcher
 # exposes both controls on the Video page and persists overrides to settings.toml.
+# Old PGXP Off followed this title's former disabled baseline. Preserve that
+# explicit choice while exposing the current defaults through Video Settings.
+[legacy_player_settings.pgxp_disabled_baseline]
+geometry_correction = false
+perspective_texturing = false
+pgxp_cpu_mode = false
+pgxp_culling = false
+
 [video]
 renderer          = "opengl"
 supersampling     = 2
@@ -107,6 +115,9 @@ antialiasing      = true
 texture_filtering = "nearest"
 pgxp_tolerance    = -1.0
 geometry_correction = false
+perspective_texturing = false
+pgxp_cpu_mode = false
+pgxp_culling = false
 # Tomba 2 owns temporal frame blending through its built-in Frame Blending mod.
 # Hide the generic Display controls and ignore stale settings.toml values.
 frame_interpolation = false

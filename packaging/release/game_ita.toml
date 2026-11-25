@@ -31,6 +31,14 @@ default_mode = "digital"
 allow_hybrid = false
 lock_mode    = true
 
+# Old PGXP Off followed this title's former disabled baseline. Preserve that
+# explicit choice while exposing the current defaults through Video Settings.
+[legacy_player_settings.pgxp_disabled_baseline]
+geometry_correction = false
+perspective_texturing = false
+pgxp_cpu_mode = false
+pgxp_culling = false
+
 [video]
 renderer          = "opengl"
 supersampling     = 2
@@ -38,6 +46,9 @@ antialiasing      = true
 texture_filtering = "nearest"
 pgxp_tolerance    = -1.0
 geometry_correction = false
+perspective_texturing = false
+pgxp_cpu_mode = false
+pgxp_culling = false
 frame_interpolation = false
 frame_interpolation_fps = 0
 offer_frame_interpolation = false

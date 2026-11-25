@@ -36,6 +36,11 @@ retail dump; clear it to return to bundled OpenBIOS.
 Tomba 2's mods live on the launcher's **Mods** page. Seamless Loading is enabled
 by default for the US disc, replacing the generic CD Speed and Fast Loading
 options. Adaptive widescreen and 1080p internal rendering are also enabled by default.
+PGXP geometry and perspective correction use **Settings ? Video**, with CPU
+propagation and precise culling available there as separate choices. Geometry
+and perspective correction start enabled for the US disc and disabled for the
+Italian disc; saved preferences, including an earlier explicit Off, are preserved.
+
 Interpolation is disabled and hidden; Skip FMVs remains optional. Generic CD Speed and host-paced Fast Loading are excluded from both regional release catalogs.
 
 ## Layout

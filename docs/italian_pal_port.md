@@ -264,28 +264,17 @@ not been ported to the SCES-02686 overlay layout.
 
 ---
 
-## 8. Video Enhancements & PGXP Precision Configuration
+## 8. Video Settings and PGXP
 
-In `game_ita.toml`, the `[video]` section explicitly sets:
-```toml
-[video]
-geometry_correction = true
-pgxp_tolerance      = -1.0
-```
+The Italian config retains disabled geometry correction, perspective texturing,
+CPU propagation and precise culling defaults. Players can change these in
+Settings ? Video. The retired `psx.enhancement.pgxp` package is no longer part
+of the regional catalog; its old saved On/options are translated into absent
+canonical preferences, and explicit canonical preferences keep precedence.
+The title also declares the former disabled baseline, preserving an explicit
+old Off even when updating from an already-migrated profile.
 
-### Rationale & Runtime Lifecycle Analysis:
-
-1. **Overcoming the Initialization Override Bug (`geometry_correction = true`)**:
-   * In `psxrecomp-v4/runtime/src/main.cpp`, `mod_runtime_activate_plugins()` executes during early startup (line 12657), invoking `builtin_pgxp_activate()` in `mod_builtin_pgxp.c` which calls `gte_geometry_correction_set(1)`.
-   * However, subsequently in `main.cpp` (line 12888, and line 14297 upon returning from the launcher UI), the runtime applies:
-     ```cpp
-     gte_geometry_correction_set(g_video_geometry_correction);
-     gpu_texture_correction_set(g_video_perspective_texturing);
-     ```
-   * If `geometry_correction` is omitted or set to `false` in `game_ita.toml`, `g_video_geometry_correction` evaluates to `0`. This **silently overrides and disables** the vertex precision engine that the PGXP mod just activated.
-   * Explicitly configuring `geometry_correction = true` in `game_ita.toml` keeps the GTE vertex channel open, allowing the PGXP mod and sub-pixel precision to function as intended.
-
-2. **Full Sub-Pixel Precision vs Conservative Clamping (`pgxp_tolerance = -1.0`)**:
-   * By default, `psxrecomp-v4/runtime/src/pgxp.cpp` applies a conservative `0.5px` tolerance filter (`s_tolerance = 0.5f`), rejecting any sub-pixel vertex displacement greater than half a pixel back to the stock integer grid (`s_stats.tolerance_reject++`).
-   * In Tomba 2, complex segmented meshes and winding 2.5D terrain paths trigger this tolerance clamp extensively, causing widespread fallback to uncorrected integer coordinates and rendering PGXP visually indistinguishable from stock.
-   * Setting `pgxp_tolerance = -1.0` disables the tolerance gate (`s_tolerance < 0.0f`), allowing full sub-pixel floating-point vertex stability across all 3D geometry and completely eliminating polygon jitter.
+`pgxp_tolerance = -1.0` retains the existing PGXP build policy. It removes the
+optional displacement tolerance gate; packet-word, lifetime and depth checks
+still determine whether a particular polygon qualifies. This is not a claim
+that every polygon or animation is free of jitter.

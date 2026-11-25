@@ -316,7 +316,9 @@ now preserves all approved recompiler, timing, viewport and visibility settings,
 removing only developer diagnostics and the machine-specific compile command.
 The release task is `beads-eio.2.16`.
 
-The USA catalog overrides only the shared PGXP manifest defaults so fresh
-installs match the accepted texture-correction state. It uses the existing
-shared `psx.pgxp` plugin; no precision implementation is copied into the title.
-CPU propagation and precise culling options retain their original defaults.
+The current USA config supplies geometry and perspective correction defaults
+through the framework's Video Settings. The retired PGXP package is absent
+from both regional catalogs. The title declares its old disabled baseline so
+an explicit saved Off survives that default transition. CPU propagation and
+precise culling retain their original disabled defaults; no precision
+implementation is copied into the title.
