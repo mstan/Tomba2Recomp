@@ -5,9 +5,8 @@ WHAT YOU NEED
   Your own Tomba! 2 (USA, SCUS-94454) disc image. A .cue + .bin pair is
   preferred; a bare .bin or .iso also works. The disc is NOT included.
 
-  A PlayStation BIOS is NOT required. This package bundles the MIT-licensed
-  OpenBIOS from PCSX-Redux (bios/openbios.bin, notice in bios/OpenBIOS.LICENSE).
-  You may optionally select your own legally obtained SCPH1001.BIN instead.
+  A PlayStation BIOS is NOT required. Native runtime support is included.
+  OpenBIOS support files and their license are under bios/.
 
 FIRST RUN
   1. Launch the game. The launcher window opens.

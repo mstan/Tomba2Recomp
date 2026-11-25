@@ -16,6 +16,12 @@ set(PSXRECOMP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/psxrecomp-v4" CACHE PATH
 
 include("${PSXRECOMP_ROOT}/runtime/runtime.cmake")
 
+# PGXP is a player Video setting. Ignore retained copies of its retired
+# catalog control while the settings migrator preserves the player's choice.
+# Scope this definition to its consumer; generated guest flags stay unchanged.
+set_property(SOURCE "${PSXRECOMP_ROOT}/runtime/src/mod_runtime.cpp" APPEND
+    PROPERTY COMPILE_DEFINITIONS "PSX_MOD_DISABLED_PACKAGES=\"psx.enhancement.pgxp\"")
+
 # Split-TU build: the recompiler writes the recompiled game as N
 # SCUS_944.54_full_NN.c shards (plus a shared SCUS_944.54_decls.h) instead of
 # one monolithic SCUS_944.54_full.c, so every shard compiles as its own
