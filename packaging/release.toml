@@ -15,7 +15,7 @@ launcher_boxart = "recomp/launcher/boxart.tga"
 regenerate = true
 pgo_train_frames = 600
 cmake_args = [
-  "-DPSX_EXECUTION_PROFILE=ENHANCED", "-DPSX_PGXP_VARIANT=OFF",
+  "-DPSX_EXECUTION_PROFILE=ENHANCED", "-DPSX_NATIVE_KERNEL=ON", "-DPSX_PGXP_VARIANT=OFF",
   "-DPSX_SETUP_WIZARD=OFF", "-DPSX_NETPLAY=OFF",
   "-DPSX_MOD_DEVELOPER_CHANNEL=OFF", "-DTOMBA2_BUILD_ITALIAN_RUNTIME=OFF"
 ]
@@ -24,7 +24,7 @@ windows_cmake_args = ["-DCMAKE_EXE_LINKER_FLAGS=-Wl,--no-insert-timestamp"]
 [aot]
 mode = "cache"
 profile = "aot/usa.json"
-cps = false
+cps = true
 
 [overlay_toolchain]
 ship = true
