@@ -95,7 +95,9 @@ if(TOMBA2_BUILD_USA_RUNTIME)
 psxrecomp_add_runtime_target(psx-runtime
     # USA XA playback waits on an IRQ-updated RAM counter. This five-instruction
     # loop makes no stores or MMIO accesses before returning to its anchor.
-    NATIVE_IDLE_WAIT_SITES 0x80050CE4
+    # SDK VSync's countdown and IRQ-counter edges share the existing audited
+    # hardware-time wait service; active guest work keeps its normal scale.
+    NATIVE_IDLE_WAIT_SITES 0x80050CE4 0x80017FEC 0x80018034
     EXCLUDE_BUILTIN_MODS psx.enhancement.cd-speed psx.enhancement.fast-loading
         psx.enhancement.8mb-ram psx.enhancement.hd-textures
     PGXP
