@@ -1,5 +1,19 @@
 # Tomba! 2 - The Evil Swine Return release notes
 
+## v0.3.7 ? native startup and PGXP settings
+
+The native BIOS executive now supplies the SDK event, controller, memory-card
+and chained-disc-executable contracts used by startup. Overlay caches carry
+the selected native-provider identity.
+
+PGXP controls use Settings ? Video. Fresh US settings enable geometry and
+perspective correction; the Italian defaults remain disabled. Updates preserve
+saved Off and enabled options. CPU propagation and precise culling retain
+separate controls and their existing disabled fresh defaults.
+
+Adaptive widescreen, native saves and optional mods are retained. These changes
+do not establish full-game coverage or a hardware-specific performance gain.
+
 ## v0.3.3 — shared optimization release
 
 Fresh settings enable Internal Resolution at 4x. The Mods selector offers 1x through 32x; saved choices are preserved, and GPU texture and memory limits still apply. Disabling the mod selects native resolution.

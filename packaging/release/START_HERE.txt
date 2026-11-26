@@ -5,9 +5,8 @@ WHAT YOU NEED
   Your own Tomba! 2 (USA, SCUS-94454) disc image. A .cue + .bin pair is
   preferred; a bare .bin or .iso also works. The disc is NOT included.
 
-  A PlayStation BIOS is NOT required. This package bundles the MIT-licensed
-  OpenBIOS from PCSX-Redux (bios/openbios.bin, notice in bios/OpenBIOS.LICENSE).
-  You may optionally select your own legally obtained SCPH1001.BIN instead.
+  A PlayStation BIOS is NOT required. Native runtime support is included.
+  OpenBIOS support files and their license are under bios/.
 
 FIRST RUN
   1. Launch the game. The launcher window opens.
@@ -17,6 +16,8 @@ FIRST RUN
      prepares resources from your disc for near-instant area transitions.
      Gameplay and audio retain normal speed. Turn it off for original loading.
      Adaptive widescreen and texture correction default on.
+     PGXP geometry, perspective, CPU propagation and culling use Settings > Video.
+     A saved explicit Off remains Off when updating.
      Interpolation is disabled and hidden. Skip FMVs remains optional.
   4. Press Launch. Your choices are remembered for next time.
 
@@ -47,4 +48,5 @@ TROUBLESHOOTING
   Controller not detected: check input.ini, or use the launcher's controller
   row to pick the device.
 
-Internal Resolution is enabled at 4x for fresh settings. Choose 1x–32x in Mods; hardware and GPU-memory limits may clamp larger choices. Your saved choices are retained.
+Internal resolution uses the shared 1080p preset for fresh settings. Change it
+in Settings > Video; saved choices and hardware limits remain effective.
